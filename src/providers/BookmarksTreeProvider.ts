@@ -1,5 +1,12 @@
 import * as vscode from 'vscode';
-import { EXTENSION_ID, EXTENSION_VIEW_ID } from '../constants';
+import {
+  CMD_TOGGLE_BOOKMARK_WITH_LABEL,
+  CMD_TOGGLE_LINE_BOOKMARK,
+  EXTENSION_VIEW_ID,
+} from '../constants';
+
+import { registerCommand } from '../utils';
+import { decorations, updateDecorations } from '../decorations';
 export class BookmarksTreeItem extends vscode.TreeItem {}
 
 export class BookmarksTreeProvider
@@ -32,14 +39,20 @@ export class BookmarksTreeView {
       treeDataProvider: new BookmarksTreeProvider(),
       showCollapseAll: true,
     });
-    // The command has been defined in the package.json file
-    // Now provide the implementation of the command with registerCommand
-    // The commandId parameter must match the command field in package.json
-    let disposable = vscode.commands.registerCommand(
-      `${EXTENSION_ID}.addLineBookmarks`,
-      () => {}
-    );
 
-    context.subscriptions.push(disposable);
+    registerCommand(context, CMD_TOGGLE_LINE_BOOKMARK, (args) => {
+      console.log(args);
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        return;
+      }
+      const selection = editor.selection;
+      if (!selection) {
+        return;
+      }
+      updateDecorations(editor, [selection]);
+      // editor.setDecorations(decorations.normal, [selection]);
+    });
+    registerCommand(context, CMD_TOGGLE_BOOKMARK_WITH_LABEL, (args) => {});
   }
 }

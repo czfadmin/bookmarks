@@ -14,8 +14,12 @@
   "contributes": {
     "commands": [
       {
-        "command": "bookmarks.addLineBookmarks",
-        "title": "Add Line Bookmarks"
+        "command": "bookmarks.CMD_TOGGLE_LINE_BOOKMARK",
+        "title": "Toggle line bookmark"
+      },
+      {
+        "command": "bookmarks.CMD_TOGGLE_BOOKMARK_WITH_LABEL",
+        "title": "Toggle bookmark with label"
       }
     ],
     "views": {
