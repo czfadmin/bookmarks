@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { BookmarksTreeView } from './providers/BookmarksTreeProvider';
 import logger from './utils/logger';
 import { EXTENSION_ID } from './constants';
-import { disposeAllDiscorations } from './decorations';
+import { disposeAllDiscorations, initDecorations } from './decorations';
 import {
   disablAllEvents,
   // updateChangeActiveTextEditorListener,
@@ -24,6 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
       updateEverything();
     })
   );
+  initDecorations(context);
   // TODO
   // updateChangeActiveTextEditorListener();
   // updateChangeBreakpointsListener();

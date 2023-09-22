@@ -1,18 +1,17 @@
 import { ExtensionContext, Uri } from 'vscode';
-import { createCircleIcon, svgToUri } from './utils/icon';
+import { createBookmarkIcon, svgToUri } from './utils/icon';
+
 export interface Gutter {
-  icon: {
-    light: Uri;
-    dark: Uri;
-  };
+  normal: Uri | string;
+  low: Uri | string;
+  high: Uri | string;
 }
 
-export function getGutter(context: ExtensionContext): Gutter {
+export function getGutters(context: ExtensionContext): Gutter {
   const $gutter: Gutter = {
-    icon: {
-      light: svgToUri(createCircleIcon('red')),
-      dark: svgToUri(createCircleIcon('white')),
-    },
+    normal: svgToUri(createBookmarkIcon('#0e69d8')),
+    low: svgToUri(createBookmarkIcon('#42dd00')),
+    high: svgToUri(createBookmarkIcon('#ff0000')),
   };
   return {
     ...$gutter,

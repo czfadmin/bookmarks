@@ -1,7 +1,9 @@
 import * as vscode from 'vscode';
 import {
   CMD_TOGGLE_BOOKMARK_WITH_LABEL,
+  CMD_TOGGLE_HiGH_BOOKMARK,
   CMD_TOGGLE_LINE_BOOKMARK,
+  CMD_TOGGLE_LOW_BOOKMARK,
   EXTENSION_VIEW_ID,
 } from '../constants';
 
@@ -41,18 +43,26 @@ export class BookmarksTreeView {
     });
 
     registerCommand(context, CMD_TOGGLE_LINE_BOOKMARK, (args) => {
-      console.log(args);
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) {
-        return;
-      }
-      const selection = editor.selection;
-      if (!selection) {
-        return;
-      }
-      updateDecorations(editor, [selection]);
-      // editor.setDecorations(decorations.normal, [selection]);
+      this.toggleLineBookmark('normal');
+    });
+    registerCommand(context, CMD_TOGGLE_LOW_BOOKMARK, (args) => {
+      this.toggleLineBookmark('low');
+    });
+    registerCommand(context, CMD_TOGGLE_HiGH_BOOKMARK, (args) => {
+      this.toggleLineBookmark('high');
     });
     registerCommand(context, CMD_TOGGLE_BOOKMARK_WITH_LABEL, (args) => {});
+  }
+
+  toggleLineBookmark(level: string) {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      return;
+    }
+    const selection = editor.selection;
+    if (!selection) {
+      return;
+    }
+    updateDecorations(editor, [selection]);
   }
 }
