@@ -9,17 +9,36 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "publisher": "czfadmin",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "bookmarks.CMD_TOGGLE_LINE_BOOKMARK",
+        "command": "bookmarks.CMD_TOGGLE_NORMAL_BOOKMARK",
         "title": "Toggle line bookmark"
+      },
+      {
+        "command": "bookmarks.CMD_TOGGLE_LOW_BOOKMARK",
+        "title": "Toggle low bookmark"
+      },
+      {
+        "command": "bookmarks.CMD_TOGGLE_HiGH_BOOKMARK",
+        "title": "Toggle high bookmark"
       },
       {
         "command": "bookmarks.CMD_TOGGLE_BOOKMARK_WITH_LABEL",
         "title": "Toggle bookmark with label"
+      },
+      {
+        "command": "bookmarks.CMD_CLEAR_ALL",
+        "title": "Clear All bookmarks",
+        "icon": {
+          "light": "resources/light/delete.svg",
+          "dark": "resources/dark/delete.svg"
+        }
       }
     ],
     "views": {
@@ -51,6 +70,32 @@
           "id": "bookmarks",
           "title": "Bookmarks",
           "icon": "resources/logo.svg"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "bookmarks",
+      "properties": {
+        "bookmarks.normalIconColor": {
+          "type": "string",
+          "description": "normal icon color"
+        },
+        "bookmarks.lowIconColor": {
+          "type": "string",
+          "description": "low icon color"
+        },
+        "bookmarks.highIconColor": {
+          "type": "string",
+          "description": "high icon color"
+        }
+      }
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "bookmarks.CMD_CLEAR_ALL",
+          "when": "view == bookmarks",
+          "group": "navigation"
         }
       ]
     }

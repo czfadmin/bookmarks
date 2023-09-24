@@ -1,4 +1,5 @@
 import {
+  DecorationOptions,
   ExtensionContext,
   Range,
   TextEditor,
@@ -7,6 +8,8 @@ import {
 } from 'vscode';
 
 import { getGutters } from './gutter';
+import { BookmarkLevel } from './types';
+import { BookmarksController } from './controllers/BookmarksController';
 
 export type BookmarkDecorationKey = 'low' | 'normal' | 'high';
 
@@ -27,13 +30,49 @@ export function initDecorations(context: ExtensionContext) {
   });
 }
 
-export function updateDecorations(editor?: TextEditor, range?: Range[]) {
-  let _editor = editor;
-  if (!editor) {
-    _editor = window.activeTextEditor;
+export function updateDecoration(
+  editor: TextEditor,
+  options: {
+    level: BookmarkLevel;
+    rangesOrOptions: readonly Range[] | readonly DecorationOptions[];
   }
-  _editor?.setDecorations(decorations.normal, range || []);
+) {
+  editor?.setDecorations(decorations[options.level], options.rangesOrOptions);
 }
+
+/**
+ * 更新给定的编辑器中的decorations
+ * @param editor {TextEditor}
+ * @returns
+ */
+export const updateDecorationsByEditor = (editor: TextEditor) => {
+  if (!editor) {
+    return;
+  }
+  if (!BookmarksController.instance) {
+    return;
+  }
+  const bookmarkStore = BookmarksController.instance.getBookmarkStoreByFileUri(
+    editor.document.uri
+  );
+  const bookmarks = bookmarkStore?.bookmarks || [];
+  const decorationsGroupByLevel = bookmarks.reduce(
+    (a, b) => {
+      a[b.level].push(b.rangesOrOptions);
+      return a;
+    },
+    { low: [] as any[], normal: [] as any[], high: [] as any[] }
+  ) as { [key: string]: any[] };
+  Object.keys(decorationsGroupByLevel).forEach((it) => {
+    if (decorationsGroupByLevel[it].length === 0) {
+      return;
+    }
+    updateDecoration(editor, {
+      level: it as BookmarkLevel,
+      rangesOrOptions: decorationsGroupByLevel[it] as any[],
+    });
+  });
+};
 
 /**
  * Dispose all decorations

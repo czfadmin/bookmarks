@@ -1,5 +1,7 @@
 import { Disposable, debug, window, workspace } from 'vscode';
 
+import { updateDecorationsByEditor } from './decorations';
+
 let onDidChangeActiveTextEditor: Disposable | undefined;
 let onDidChangeVisibleTextEditors: Disposable | undefined;
 let onDidSaveTextDocumentDisposable: Disposable | undefined;
@@ -8,7 +10,19 @@ let onDidChangeBreakpoints: Disposable | undefined;
 
 export function updateChangeActiveTextEditorListener() {
   onDidChangeActiveTextEditor?.dispose();
-  onDidChangeActiveTextEditor = window.onDidChangeActiveTextEditor((ev) => {});
+  // 当打开多个editor group时,更新每个editor的中的decorations
+  const visibleTextEditors = window.visibleTextEditors;
+  if (visibleTextEditors.length) {
+    visibleTextEditors.forEach((editor) => {
+      updateDecorationsByEditor(editor);
+    });
+  }
+  onDidChangeActiveTextEditor = window.onDidChangeActiveTextEditor((ev) => {
+    if (!ev) {
+      return;
+    }
+    updateDecorationsByEditor(ev);
+  });
 }
 
 export function updateChangeVisibleTextEidtorsListener() {

@@ -5,16 +5,18 @@ import { EXTENSION_ID } from './constants';
 import { disposeAllDiscorations, initDecorations } from './decorations';
 import {
   disablAllEvents,
-  // updateChangeActiveTextEditorListener,
+  updateChangeActiveTextEditorListener,
   // updateChangeBreakpointsListener,
   // updateChangeVisibleTextEidtorsListener,
   // updateCursorChangeListener,
   // updateSaveTextDocumentListener,
 } from './events';
+import { BookmarksController } from './controllers/BookmarksController';
 
 export function activate(context: vscode.ExtensionContext) {
   logger.log(`${EXTENSION_ID} is now active!`);
-  new BookmarksTreeView(context);
+
+  new BookmarksTreeView(context, BookmarksController.createInstance(context));
   // 监听插件配置的变化
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((ev) => {
@@ -26,7 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
   initDecorations(context);
   // TODO
-  // updateChangeActiveTextEditorListener();
+  updateChangeActiveTextEditorListener();
   // updateChangeBreakpointsListener();
   // updateChangeVisibleTextEidtorsListener();
   // updateCursorChangeListener();
