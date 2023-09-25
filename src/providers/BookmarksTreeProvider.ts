@@ -110,6 +110,11 @@ export class BookmarksTreeView {
 
     registerCommand(context, CMD_CLEAR_ALL, (args) => {
       this._controller.clearAll();
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        return;
+      }
+      updateDecorationsByEditor(editor);
     });
 
     registerCommand(context, CMD_DELETE_BOOKMARK, (args) => {

@@ -36,16 +36,16 @@
         "command": "bookmarks.clearAllBookmarks",
         "title": "Clear All bookmarks",
         "icon": {
-          "light": "resources/light/delete.svg",
-          "dark": "resources/dark/delete.svg"
+          "light": "resources/light/clearAll.svg",
+          "dark": "resources/dark/clearAll.svg"
         }
       },
       {
         "command": "bookmarks.deleteBookmark",
         "title": "Delete",
         "icon": {
-          "light": "resources/light/delete.svg",
-          "dark": "resources/dark/delete.svg"
+          "light": "resources/light/close.svg",
+          "dark": "resources/dark/close.svg"
         }
       }
     ],
