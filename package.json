@@ -17,24 +17,32 @@
   "contributes": {
     "commands": [
       {
-        "command": "bookmarks.CMD_TOGGLE_NORMAL_BOOKMARK",
+        "command": "bookmarks.toggleBookmark",
         "title": "Toggle line bookmark"
       },
       {
-        "command": "bookmarks.CMD_TOGGLE_LOW_BOOKMARK",
+        "command": "bookmarks.toggleLowBookmark",
         "title": "Toggle low bookmark"
       },
       {
-        "command": "bookmarks.CMD_TOGGLE_HiGH_BOOKMARK",
+        "command": "bookmarks.toggleHighBookmark",
         "title": "Toggle high bookmark"
       },
       {
-        "command": "bookmarks.CMD_TOGGLE_BOOKMARK_WITH_LABEL",
+        "command": "bookmarks.toggleLabelBookmark",
         "title": "Toggle bookmark with label"
       },
       {
-        "command": "bookmarks.CMD_CLEAR_ALL",
+        "command": "bookmarks.clearAllBookmarks",
         "title": "Clear All bookmarks",
+        "icon": {
+          "light": "resources/light/delete.svg",
+          "dark": "resources/dark/delete.svg"
+        }
+      },
+      {
+        "command": "bookmarks.deleteBookmark",
+        "title": "Delete",
         "icon": {
           "light": "resources/light/delete.svg",
           "dark": "resources/dark/delete.svg"
@@ -93,9 +101,16 @@
     "menus": {
       "view/title": [
         {
-          "command": "bookmarks.CMD_CLEAR_ALL",
+          "command": "bookmarks.clearAllBookmarks",
           "when": "view == bookmarks",
           "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "bookmarks.deleteBookmark",
+          "when": "view==bookmarks",
+          "group": "inline"
         }
       ]
     }

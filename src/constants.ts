@@ -2,9 +2,10 @@ export const EXTENSION_ID = 'bookmarks';
 export const EXTENSION_VIEW_ID = 'bookmarks';
 
 /** Commands */
-export const CMD_TOGGLE_BOOKMARK_WITH_LABEL = 'CMD_TOGGLE_BOOKMARK_WITH_LABEL';
-export const CMD_TOGGLE_LINE_BOOKMARK = 'CMD_TOGGLE_LINE_BOOKMARK';
-export const CMD_TOGGLE_NORMAL_BOOKMARK = 'CMD_TOGGLE_NORMAL_BOOKMARK';
-export const CMD_TOGGLE_LOW_BOOKMARK = 'CMD_TOGGLE_LOW_BOOKMARK';
-export const CMD_TOGGLE_HiGH_BOOKMARK = 'CMD_TOGGLE_HiGH_BOOKMARK';
-export const CMD_CLEAR_ALL = 'CMD_CLEAR_ALL';
+export const CMD_TOGGLE_BOOKMARK_WITH_LABEL = 'toggleLabelBookmark';
+export const CMD_TOGGLE_NORMAL_BOOKMARK = 'toggleBookmark';
+export const CMD_TOGGLE_LOW_BOOKMARK = 'toggleLowBookmark';
+export const CMD_TOGGLE_HIGH_BOOKMARK = 'toggleHighBookmark';
+export const CMD_CLEAR_ALL = 'clearAllBookmarks';
+
+export const CMD_DELETE_BOOKMARK = 'deleteBookmark'

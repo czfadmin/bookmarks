@@ -1,19 +1,20 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 import {
   CMD_TOGGLE_BOOKMARK_WITH_LABEL,
   CMD_CLEAR_ALL,
-  CMD_TOGGLE_HiGH_BOOKMARK,
+  CMD_TOGGLE_HIGH_BOOKMARK,
   CMD_TOGGLE_LOW_BOOKMARK,
   CMD_TOGGLE_NORMAL_BOOKMARK,
   EXTENSION_VIEW_ID,
-} from '../constants';
+  CMD_DELETE_BOOKMARK,
+} from "../constants";
 
-import { registerCommand } from '../utils';
-import { updateDecorationsByEditor } from '../decorations';
-import { BookmarksController } from '../controllers/BookmarksController';
-import { createHash } from '../utils/hash';
-import { BookmarkLevel, BookmarkMeta, BookmarkStoreType } from '../types';
-import gutters from '../gutter';
+import { registerCommand } from "../utils";
+import { updateDecorationsByEditor } from "../decorations";
+import { BookmarksController } from "../controllers/BookmarksController";
+import { createHash } from "../utils/hash";
+import { BookmarkLevel, BookmarkMeta, BookmarkStoreType } from "../types";
+import gutters from "../gutter";
 
 export class BookmarksTreeItem extends vscode.TreeItem {
   constructor(
@@ -22,7 +23,7 @@ export class BookmarksTreeItem extends vscode.TreeItem {
     public meta: BookmarkStoreType | BookmarkMeta
   ) {
     super(label, collapsibleState);
-    if ('level' in this.meta) {
+    if ("level" in this.meta) {
       this.iconPath = gutters[this.meta.level];
     }
   }
@@ -97,18 +98,22 @@ export class BookmarksTreeView {
     this._provider = new BookmarksTreeProvider(controller);
 
     registerCommand(context, CMD_TOGGLE_NORMAL_BOOKMARK, (args) => {
-      this.toggleLineBookmark('normal');
+      this.toggleLineBookmark("normal");
     });
     registerCommand(context, CMD_TOGGLE_LOW_BOOKMARK, (args) => {
-      this.toggleLineBookmark('low');
+      this.toggleLineBookmark("low");
     });
-    registerCommand(context, CMD_TOGGLE_HiGH_BOOKMARK, (args) => {
-      this.toggleLineBookmark('high');
+    registerCommand(context, CMD_TOGGLE_HIGH_BOOKMARK, (args) => {
+      this.toggleLineBookmark("high");
     });
     registerCommand(context, CMD_TOGGLE_BOOKMARK_WITH_LABEL, (args) => {});
 
     registerCommand(context, CMD_CLEAR_ALL, (args) => {
       this._controller.clearAll();
+    });
+
+    registerCommand(context, CMD_DELETE_BOOKMARK, (args) => {
+      // this._controller.remove()
     });
 
     vscode.window.createTreeView(EXTENSION_VIEW_ID, {
