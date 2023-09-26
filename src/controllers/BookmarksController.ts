@@ -142,6 +142,12 @@ export class BookmarksController {
     // @ts-ignore
     this._onDidChangeEvent?.fire();
   }
+  /**
+   *
+   * @param bookmark
+   * @param label
+   */
+  editLabel(bookmark: BookmarkMeta, label: string) {}
 
   static createInstance(context: vscode.ExtensionContext): BookmarksController {
     if (!BookmarksController._instance) {

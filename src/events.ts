@@ -1,6 +1,7 @@
 import { Disposable, debug, window, workspace } from 'vscode';
 
 import { updateDecorationsByEditor } from './decorations';
+import logger from './utils/logger';
 
 let onDidChangeActiveTextEditor: Disposable | undefined;
 let onDidChangeVisibleTextEditors: Disposable | undefined;
@@ -46,7 +47,9 @@ export function updateCursorChangeListener() {
 
 export function updateChangeBreakpointsListener() {
   onDidChangeBreakpoints?.dispose();
-  onDidChangeBreakpoints = debug.onDidChangeBreakpoints((ev) => {});
+  onDidChangeBreakpoints = debug.onDidChangeBreakpoints((ev) => {
+    logger.info(ev);
+  });
 }
 
 export function disablAllEvents() {

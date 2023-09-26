@@ -1,4 +1,4 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 import {
   CMD_TOGGLE_BOOKMARK_WITH_LABEL,
   CMD_CLEAR_ALL,
@@ -7,23 +7,26 @@ import {
   CMD_TOGGLE_NORMAL_BOOKMARK,
   EXTENSION_VIEW_ID,
   CMD_DELETE_BOOKMARK,
-} from "../constants";
+  CMD_EDIT_LABEL,
+} from '../constants';
 
-import { registerCommand } from "../utils";
-import { updateDecorationsByEditor } from "../decorations";
-import { BookmarksController } from "../controllers/BookmarksController";
-import { createHash } from "../utils/hash";
-import { BookmarkLevel, BookmarkMeta, BookmarkStoreType } from "../types";
-import gutters from "../gutter";
+import { registerCommand } from '../utils';
+import { updateDecorationsByEditor } from '../decorations';
+import { BookmarksController } from '../controllers/BookmarksController';
+import { createHash } from '../utils/hash';
+import { BookmarkLevel, BookmarkMeta, BookmarkStoreType } from '../types';
+import gutters from '../gutter';
 
 export class BookmarksTreeItem extends vscode.TreeItem {
   constructor(
     label: string,
     collapsibleState: vscode.TreeItemCollapsibleState,
+    contextValue: string,
     public meta: BookmarkStoreType | BookmarkMeta
   ) {
     super(label, collapsibleState);
-    if ("level" in this.meta) {
+    this.contextValue = contextValue;
+    if ('level' in this.meta) {
       this.iconPath = gutters[this.meta.level];
     }
   }
@@ -65,6 +68,7 @@ export class BookmarksTreeProvider
           new BookmarksTreeItem(
             it.filename,
             vscode.TreeItemCollapsibleState.Collapsed,
+            'file',
             it
           )
       );
@@ -77,6 +81,7 @@ export class BookmarksTreeProvider
           new BookmarksTreeItem(
             it.label || it.id,
             vscode.TreeItemCollapsibleState.None,
+            'item',
             it
           )
       );
@@ -98,27 +103,43 @@ export class BookmarksTreeView {
     this._provider = new BookmarksTreeProvider(controller);
 
     registerCommand(context, CMD_TOGGLE_NORMAL_BOOKMARK, (args) => {
-      this.toggleLineBookmark("normal");
+      this.toggleLineBookmark('normal');
     });
     registerCommand(context, CMD_TOGGLE_LOW_BOOKMARK, (args) => {
-      this.toggleLineBookmark("low");
+      this.toggleLineBookmark('low');
     });
     registerCommand(context, CMD_TOGGLE_HIGH_BOOKMARK, (args) => {
-      this.toggleLineBookmark("high");
+      this.toggleLineBookmark('high');
     });
     registerCommand(context, CMD_TOGGLE_BOOKMARK_WITH_LABEL, (args) => {});
 
     registerCommand(context, CMD_CLEAR_ALL, (args) => {
-      this._controller.clearAll();
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) {
+      const editors = vscode.window.visibleTextEditors;
+      if (!editors.length) {
         return;
       }
-      updateDecorationsByEditor(editor);
+      for (const editor of editors) {
+        updateDecorationsByEditor(editor, true);
+      }
+      this._controller.clearAll();
     });
 
-    registerCommand(context, CMD_DELETE_BOOKMARK, (args) => {
-      // this._controller.remove()
+    registerCommand(context, CMD_DELETE_BOOKMARK, (args) => {});
+
+    registerCommand(context, CMD_EDIT_LABEL, (args) => {
+      const element = args[0];
+      vscode.window
+        .showInputBox({
+          placeHolder: 'Type a label for your bookmarks',
+          title:
+            'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
+        })
+        .then((input) => {
+          if (!input) {
+            return;
+          }
+          this._controller.editLabel(element, input);
+        });
     });
 
     vscode.window.createTreeView(EXTENSION_VIEW_ID, {

@@ -6,7 +6,7 @@ import { disposeAllDiscorations, initDecorations } from './decorations';
 import {
   disablAllEvents,
   updateChangeActiveTextEditorListener,
-  // updateChangeBreakpointsListener,
+  updateChangeBreakpointsListener,
   // updateChangeVisibleTextEidtorsListener,
   // updateCursorChangeListener,
   // updateSaveTextDocumentListener,
@@ -29,7 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
   initDecorations(context);
   // TODO
   updateChangeActiveTextEditorListener();
-  // updateChangeBreakpointsListener();
+  updateChangeBreakpointsListener();
   // updateChangeVisibleTextEidtorsListener();
   // updateCursorChangeListener();
   // updateSaveTextDocumentListener();

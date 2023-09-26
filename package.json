@@ -47,6 +47,14 @@
           "light": "resources/light/close.svg",
           "dark": "resources/dark/close.svg"
         }
+      },
+      {
+        "command": "bookmarks.editLabel",
+        "title": "Edit label",
+        "icon": {
+          "light": "resources/light/edit.svg",
+          "dark": "resources/dark/edit.svg"
+        }
       }
     ],
     "views": {
@@ -95,6 +103,10 @@
         "bookmarks.highIconColor": {
           "type": "string",
           "description": "high icon color"
+        },
+        "bookmarks.showInoverviewRuler": {
+          "type": "boolean",
+          "description": "Whether to display the corresponding position of the bookmark on the overview ruler"
         }
       }
     },
@@ -108,9 +120,19 @@
       ],
       "view/item/context": [
         {
-          "command": "bookmarks.deleteBookmark",
+          "command": "bookmarks.editLabel",
           "when": "view==bookmarks",
-          "group": "inline"
+          "group": "inline@1"
+        },
+        {
+          "command": "bookmarks.clearAllBookmarks",
+          "when": "view == bookmarks && viewItem === file",
+          "group": "inline@2"
+        },
+        {
+          "command": "bookmarks.deleteBookmark",
+          "when": "view==bookmarks && viewItem === item",
+          "group": "inline@2"
         }
       ]
     }

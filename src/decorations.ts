@@ -4,6 +4,7 @@ import {
   Range,
   TextEditor,
   TextEditorDecorationType,
+  ThemeColor,
   window,
 } from 'vscode';
 
@@ -21,6 +22,7 @@ export function initDecorations(context: ExtensionContext) {
   const gutter = getGutters(context);
   decorations.normal = window.createTextEditorDecorationType({
     gutterIconPath: gutter.normal,
+    // overviewRulerColor: new ThemeColor('inputValidation.errorBackground'),
   });
   decorations.low = window.createTextEditorDecorationType({
     gutterIconPath: gutter.low,
@@ -45,7 +47,10 @@ export function updateDecoration(
  * @param editor {TextEditor}
  * @returns
  */
-export const updateDecorationsByEditor = (editor: TextEditor) => {
+export const updateDecorationsByEditor = (
+  editor: TextEditor,
+  clear: boolean = false
+) => {
   if (!editor) {
     return;
   }
@@ -64,12 +69,9 @@ export const updateDecorationsByEditor = (editor: TextEditor) => {
     { low: [] as any[], normal: [] as any[], high: [] as any[] }
   ) as { [key: string]: any[] };
   Object.keys(decorationsGroupByLevel).forEach((it) => {
-    if (decorationsGroupByLevel[it].length === 0) {
-      return;
-    }
     updateDecoration(editor, {
       level: it as BookmarkLevel,
-      rangesOrOptions: decorationsGroupByLevel[it] as any[],
+      rangesOrOptions: clear ? [] : (decorationsGroupByLevel[it] as any[]),
     });
   });
 };
