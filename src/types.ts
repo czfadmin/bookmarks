@@ -5,11 +5,12 @@ export type BookmarkLevel = 'low' | 'normal' | 'high';
 export interface BookmarkMeta {
   id: string;
   fileUri: Uri;
+  fileUriHash?: string;
   level: BookmarkLevel;
 
   label?: string;
   description?: string;
-  readonly rangesOrOptions: Range | DecorationOptions;
+  rangesOrOptions: Range | DecorationOptions;
 }
 
 /**

@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { createHash } from '../utils/hash';
 import { EXTENSION_ID } from '../constants';
 import { BookmarkMeta, BookmarkStoreRootType } from '../types';
-import { BookmarksTreeItem } from '../providers/BookmarksTreeProvider';
 
 export class BookmarksController {
   private static _instance: BookmarksController;
@@ -53,7 +52,10 @@ export class BookmarksController {
       } else {
         bookmarkStore = this._datasource!.data[idx];
       }
-      bookmarkStore.bookmarks.push(bookmark);
+      bookmarkStore.bookmarks.push({
+        ...bookmark,
+        fileUriHash: fileHash,
+      });
       this.save();
     }
   }
@@ -81,7 +83,7 @@ export class BookmarksController {
     bookmark: BookmarkMeta,
     bookmarkDto: Partial<Omit<BookmarkMeta, 'id'>>
   ) {
-    const hash = createHash(fileUri.toString());
+    const hash = bookmark.fileUriHash || createHash(fileUri.toString());
     if (!hash) {
       return;
     }
@@ -90,13 +92,45 @@ export class BookmarksController {
     if (idx === -1) {
       return;
     }
-    const existed = this._datasource!.data[idx].bookmarks.find(
+    const bookmarkIdx = this._datasource!.data[idx].bookmarks.findIndex(
       (it) => it.id === bookmark.id
     );
-    if (!existed) {
+    if (bookmarkIdx === -1) {
       return;
     }
-    this._datasource!.data[idx].bookmarks[idx] = { ...existed, ...bookmarkDto };
+    const existed = this._datasource!.data[idx].bookmarks[bookmarkIdx];
+
+    let rangesOrOptions: Partial<vscode.DecorationOptions> = {
+      range: undefined,
+    };
+    const existedRenderOptions = existed.rangesOrOptions;
+    const { label, description, ...rest } = bookmarkDto;
+    if (label || description) {
+      let hoverMessage: vscode.MarkdownString = new vscode.MarkdownString(
+        label || description || ''
+      );
+      // 代表类型为 Range
+      if ('start' in existedRenderOptions) {
+        rangesOrOptions = {
+          range: existedRenderOptions,
+        };
+
+        rangesOrOptions.hoverMessage = hoverMessage;
+      } else {
+        rangesOrOptions = {
+          ...existedRenderOptions,
+          hoverMessage,
+        };
+      }
+    }
+
+    this._datasource!.data[idx].bookmarks[bookmarkIdx] = {
+      ...existed,
+      label,
+      description,
+      rangesOrOptions,
+      ...rest,
+    } as BookmarkMeta;
     this.save();
   }
   detail(fileUri: vscode.Uri, id: string) {
@@ -147,7 +181,14 @@ export class BookmarksController {
    * @param bookmark
    * @param label
    */
-  editLabel(bookmark: BookmarkMeta, label: string) {}
+  editLabel(bookmark: BookmarkMeta, label: string) {
+    this.update(bookmark.fileUri, bookmark, { label });
+  }
+
+  fire() {
+    // @ts-ignore
+    this._onDidChangeEvent?.fire();
+  }
 
   static createInstance(context: vscode.ExtensionContext): BookmarksController {
     if (!BookmarksController._instance) {

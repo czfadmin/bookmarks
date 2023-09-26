@@ -127,7 +127,6 @@ export class BookmarksTreeView {
     registerCommand(context, CMD_DELETE_BOOKMARK, (args) => {});
 
     registerCommand(context, CMD_EDIT_LABEL, (args) => {
-      const element = args[0];
       vscode.window
         .showInputBox({
           placeHolder: 'Type a label for your bookmarks',
@@ -138,7 +137,9 @@ export class BookmarksTreeView {
           if (!input) {
             return;
           }
-          this._controller.editLabel(element, input);
+          if (args.contextValue === 'item') {
+            this._controller.editLabel(args.meta, input);
+          }
         });
     });
 
