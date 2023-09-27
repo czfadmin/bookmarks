@@ -173,8 +173,7 @@ export class BookmarksController {
   save(store?: BookmarkStoreRootType) {
     this._datasource = store || this._datasource;
     this.workspaceState.update(EXTENSION_ID, this._datasource).then();
-    // @ts-ignore
-    this._onDidChangeEvent?.fire();
+    this.fire();
   }
   /**
    *
@@ -190,7 +189,7 @@ export class BookmarksController {
     this._onDidChangeEvent?.fire();
   }
 
-  static createInstance(context: vscode.ExtensionContext): BookmarksController {
+  static getInstance(context: vscode.ExtensionContext): BookmarksController {
     if (!BookmarksController._instance) {
       BookmarksController._instance = new BookmarksController(context);
     }
