@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { BookmarksTreeView } from './providers/BookmarksTreeProvider';
+import { BookmarksTreeView } from './views/BookmarksTreeView';
 import logger from './utils/logger';
 import { EXTENSION_ID } from './constants';
 import { disposeAllDiscorations, initDecorations } from './decorations';

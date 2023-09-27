@@ -55,6 +55,14 @@
           "light": "resources/light/edit.svg",
           "dark": "resources/dark/edit.svg"
         }
+      },
+      {
+        "command": "bookmarks.gotoSourceLocation",
+        "title": "Location",
+        "icon": {
+          "light": "resources/light/location.svg",
+          "dark": "resources/dark/location.svg"
+        }
       }
     ],
     "views": {
@@ -107,6 +115,10 @@
         "bookmarks.showInoverviewRuler": {
           "type": "boolean",
           "description": "Whether to display the corresponding position of the bookmark on the overview ruler"
+        },
+        "bookmarks.onlyShowFilename": {
+          "type": "boolean",
+          "description": "Whether to display only the file name where the bookmark is located. Otherwise, display the name of the file where the bookmark is located."
         }
       }
     },
@@ -120,9 +132,14 @@
       ],
       "view/item/context": [
         {
-          "command": "bookmarks.editLabel",
-          "when": "view==bookmarks",
+          "command": "bookmarks.gotoSourceLocation",
+          "when": "view == bookmarks && viewItem === item",
           "group": "inline@1"
+        },
+        {
+          "command": "bookmarks.editLabel",
+          "when": "view==bookmarks && viewItem === item",
+          "group": "inline@2"
         },
         {
           "command": "bookmarks.clearAllBookmarks",
@@ -132,7 +149,7 @@
         {
           "command": "bookmarks.deleteBookmark",
           "when": "view==bookmarks && viewItem === item",
-          "group": "inline@2"
+          "group": "inline@3"
         }
       ]
     }

@@ -100,36 +100,9 @@ export class BookmarksController {
     }
     const existed = this._datasource!.data[idx].bookmarks[bookmarkIdx];
 
-    let rangesOrOptions: Partial<vscode.DecorationOptions> = {
-      range: undefined,
-    };
-    const existedRenderOptions = existed.rangesOrOptions;
-    const { label, description, ...rest } = bookmarkDto;
-    if (label || description) {
-      let hoverMessage: vscode.MarkdownString = new vscode.MarkdownString(
-        label || description || ''
-      );
-      // 代表类型为 Range
-      if ('start' in existedRenderOptions) {
-        rangesOrOptions = {
-          range: existedRenderOptions,
-        };
-
-        rangesOrOptions.hoverMessage = hoverMessage;
-      } else {
-        rangesOrOptions = {
-          ...existedRenderOptions,
-          hoverMessage,
-        };
-      }
-    }
-
     this._datasource!.data[idx].bookmarks[bookmarkIdx] = {
       ...existed,
-      label,
-      description,
-      rangesOrOptions,
-      ...rest,
+      ...bookmarkDto,
     } as BookmarkMeta;
     this.save();
   }

@@ -12,7 +12,13 @@ import { getGutters } from './gutter';
 import { BookmarkLevel } from './types';
 import { BookmarksController } from './controllers/BookmarksController';
 
-export type BookmarkDecorationKey = 'low' | 'normal' | 'high';
+export type BookmarkDecorationKey =
+  | 'low'
+  | 'normal'
+  | 'high'
+  | 'lowHintMessage'
+  | 'normalHintMessage'
+  | 'highHintMessage';
 
 export const decorations = {} as Record<
   BookmarkDecorationKey,
@@ -22,13 +28,16 @@ export function initDecorations(context: ExtensionContext) {
   const gutter = getGutters(context);
   decorations.normal = window.createTextEditorDecorationType({
     gutterIconPath: gutter.normal,
+    isWholeLine: true,
     // overviewRulerColor: new ThemeColor('inputValidation.errorBackground'),
   });
   decorations.low = window.createTextEditorDecorationType({
     gutterIconPath: gutter.low,
+    isWholeLine: true,
   });
   decorations.high = window.createTextEditorDecorationType({
     gutterIconPath: gutter.high,
+    isWholeLine: true,
   });
 }
 

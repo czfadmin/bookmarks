@@ -11,3 +11,5 @@ export const CMD_CLEAR_ALL = 'clearAllBookmarks';
 export const CMD_DELETE_BOOKMARK = 'deleteBookmark';
 
 export const CMD_EDIT_LABEL = 'editLabel';
+
+export const CMD_GO_TO_SOURCE_LOCATION = 'gotoSourceLocation';
