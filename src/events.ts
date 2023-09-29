@@ -1,4 +1,10 @@
-import { Disposable, debug, window, workspace } from 'vscode';
+import {
+  Disposable,
+  TextEditorSelectionChangeKind,
+  debug,
+  window,
+  workspace,
+} from 'vscode';
 
 import { updateDecorationsByEditor } from './decorations';
 import logger from './utils/logger';
@@ -40,16 +46,26 @@ export function updateSaveTextDocumentListener() {
 
 export function updateCursorChangeListener() {
   onDidCursorChangeDisposable?.dispose();
-  onDidCursorChangeDisposable = window.onDidChangeTextEditorSelection(
-    (ev) => {}
-  );
+  let lastPositionLine = -1;
+  onDidCursorChangeDisposable = window.onDidChangeTextEditorSelection((ev) => {
+    const { kind } = ev;
+    const section = ev.selections[0];
+    logger.info(kind);
+    if (
+      ev.selections.length === 1 &&
+      section.isEmpty &&
+      section.isSingleLine &&
+      kind === TextEditorSelectionChangeKind.Keyboard
+    ) {
+      logger.info(ev);
+      // TODO: 更新bookmark的位置
+    }
+  });
 }
 
 export function updateChangeBreakpointsListener() {
   onDidChangeBreakpoints?.dispose();
-  onDidChangeBreakpoints = debug.onDidChangeBreakpoints((ev) => {
-    logger.info(ev);
-  });
+  onDidChangeBreakpoints = debug.onDidChangeBreakpoints((ev) => {});
 }
 
 export function disablAllEvents() {

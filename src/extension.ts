@@ -7,9 +7,9 @@ import {
   disablAllEvents,
   updateChangeActiveTextEditorListener,
   updateChangeBreakpointsListener,
-  // updateChangeVisibleTextEidtorsListener,
-  // updateCursorChangeListener,
-  // updateSaveTextDocumentListener,
+  updateChangeVisibleTextEidtorsListener,
+  updateCursorChangeListener,
+  updateSaveTextDocumentListener,
 } from './events';
 import { BookmarksController } from './controllers/BookmarksController';
 
@@ -30,9 +30,9 @@ export function activate(context: vscode.ExtensionContext) {
   // TODO
   updateChangeActiveTextEditorListener();
   updateChangeBreakpointsListener();
-  // updateChangeVisibleTextEidtorsListener();
-  // updateCursorChangeListener();
-  // updateSaveTextDocumentListener();
+  updateChangeVisibleTextEidtorsListener();
+  updateCursorChangeListener();
+  updateSaveTextDocumentListener();
 }
 
 function updateEverything() {}

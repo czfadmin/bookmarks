@@ -33,6 +33,10 @@
         "title": "Toggle bookmark with label"
       },
       {
+        "command": "bookmarks.toggleBookmarkWithSelections",
+        "title": "Toggle bookmark with selections"
+      },
+      {
         "command": "bookmarks.clearAllBookmarks",
         "title": "Clear All bookmarks",
         "icon": {
@@ -119,6 +123,14 @@
         "bookmarks.onlyShowFilename": {
           "type": "boolean",
           "description": "Whether to display only the file name where the bookmark is located. Otherwise, display the name of the file where the bookmark is located."
+        },
+        "bookmarks.showBorder": {
+          "type": "boolean",
+          "description": "Whether to add a border to the line where the bookmark is located"
+        },
+        "bookmarks.boldActiveLine": {
+          "type": "boolean",
+          "description": "Bold the line where the bookmark is located"
         }
       }
     },
@@ -166,19 +178,23 @@
     "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
-    "@types/vscode": "^1.82.0",
     "@types/glob": "^8.1.0",
+    "@types/lodash": "^4.14.199",
     "@types/mocha": "^10.0.1",
     "@types/node": "16.x",
+    "@types/vscode": "^1.82.0",
     "@typescript-eslint/eslint-plugin": "^5.59.1",
     "@typescript-eslint/parser": "^5.59.1",
+    "@vscode/test-electron": "^2.3.0",
     "eslint": "^8.39.0",
     "glob": "^8.1.0",
     "mocha": "^10.2.0",
-    "typescript": "^5.0.4",
     "ts-loader": "^9.4.2",
+    "typescript": "^5.0.4",
     "webpack": "^5.81.0",
-    "webpack-cli": "^5.0.2",
-    "@vscode/test-electron": "^2.3.0"
+    "webpack-cli": "^5.0.2"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21"
   }
 }

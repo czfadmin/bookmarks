@@ -1,5 +1,6 @@
 import {
   DecorationOptions,
+  DecorationRangeBehavior,
   ExtensionContext,
   Range,
   TextEditor,
@@ -8,9 +9,10 @@ import {
   window,
 } from 'vscode';
 
-import { getGutters } from './gutter';
 import { BookmarkLevel } from './types';
 import { BookmarksController } from './controllers/BookmarksController';
+import { createBookmarkIcon, svgToUri } from './utils/icon';
+import logger from './utils/logger';
 
 export type BookmarkDecorationKey =
   | 'low'
@@ -25,20 +27,29 @@ export const decorations = {} as Record<
   TextEditorDecorationType
 >;
 export function initDecorations(context: ExtensionContext) {
-  const gutter = getGutters(context);
-  decorations.normal = window.createTextEditorDecorationType({
-    gutterIconPath: gutter.normal,
-    isWholeLine: true,
-    // overviewRulerColor: new ThemeColor('inputValidation.errorBackground'),
+  decorations.normal = createDecoration('#0e69d8');
+  decorations.low = createDecoration('#42dd00');
+  decorations.high = createDecoration('#ff0000');
+}
+
+export function createDecoration(color: string) {
+  const gutterIconPath = svgToUri(createBookmarkIcon(color));
+  const decoration = window.createTextEditorDecorationType({
+    gutterIconPath,
+    rangeBehavior: DecorationRangeBehavior.ClosedClosed,
+    textDecoration: `underline ${color}BF`,
+    isWholeLine: false,
+    borderRadius: '2px',
+    borderColor: `${color}CF`,
+    border: `0 solid ${color}AF`,
+    fontWeight: 'bold',
+    after: {
+      backgroundColor: `${color}AA`,
+      color: '#ffff',
+      margin: '0 6px 0 6px',
+    },
   });
-  decorations.low = window.createTextEditorDecorationType({
-    gutterIconPath: gutter.low,
-    isWholeLine: true,
-  });
-  decorations.high = window.createTextEditorDecorationType({
-    gutterIconPath: gutter.high,
-    isWholeLine: true,
-  });
+  return decoration;
 }
 
 export function updateDecoration(
@@ -48,7 +59,11 @@ export function updateDecoration(
     rangesOrOptions: readonly Range[] | readonly DecorationOptions[];
   }
 ) {
-  editor?.setDecorations(decorations[options.level], options.rangesOrOptions);
+  try {
+    editor?.setDecorations(decorations[options.level], options.rangesOrOptions);
+  } catch (error) {
+    logger.error(error);
+  }
 }
 
 /**

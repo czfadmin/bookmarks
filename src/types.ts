@@ -9,8 +9,9 @@ export interface BookmarkMeta {
   level: BookmarkLevel;
 
   label?: string;
+  ranges: Range[];
   description?: string;
-  rangesOrOptions: Range | DecorationOptions;
+  rangesOrOptions: DecorationOptions;
 }
 
 /**
