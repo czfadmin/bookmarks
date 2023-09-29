@@ -59,13 +59,10 @@ export class BookmarksController {
       this.save();
     }
   }
-  remove(fileUri: vscode.Uri, bookmark: BookmarkMeta) {
-    const hash = createHash(fileUri.toString());
-    if (!hash) {
-      return;
-    }
-
-    let idx = this._datasource!.data.findIndex((it) => it.id === hash);
+  remove(bookmark: BookmarkMeta) {
+    let idx = this._datasource!.data.findIndex(
+      (it) => it.id === bookmark.fileUriHash
+    );
     if (idx === -1) {
       return;
     }
@@ -79,16 +76,16 @@ export class BookmarksController {
     this.save();
   }
   update(
-    fileUri: vscode.Uri,
     bookmark: BookmarkMeta,
     bookmarkDto: Partial<Omit<BookmarkMeta, 'id'>>
   ) {
-    const hash = bookmark.fileUriHash || createHash(fileUri.toString());
-    if (!hash) {
+    if (!bookmark.fileUriHash) {
       return;
     }
 
-    let idx = this._datasource!.data.findIndex((it) => it.id === hash);
+    let idx = this._datasource!.data.findIndex(
+      (it) => it.id === bookmark.fileUriHash
+    );
     if (idx === -1) {
       return;
     }
@@ -106,13 +103,13 @@ export class BookmarksController {
     } as BookmarkMeta;
     this.save();
   }
-  detail(fileUri: vscode.Uri, id: string) {
-    const hash = createHash(fileUri.toString());
-    if (!hash) {
+  detail(bookmark: BookmarkMeta) {
+    const { id, fileUriHash } = bookmark;
+    if (!fileUriHash) {
       return;
     }
 
-    let idx = this._datasource!.data.findIndex((it) => it.id === hash);
+    let idx = this._datasource!.data.findIndex((it) => it.id === fileUriHash);
     if (idx === -1) {
       return;
     }
@@ -154,7 +151,7 @@ export class BookmarksController {
    * @param label
    */
   editLabel(bookmark: BookmarkMeta, label: string) {
-    this.update(bookmark.fileUri, bookmark, { label });
+    this.update(bookmark, { label });
   }
 
   fire() {

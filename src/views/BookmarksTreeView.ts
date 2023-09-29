@@ -39,17 +39,14 @@ export class BookmarksTreeView {
     registerCommand(context, CMD_TOGGLE_BOOKMARK_WITH_LABEL, (args) => {});
 
     registerCommand(context, CMD_CLEAR_ALL, (args) => {
-      const editors = vscode.window.visibleTextEditors;
-      if (!editors.length) {
-        return;
-      }
-      for (const editor of editors) {
-        updateDecorationsByEditor(editor, true);
-      }
+      this._updateActiveEditorAllDecorations();
       this._controller.clearAll();
     });
 
-    registerCommand(context, CMD_DELETE_BOOKMARK, (args) => {});
+    registerCommand(context, CMD_DELETE_BOOKMARK, (args) => {
+      this._updateActiveEditorAllDecorations();
+      this._controller.remove(args.meta);
+    });
 
     registerCommand(context, CMD_EDIT_LABEL, (args) => {
       vscode.window
@@ -110,13 +107,13 @@ export class BookmarksTreeView {
         range: editor.selection,
         hoverMessage: 'Hover Message',
         renderOptions: {
-          after: {
-            contentText: 'After....',
-            borderColor: '#ffff',
-          },
-          before: {
-            contentText: 'Before....',
-          },
+          // after: {
+          //   contentText: 'After....',
+          //   borderColor: '#ffff',
+          // },
+          // before: {
+          //   contentText: 'Before....',
+          // },
         },
       },
     });
@@ -213,5 +210,15 @@ export class BookmarksTreeView {
     message.supportHtml = true;
     message.supportThemeIcons = true;
     return message;
+  }
+
+  private _updateActiveEditorAllDecorations() {
+    const editors = vscode.window.visibleTextEditors;
+    if (!editors.length) {
+      return;
+    }
+    for (const editor of editors) {
+      updateDecorationsByEditor(editor, true);
+    }
   }
 }
