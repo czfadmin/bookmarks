@@ -12,11 +12,13 @@ import {
   updateSaveTextDocumentListener,
 } from './events';
 import { BookmarksController } from './controllers/BookmarksController';
+import { registerCommands } from './commands';
 
 export function activate(context: vscode.ExtensionContext) {
   logger.log(`${EXTENSION_ID} is now active!`);
 
   new BookmarksTreeView(context, BookmarksController.getInstance(context));
+  registerCommands(context);
   // 监听插件配置的变化
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((ev) => {
@@ -27,7 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
   initDecorations(context);
-  // TODO
+
   updateChangeActiveTextEditorListener();
   updateChangeBreakpointsListener();
   updateChangeVisibleTextEidtorsListener();
@@ -40,6 +42,7 @@ function updateEverything() {}
 function disposeAll() {
   disablAllEvents();
   disposeAllDiscorations();
+  logger.log(`${EXTENSION_ID} is now deactive!`);
 }
 
 export function deactivate() {

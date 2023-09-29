@@ -149,6 +149,20 @@ export const updateDecorationsByEditor = (
 };
 
 /**
+ * 更新激活的编辑器的所有的`Decorations`
+ * @param clear 是否要清除`bookmarks`
+ * @returns
+ */
+export function updateActiveEditorAllDecorations(clear: boolean = false) {
+  const editors = window.visibleTextEditors;
+  if (!editors.length) {
+    return;
+  }
+  for (const editor of editors) {
+    updateDecorationsByEditor(editor, clear);
+  }
+}
+/**
  * Dispose all decorations
  */
 export function disposeAllDiscorations() {
