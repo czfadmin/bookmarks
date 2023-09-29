@@ -1,16 +1,15 @@
-import { Uri, Range, DecorationOptions } from 'vscode';
+import { Uri, DecorationOptions, Selection } from 'vscode';
 
-export type BookmarkLevel = 'low' | 'normal' | 'high';
+export type BookmarkLevel = 'low' | 'normal' | 'high' | 'none';
 
 export interface BookmarkMeta {
   id: string;
   fileUri: Uri;
-  fileUriHash?: string;
   level: BookmarkLevel;
-
+  selection: Selection;
   label?: string;
-  ranges: Range[];
   description?: string;
+  fileUriHash?: string;
   rangesOrOptions: DecorationOptions;
 }
 

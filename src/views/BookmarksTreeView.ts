@@ -10,11 +10,11 @@ import {
   CMD_EDIT_LABEL,
   CMD_GO_TO_SOURCE_LOCATION,
   CMD_TOGGLE_BOOKMARK_WITH_SECTIONS,
+  CMD_BOOKMARK_ADD_MORE_MEMO,
 } from '../constants';
 import { registerCommand } from '../utils';
-import { decorations, updateDecorationsByEditor } from '../decorations';
+import { updateDecorationsByEditor } from '../decorations';
 import { BookmarksController } from '../controllers/BookmarksController';
-import { createHash } from '../utils/hash';
 import { BookmarkLevel, BookmarkMeta } from '../types';
 import { BookmarksTreeProvider } from '../providers/BookmarksTreeProvider';
 
@@ -56,8 +56,6 @@ export class BookmarksTreeView {
 
     const fileUri = editor.document.uri;
 
-    const hash = createHash(fileUri.toString() + `#${selection.active.line}`);
-
     const line = editor.document.lineAt(selection.active.line);
     const label = line.text.trim();
     const startPos = line.text.indexOf(label);
@@ -69,18 +67,15 @@ export class BookmarksTreeView {
     );
     // 整行文字
     this._controller.add(editor, {
-      id: hash,
       level,
       fileUri,
       label,
-      ranges: [range],
+      selection: range,
       rangesOrOptions: {
         range,
         hoverMessage: '',
         renderOptions: {
-          after: {
-            contentText: 'Hello',
-          },
+          after: {},
         },
       },
     });
@@ -88,15 +83,40 @@ export class BookmarksTreeView {
     updateDecorationsByEditor(editor);
   }
 
+  toggleBookmarksWithSelections(input: string) {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      return;
+    }
+    const range = editor.selection;
+    if (range.isEmpty) {
+      vscode.window.showInformationMessage('所选内容不可以为空,请重新操作!');
+      return;
+    }
+
+    const bookmark: Partial<BookmarkMeta> = {
+      selection: range,
+      label: input,
+      level: 'none',
+      rangesOrOptions: {
+        range: range,
+        hoverMessage: '',
+        renderOptions: {},
+      },
+    };
+    this._controller.add(editor, bookmark);
+    updateDecorationsByEditor(editor);
+  }
+
   gotoSourceLocation(bookmark: BookmarkMeta) {
     const activeEditor = vscode.window.activeTextEditor;
-    const { fileUri, rangesOrOptions, ranges } = bookmark;
+    const { fileUri, rangesOrOptions, selection } = bookmark;
 
-    const range = ranges[0] || rangesOrOptions.range;
+    const range = selection || rangesOrOptions.range;
     if (activeEditor) {
       if (activeEditor.document.uri.fsPath === fileUri.fsPath) {
         activeEditor.revealRange(range);
-        const { start,end } = range;
+        const { start, end } = range;
         this._highlightSelection(
           activeEditor,
           range,
@@ -143,42 +163,22 @@ export class BookmarksTreeView {
     editor.revealRange(range);
   }
 
-  async _createHoverMessage(): Promise<vscode.MarkdownString> {
-    // let rangesOrOptions: Partial<vscode.DecorationOptions> = {
-    //   range: undefined,
-    // };
-    // const existedRenderOptions = existed.rangesOrOptions;
-    // const { label, description, ...rest } = bookmarkDto;
-    // if (label || description) {
-    //   let hoverMessage: vscode.MarkdownString =
-    //     new vscode.MarkdownString(label || description || '');
-    //   // 代表类型为 Range
-    //   if ('start' in existedRenderOptions) {
-    //     rangesOrOptions = {
-    //       range: existedRenderOptions,
-    //     };
-    //     rangesOrOptions.hoverMessage = hoverMessage;
-    //   } else {
-    //     rangesOrOptions = {
-    //       ...existedRenderOptions,
-    //       hoverMessage,
-    //     };
-    //   }
-    // }
-    let message = new vscode.MarkdownString('', true);
-    message.supportHtml = true;
-    message.supportThemeIcons = true;
-    return message;
-  }
-
-  private _updateActiveEditorAllDecorations() {
+  private _updateActiveEditorAllDecorations(clear: boolean = false) {
     const editors = vscode.window.visibleTextEditors;
     if (!editors.length) {
       return;
     }
     for (const editor of editors) {
-      updateDecorationsByEditor(editor, true);
+      updateDecorationsByEditor(editor, clear);
     }
+  }
+
+  private _addMoreMemo(bookmark: BookmarkMeta, memo: string) {
+    this._controller.update(bookmark, {
+      description: memo,
+    });
+    this._updateActiveEditorAllDecorations();
+    this._controller.refresh();
   }
 
   private _registerCommands() {
@@ -195,12 +195,12 @@ export class BookmarksTreeView {
     registerCommand(context, CMD_TOGGLE_BOOKMARK_WITH_LABEL, (args) => {});
 
     registerCommand(context, CMD_CLEAR_ALL, (args) => {
-      this._updateActiveEditorAllDecorations();
+      this._updateActiveEditorAllDecorations(true);
       this._controller.clearAll();
     });
 
     registerCommand(context, CMD_DELETE_BOOKMARK, (args) => {
-      this._updateActiveEditorAllDecorations();
+      this._updateActiveEditorAllDecorations(true);
       this._controller.remove(args.meta);
     });
 
@@ -222,10 +222,39 @@ export class BookmarksTreeView {
     });
 
     registerCommand(context, CMD_GO_TO_SOURCE_LOCATION, (args) => {
-      const bookmark = args.meta;
-      this.gotoSourceLocation(bookmark);
+      this.gotoSourceLocation(args.meta);
     });
 
-    registerCommand(context, CMD_TOGGLE_BOOKMARK_WITH_SECTIONS, (args) => {});
+    registerCommand(context, CMD_TOGGLE_BOOKMARK_WITH_SECTIONS, (args) => {
+      vscode.window
+        .showInputBox({
+          placeHolder: 'Type a label for your bookmarks',
+          title:
+            'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
+        })
+        .then((input) => {
+          if (!input) {
+            return;
+          }
+
+          this.toggleBookmarksWithSelections(input);
+        });
+    });
+
+    registerCommand(context, CMD_BOOKMARK_ADD_MORE_MEMO, (args) => {
+      vscode.window
+        .showInputBox({
+          placeHolder: 'Type more info for your bookmarks',
+          title:
+            'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
+        })
+        .then((input) => {
+          if (!input) {
+            return;
+          }
+
+          this._addMoreMemo(args.meta, input);
+        });
+    });
   }
 }

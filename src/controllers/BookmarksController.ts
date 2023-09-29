@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { createHash } from '../utils/hash';
 import { EXTENSION_ID } from '../constants';
 import { BookmarkMeta, BookmarkStoreRootType } from '../types';
+import { createID } from '../utils';
 
 export class BookmarksController {
   private static _instance: BookmarksController;
@@ -35,7 +36,7 @@ export class BookmarksController {
     this._onDidChangeEvent = event;
   }
 
-  add(editor: vscode.TextEditor, bookmark: BookmarkMeta) {
+  add(editor: vscode.TextEditor, bookmark: Partial<Omit<BookmarkMeta, 'id'>>) {
     const fileUri = editor.document.uri;
     const fileHash = createHash(fileUri.toString());
     if (fileHash) {
@@ -52,8 +53,11 @@ export class BookmarksController {
       } else {
         bookmarkStore = this._datasource!.data[idx];
       }
+      // @ts-ignore
       bookmarkStore.bookmarks.push({
         ...bookmark,
+        id: createID(),
+        fileUri: fileUri,
         fileUriHash: fileHash,
       });
       this.save();
@@ -96,10 +100,14 @@ export class BookmarksController {
       return;
     }
     const existed = this._datasource!.data[idx].bookmarks[bookmarkIdx];
-
+    const { rangesOrOptions, ...rest } = bookmarkDto;
     this._datasource!.data[idx].bookmarks[bookmarkIdx] = {
       ...existed,
-      ...bookmarkDto,
+      ...rest,
+      rangesOrOptions: {
+        ...(existed.rangesOrOptions || {}),
+        ...rangesOrOptions,
+      },
     } as BookmarkMeta;
     this.save();
   }
@@ -143,7 +151,7 @@ export class BookmarksController {
   save(store?: BookmarkStoreRootType) {
     this._datasource = store || this._datasource;
     this.workspaceState.update(EXTENSION_ID, this._datasource).then();
-    this.fire();
+    this._fire();
   }
   /**
    *
@@ -154,7 +162,11 @@ export class BookmarksController {
     this.update(bookmark, { label });
   }
 
-  fire() {
+  refresh() {
+    this._fire();
+  }
+
+  _fire() {
     // @ts-ignore
     this._onDidChangeEvent?.fire();
   }

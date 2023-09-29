@@ -37,6 +37,10 @@
         "title": "Toggle bookmark with selections"
       },
       {
+        "command": "bookmarks.bookmarkEditDescription",
+        "title": "Edit description"
+      },
+      {
         "command": "bookmarks.clearAllBookmarks",
         "title": "Clear All bookmarks",
         "icon": {
@@ -154,14 +158,18 @@
           "group": "inline@2"
         },
         {
+          "command": "bookmarks.deleteBookmark",
+          "when": "view==bookmarks && viewItem === item",
+          "group": "inline@3"
+        },
+        {
           "command": "bookmarks.clearAllBookmarks",
           "when": "view == bookmarks && viewItem === file",
           "group": "inline@2"
         },
         {
-          "command": "bookmarks.deleteBookmark",
-          "when": "view==bookmarks && viewItem === item",
-          "group": "inline@3"
+          "command": "bookmarks.bookmarkEditDescription",
+          "when": "view==bookmarks && viewItem === item"
         }
       ]
     }
@@ -182,6 +190,7 @@
     "@types/lodash": "^4.14.199",
     "@types/mocha": "^10.0.1",
     "@types/node": "16.x",
+    "@types/uuid": "^9.0.4",
     "@types/vscode": "^1.82.0",
     "@typescript-eslint/eslint-plugin": "^5.59.1",
     "@typescript-eslint/parser": "^5.59.1",
@@ -195,6 +204,7 @@
     "webpack-cli": "^5.0.2"
   },
   "dependencies": {
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "uuid": "^9.0.1"
   }
 }

@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
+import { MarkdownString } from 'vscode';
 
 import { BookmarksController } from '../controllers/BookmarksController';
 import { BookmarkMeta, BookmarkStoreType } from '../types';
 import gutters from '../gutter';
+import { EXTENSION_ID } from '../constants';
 
 export class BookmarksTreeItem extends vscode.TreeItem {
   constructor(
@@ -15,6 +17,35 @@ export class BookmarksTreeItem extends vscode.TreeItem {
     this.contextValue = contextValue;
     if ('level' in this.meta) {
       this.iconPath = gutters[this.meta.level];
+    }
+    this._createTooltip();
+  }
+
+  private _createTooltip() {
+    if ('level' in this.meta) {
+      const appendMarkdown = (
+        bookmark: BookmarkMeta,
+        markdownString: MarkdownString
+      ) => {
+        if (bookmark.label) {
+          markdownString.appendMarkdown(`#### ${bookmark.label}`);
+        }
+        if (bookmark.description) {
+          markdownString.appendMarkdown(`\n ${bookmark.description}`);
+        }
+      };
+
+      const {
+        rangesOrOptions: { hoverMessage: _hoverMessage },
+      } = this.meta;
+      let markdownString = _hoverMessage || new MarkdownString('', true);
+      if (markdownString instanceof MarkdownString) {
+        appendMarkdown(this.meta, markdownString);
+      } else if (!Object.keys(markdownString).length) {
+        markdownString = new MarkdownString('', true);
+        appendMarkdown(this.meta, markdownString);
+      }
+      this.tooltip = markdownString as MarkdownString;
     }
   }
 }
