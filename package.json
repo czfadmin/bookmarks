@@ -100,18 +100,6 @@
     "configuration": {
       "title": "bookmarks",
       "properties": {
-        "bookmarks.normalIconColor": {
-          "type": "string",
-          "description": "normal icon color"
-        },
-        "bookmarks.lowIconColor": {
-          "type": "string",
-          "description": "low icon color"
-        },
-        "bookmarks.highIconColor": {
-          "type": "string",
-          "description": "high icon color"
-        },
         "bookmarks.showInoverviewRuler": {
           "type": "boolean",
           "description": "Whether to display the corresponding position of the bookmark on the overview ruler"
@@ -149,7 +137,10 @@
         "green": "green",
         "blue": "blue",
         "white": "white",
-        "yellow": "yellow"
+        "yellow": "yellow",
+        "orange": "orange",
+        "purple": "purple",
+        "black": "black"
       }
     },
     "menus": {
