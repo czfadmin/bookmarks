@@ -2,7 +2,11 @@ import * as vscode from 'vscode';
 import { BookmarksTreeView } from './views/BookmarksTreeView';
 import logger from './utils/logger';
 import { EXTENSION_ID } from './constants';
-import { disposeAllDiscorations, initDecorations } from './decorations';
+import {
+  disposeAllDiscorations,
+  initDecorations,
+  updateActiveEditorAllDecorations,
+} from './decorations';
 import {
   disablAllEvents,
   updateChangeActiveTextEditorListener,
@@ -25,7 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
       if (!ev.affectsConfiguration(EXTENSION_ID)) {
         return;
       }
-      updateEverything();
+      updateEverything(context);
     })
   );
   initDecorations(context);
@@ -37,7 +41,16 @@ export function activate(context: vscode.ExtensionContext) {
   updateSaveTextDocumentListener();
 }
 
-function updateEverything() {}
+function updateEverything(context: vscode.ExtensionContext) {
+  initDecorations(context);
+  updateChangeActiveTextEditorListener();
+  updateChangeBreakpointsListener();
+  updateChangeVisibleTextEidtorsListener();
+  updateCursorChangeListener();
+  updateSaveTextDocumentListener();
+  updateActiveEditorAllDecorations();
+  BookmarksController.instance.refresh();
+}
 
 function disposeAll() {
   disablAllEvents();

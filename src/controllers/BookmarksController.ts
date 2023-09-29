@@ -166,7 +166,7 @@ export class BookmarksController {
     this._fire();
   }
 
-  _fire() {
+  private _fire() {
     // @ts-ignore
     this._onDidChangeEvent?.fire();
   }

@@ -35,7 +35,11 @@ export function updateChangeActiveTextEditorListener() {
 export function updateChangeVisibleTextEidtorsListener() {
   onDidChangeVisibleTextEditors?.dispose();
   onDidChangeVisibleTextEditors = window.onDidChangeVisibleTextEditors(
-    (ev) => {}
+    (editors) => {
+      for (let editor of editors) {
+        updateDecorationsByEditor(editor);
+      }
+    }
   );
 }
 
@@ -50,14 +54,13 @@ export function updateCursorChangeListener() {
   onDidCursorChangeDisposable = window.onDidChangeTextEditorSelection((ev) => {
     const { kind } = ev;
     const section = ev.selections[0];
-    logger.info(kind);
     if (
       ev.selections.length === 1 &&
       section.isEmpty &&
       section.isSingleLine &&
       kind === TextEditorSelectionChangeKind.Keyboard
     ) {
-      logger.info(ev);
+      // logger.info(ev);
       // TODO: 更新bookmark的位置
     }
   });

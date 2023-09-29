@@ -4,7 +4,6 @@ import { MarkdownString } from 'vscode';
 import { BookmarksController } from '../controllers/BookmarksController';
 import { BookmarkMeta, BookmarkStoreType } from '../types';
 import gutters from '../gutter';
-import { EXTENSION_ID } from '../constants';
 
 export class BookmarksTreeItem extends vscode.TreeItem {
   constructor(
@@ -15,14 +14,14 @@ export class BookmarksTreeItem extends vscode.TreeItem {
   ) {
     super(label, collapsibleState);
     this.contextValue = contextValue;
-    if ('level' in this.meta) {
-      this.iconPath = gutters[this.meta.level];
+    if ('color' in this.meta) {
+      this.iconPath = gutters[this.meta.color] || gutters['default'];
     }
     this._createTooltip();
   }
 
   private _createTooltip() {
-    if ('level' in this.meta) {
+    if ('color' in this.meta) {
       const appendMarkdown = (
         bookmark: BookmarkMeta,
         markdownString: MarkdownString

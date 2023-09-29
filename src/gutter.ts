@@ -1,27 +1,18 @@
-import { ExtensionContext, Uri } from 'vscode';
+import { Uri, workspace } from 'vscode';
 import { createBookmarkIcon, svgToUri } from './utils/icon';
+import { DEFAULT_BOOKMARK_COLOR, EXTENSION_ID } from './constants';
 
 export interface Gutter {
-  normal: Uri | string;
-  low: Uri | string;
-  high: Uri | string;
-  none: Uri | string;
+  [key: string]: Uri | string;
 }
-let gutters: Gutter = {
-  normal: svgToUri(createBookmarkIcon('#0e69d8')),
-  low: svgToUri(createBookmarkIcon('#42dd00')),
-  high: svgToUri(createBookmarkIcon('#ff0000')),
-  none: svgToUri(createBookmarkIcon('#faafff')),
-};
-
-export function getGutters(context: ExtensionContext): Gutter {
-  let gutters = {
-    normal: svgToUri(createBookmarkIcon('#0e69d8')),
-    low: svgToUri(createBookmarkIcon('#42dd00')),
-    high: svgToUri(createBookmarkIcon('#ff0000')),
-    none: svgToUri(createBookmarkIcon('#faafff')),
-  };
-  return gutters;
+let gutters: Gutter = {};
+export function initGutters() {
+  const config = workspace.getConfiguration(`${EXTENSION_ID}`);
+  gutters['default'] = svgToUri(
+    createBookmarkIcon(
+      config.get('defaultBookmarkIconColor') || DEFAULT_BOOKMARK_COLOR
+    )
+  );
 }
 
 export default gutters;

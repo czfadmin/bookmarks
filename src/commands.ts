@@ -1,6 +1,7 @@
 import {
   ExtensionContext,
   Position,
+  QuickPickItem,
   Range,
   Selection,
   TextEditor,
@@ -10,9 +11,7 @@ import {
 } from 'vscode';
 import { registerCommand } from './utils';
 import {
-  CMD_TOGGLE_NORMAL_BOOKMARK,
-  CMD_TOGGLE_LOW_BOOKMARK,
-  CMD_TOGGLE_HIGH_BOOKMARK,
+  CMD_TOGGLE_LINE_BOOKMARK,
   CMD_TOGGLE_BOOKMARK_WITH_LABEL,
   CMD_CLEAR_ALL,
   CMD_DELETE_BOOKMARK,
@@ -25,22 +24,18 @@ import {
   updateActiveEditorAllDecorations,
   updateDecorationsByEditor,
 } from './decorations';
-import { BookmarkLevel, BookmarkMeta } from './types';
+import { BookmarkMeta } from './types';
 import { BookmarksController } from './controllers/BookmarksController';
+import { getAllColors } from './configurations';
+import gutters from './gutter';
 
 /**
  * 注册所需要的命令
  * @param context
  */
 export function registerCommands(context: ExtensionContext) {
-  registerCommand(context, CMD_TOGGLE_NORMAL_BOOKMARK, (args) => {
-    toggleLineBookmark('normal');
-  });
-  registerCommand(context, CMD_TOGGLE_LOW_BOOKMARK, (args) => {
-    toggleLineBookmark('low');
-  });
-  registerCommand(context, CMD_TOGGLE_HIGH_BOOKMARK, (args) => {
-    toggleLineBookmark('high');
+  registerCommand(context, CMD_TOGGLE_LINE_BOOKMARK, async (args) => {
+    toggleLineBookmark();
   });
   registerCommand(context, CMD_TOGGLE_BOOKMARK_WITH_LABEL, (args) => {});
 
@@ -198,7 +193,7 @@ function editBookmarkDescription(bookmark: BookmarkMeta, memo: string) {
  * @param input
  * @returns
  */
-export function toggleBookmarksWithSelections(input: string) {
+export async function toggleBookmarksWithSelections(input: string) {
   const editor = window.activeTextEditor;
   if (!editor) {
     return;
@@ -209,10 +204,15 @@ export function toggleBookmarksWithSelections(input: string) {
     return;
   }
 
+  const color = await chooseBookmarkColor();
+  if (!color) {
+    return;
+  }
+
   const bookmark: Partial<BookmarkMeta> = {
     selection: range,
     label: input,
-    level: 'none',
+    color,
     rangesOrOptions: {
       range: range,
       hoverMessage: '',
@@ -228,7 +228,7 @@ export function toggleBookmarksWithSelections(input: string) {
  * @param level
  * @returns
  */
-function toggleLineBookmark(level: BookmarkLevel) {
+async function toggleLineBookmark() {
   const editor = window.activeTextEditor;
   if (!editor) {
     return;
@@ -244,7 +244,10 @@ function toggleLineBookmark(level: BookmarkLevel) {
   if (editor.document.isUntitled) {
     return;
   }
-
+  const choosedColor = await chooseBookmarkColor();
+  if (!choosedColor) {
+    return;
+  }
   const fileUri = editor.document.uri;
 
   const line = editor.document.lineAt(selection.active.line);
@@ -257,7 +260,7 @@ function toggleLineBookmark(level: BookmarkLevel) {
     line.range.end.character
   );
   BookmarksController.instance.add(editor, {
-    level,
+    color: choosedColor,
     fileUri,
     label,
     selection: range,
@@ -271,4 +274,26 @@ function toggleLineBookmark(level: BookmarkLevel) {
   });
 
   updateDecorationsByEditor(editor);
+}
+
+/**
+ * 用户所选择的颜色
+ * @returns 用户选取的颜色
+ */
+export async function chooseBookmarkColor() {
+  const colors = getAllColors();
+  const pickItems = Object.keys(colors).map((color) => {
+    return {
+      label: color,
+      iconPath: gutters[color],
+      // description: `$(bookmark) ${color}`,
+      // detail: colors[color],
+    } as QuickPickItem;
+  });
+  const choosedColor = await window.showQuickPick(pickItems, {
+    title: "选择书签颜色.按下'ENTER'键确认,按下'EAPSE'键取消",
+    placeHolder: '请选择书签颜色',
+    canPickMany: false,
+  });
+  return choosedColor?.label;
 }

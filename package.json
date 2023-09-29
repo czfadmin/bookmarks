@@ -17,16 +17,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "bookmarks.toggleBookmark",
+        "command": "bookmarks.toggleLineBookmark",
         "title": "Toggle line bookmark"
-      },
-      {
-        "command": "bookmarks.toggleLowBookmark",
-        "title": "Toggle low bookmark"
-      },
-      {
-        "command": "bookmarks.toggleHighBookmark",
-        "title": "Toggle high bookmark"
       },
       {
         "command": "bookmarks.toggleLabelBookmark",
@@ -128,14 +120,36 @@
           "type": "boolean",
           "description": "Whether to display only the file name where the bookmark is located. Otherwise, display the name of the file where the bookmark is located."
         },
-        "bookmarks.showBorder": {
+        "bookmarks.showTextDecoration": {
           "type": "boolean",
-          "description": "Whether to add a border to the line where the bookmark is located"
+          "description": "Whether to display the text decoration of the bookmark's location"
         },
         "bookmarks.boldActiveLine": {
           "type": "boolean",
-          "description": "Bold the line where the bookmark is located"
+          "description": "Bold the line where the bookmark is located",
+          "default": false
+        },
+        "bookmarks.colors": {
+          "type": "object",
+          "description": "Custom bookmark color, object format: {\" name\": \"value\"}",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "bookmarks.defaultBookmarkIconColor": {
+          "type": "string",
+          "description": "The default color of bookmark icon.",
+          "default": "#0e69d8"
         }
+      }
+    },
+    "configurationDefaults": {
+      "bookmarks.colors": {
+        "red": "red",
+        "green": "green",
+        "blue": "blue",
+        "white": "white",
+        "yellow": "yellow"
       }
     },
     "menus": {

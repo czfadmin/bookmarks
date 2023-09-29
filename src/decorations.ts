@@ -5,47 +5,58 @@ import {
   TextEditor,
   TextEditorDecorationType,
   window,
+  workspace,
 } from 'vscode';
 
-import { BookmarkLevel, BookmarkMeta } from './types';
+import { BookmarkColor, BookmarkMeta } from './types';
 import { BookmarksController } from './controllers/BookmarksController';
 import { createBookmarkIcon, svgToUri } from './utils/icon';
 import logger from './utils/logger';
-import { EXTENSION_ID } from './constants';
+import { DEFAULT_BOOKMARK_COLOR, EXTENSION_ID } from './constants';
+import { getAllColors } from './configurations';
+import gutters from './gutter';
 
-export type BookmarkDecorationKey =
-  | 'low'
-  | 'normal'
-  | 'high'
-  | 'none'
-  | 'lowHintMessage'
-  | 'normalHintMessage'
-  | 'highHintMessage';
+export type BookmarkDecorationKey = string | 'default';
 
-export const decorations = {} as Record<
+export let decorations = {} as Record<
   BookmarkDecorationKey,
   TextEditorDecorationType
 >;
 export function initDecorations(context: ExtensionContext) {
-  decorations.normal = createDecoration('#0e69d8');
-  decorations.low = createDecoration('#42dd00');
-  decorations.high = createDecoration('#ff0000');
-  decorations.none = createDecoration('#faafff');
+  decorations = {};
+  const colors = getAllColors(true);
+  Object.keys(colors).forEach((item) => {
+    decorations[item] = createDecoration(item);
+  });
+  const config = workspace.getConfiguration(`${EXTENSION_ID}`);
+  decorations.default = createDecoration(
+    'default',
+    config.get('defaultBookmarkIconColor')
+  );
 }
 
-export function createDecoration(color: string) {
-  const gutterIconPath = svgToUri(createBookmarkIcon(color));
+export function createDecoration(
+  colorLabel: string,
+  defaultColor: string = DEFAULT_BOOKMARK_COLOR
+) {
+  const colors = getAllColors();
+  const color = colors[colorLabel];
+  const gutterIconPath = svgToUri(createBookmarkIcon(color || defaultColor));
+
+  // 初始化gutter 颜色
+  gutters[colorLabel] = gutterIconPath;
+
   const decoration = window.createTextEditorDecorationType({
     gutterIconPath,
     rangeBehavior: DecorationRangeBehavior.ClosedClosed,
-    textDecoration: `underline ${color}DF`,
+    textDecoration: `underline ${color}`,
     isWholeLine: false,
     borderRadius: '2px',
-    borderColor: `${color}DF`,
-    border: `0 solid ${color}AF`,
+    borderColor: `${color}`,
+    border: `0 solid ${color}`,
     fontWeight: 'bold',
     after: {
-      backgroundColor: `${color}AA`,
+      backgroundColor: `${color}`,
       color: '#ffff',
       margin: '0 6px 0 6px',
     },
@@ -56,13 +67,17 @@ export function createDecoration(color: string) {
 export function updateDecoration(
   editor: TextEditor,
   options: {
-    level: BookmarkLevel;
+    color: BookmarkColor;
     bookmarks: BookmarkMeta[];
   }
 ) {
   try {
     const rangeOrOptions = createRangeOrOptions(options.bookmarks);
-    editor?.setDecorations(decorations[options.level], rangeOrOptions);
+    const _decorations = decorations;
+    editor?.setDecorations(
+      decorations[options.color] || _decorations['default'],
+      rangeOrOptions
+    );
   } catch (error) {
     logger.error(error);
   }
@@ -128,21 +143,16 @@ export const updateDecorationsByEditor = (
     editor.document.uri
   );
   const bookmarks = bookmarkStore?.bookmarks || [];
-  const decorationsGroupByLevel = bookmarks.reduce(
-    (a, b) => {
-      a[b.level].push(b);
-      return a;
-    },
-    {
-      low: [] as any[],
-      normal: [] as any[],
-      high: [] as any[],
-      none: [] as any[],
+  const decorationsGroupByLevel = bookmarks.reduce((a, b) => {
+    if (!a[b.color]) {
+      a[b.color] = [];
     }
-  ) as { [key: string]: any[] };
+    a[b.color].push(b);
+    return a;
+  }, {} as { [key: string]: any }) as { [key: string]: any[] };
   Object.keys(decorationsGroupByLevel).forEach((it) => {
     updateDecoration(editor, {
-      level: it as BookmarkLevel,
+      color: it as BookmarkColor,
       bookmarks: clear ? [] : decorationsGroupByLevel[it],
     });
   });

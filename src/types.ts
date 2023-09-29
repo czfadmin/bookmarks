@@ -1,11 +1,12 @@
 import { Uri, DecorationOptions, Selection } from 'vscode';
 
-export type BookmarkLevel = 'low' | 'normal' | 'high' | 'none';
+export type StringIndexType<T> = { [key: string]: T };
+export type BookmarkColor = string | 'none';
 
 export interface BookmarkMeta {
   id: string;
   fileUri: Uri;
-  level: BookmarkLevel;
+  color: BookmarkColor;
   selection: Selection;
   label?: string;
   description?: string;
