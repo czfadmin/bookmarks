@@ -41,6 +41,12 @@
         "category": "Bookmarks"
       },
       {
+        "command": "bookmarks.changeBookmarkColor",
+        "title": "Change color",
+        "icon": "$(bookmark)",
+        "category": "Bookmarks"
+      },
+      {
         "command": "bookmarks.clearAllBookmarks",
         "title": "Clear All bookmarks",
         "icon": {
@@ -203,7 +209,13 @@
         },
         {
           "command": "bookmarks.bookmarkEditDescription",
-          "when": "view==bookmarks && viewItem === item"
+          "when": "view==bookmarks && viewItem === item",
+          "group": "itemContextGroup@1"
+        },
+        {
+          "command": "bookmarks.changeBookmarkColor",
+          "when": "view==bookmarks && viewItem === item",
+          "group": "itemContextGroup@2"
         }
       ]
     },

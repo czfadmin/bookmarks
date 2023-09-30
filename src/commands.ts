@@ -20,6 +20,7 @@ import {
   CMD_TOGGLE_BOOKMARK_WITH_SECTIONS,
   CMD_BOOKMARK_ADD_MORE_MEMO,
   CMD_JUMP_TO_BOOKMARK,
+  CMD_CHANGE_BOOKMARK_COLOR,
 } from './constants';
 import {
   updateActiveEditorAllDecorations,
@@ -111,6 +112,24 @@ export function registerCommands(context: ExtensionContext) {
 
   registerCommand(context, CMD_JUMP_TO_BOOKMARK, (args) => {
     quicklyJumpToBookmark();
+  });
+
+  registerCommand(context, CMD_CHANGE_BOOKMARK_COLOR, async (args) => {
+    if (!args || !args.meta) {
+      window.showInformationMessage('请选择书签后再更改颜色.', {});
+      return;
+    }
+    const { meta } = args;
+    if ('color' in meta) {
+      const newColor = await chooseBookmarkColor();
+      if (!newColor) {
+        return;
+      }
+      BookmarksController.instance.update(meta, {
+        color: newColor,
+      });
+      updateActiveEditorAllDecorations();
+    }
   });
 }
 

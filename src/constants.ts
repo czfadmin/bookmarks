@@ -14,3 +14,5 @@ export const CMD_TOGGLE_BOOKMARK_WITH_SECTIONS = 'toggleBookmarkWithSelections';
 export const CMD_BOOKMARK_ADD_MORE_MEMO = 'bookmarkEditDescription';
 
 export const CMD_JUMP_TO_BOOKMARK = 'quickJumpTo';
+
+export const CMD_CHANGE_BOOKMARK_COLOR = 'changeBookmarkColor';
