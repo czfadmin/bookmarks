@@ -6,13 +6,13 @@ import { createID } from '../utils';
 
 export class BookmarksController {
   private static _instance: BookmarksController;
-  private _datasource: BookmarkStoreRootType | undefined;
+  private _datasource: BookmarkStoreRootType;
   private _context: vscode.ExtensionContext;
 
   private _onDidChangeEvent:
     | vscode.EventEmitter<any | undefined | void>
     | undefined;
-  public get datasource(): BookmarkStoreRootType | undefined {
+  public get datasource(): BookmarkStoreRootType {
     return this._datasource;
   }
 
@@ -22,13 +22,16 @@ export class BookmarksController {
 
   private constructor(context: vscode.ExtensionContext) {
     this._context = context;
-    this._datasource =
+    const _datasource =
       this.workspaceState.get<BookmarkStoreRootType>(EXTENSION_ID);
-    if (!this._datasource) {
-      this.save({
+    if (!_datasource) {
+      this._datasource = {
         workspace: createHash(context.storageUri?.toString()) || '',
         data: [],
-      });
+      };
+      this.save(this._datasource);
+    } else {
+      this._datasource = _datasource;
     }
   }
 
@@ -64,19 +67,22 @@ export class BookmarksController {
     }
   }
   remove(bookmark: BookmarkMeta) {
-    let idx = this._datasource!.data.findIndex(
+    const idx = this._datasource.data.findIndex(
       (it) => it.id === bookmark.fileUriHash
     );
     if (idx === -1) {
       return;
     }
-    idx = this._datasource!.data[idx].bookmarks.findIndex(
+    const bookmarkIdx = this._datasource.data[idx].bookmarks.findIndex(
       (it) => it.id === bookmark.id
     );
-    if (idx === -1) {
+    if (bookmarkIdx === -1) {
       return;
     }
-    this.datasource!.data[idx].bookmarks.splice(idx, 1);
+    this.datasource!.data[idx].bookmarks.splice(bookmarkIdx, 1);
+    if (!this.datasource.data[idx].bookmarks.length) {
+      this.datasource.data.splice(idx, 1);
+    }
     this.save();
   }
   update(
@@ -141,11 +147,32 @@ export class BookmarksController {
     });
   }
 
-  clearAll(fileUri?: vscode.Uri) {
+  /**
+   *
+   * 清除所有标签
+   */
+  clearAll() {
     if (!this._datasource?.data.length) {
       return;
     }
     this.restore();
+  }
+
+  /**
+   * 清除指定文件上的所有的标签,并删除此文件存储信息
+   * @param fileUri
+   * @returns
+   */
+  clearAllBookmarkInFile(fileUri: vscode.Uri) {
+    if (!this._datasource.data.length) {
+      return;
+    }
+    const idx = this.datasource.data.findIndex((it) => it.fileUri === fileUri);
+    if (idx === -1) {
+      return;
+    }
+    this.datasource?.data.splice(idx, 1);
+    this.refresh();
   }
 
   save(store?: BookmarkStoreRootType) {

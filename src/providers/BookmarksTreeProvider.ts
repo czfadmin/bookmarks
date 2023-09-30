@@ -93,15 +93,22 @@ export class BookmarksTreeProvider
     }
     let children: BookmarksTreeItem[] = [];
     try {
-      children = (element.meta as BookmarkStoreType).bookmarks.map(
-        (it) =>
-          new BookmarksTreeItem(
-            it.label || it.id,
-            vscode.TreeItemCollapsibleState.None,
-            'item',
-            it
-          )
-      );
+      children = (element.meta as BookmarkStoreType).bookmarks.map((it) => {
+        const selection = new vscode.Selection(
+          it.selection.anchor,
+          it.selection.active
+        );
+
+        return new BookmarksTreeItem(
+          it.label || it.id,
+          vscode.TreeItemCollapsibleState.None,
+          'item',
+          {
+            ...it,
+            selection,
+          }
+        );
+      });
       return Promise.resolve(children);
     } catch (error) {
       return Promise.resolve([]);

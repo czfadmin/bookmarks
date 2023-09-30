@@ -8,7 +8,7 @@ import {
   workspace,
 } from 'vscode';
 
-import { BookmarkColor, BookmarkMeta } from './types';
+import { BookmarkColor, BookmarkMeta, StringIndexType } from './types';
 import { BookmarksController } from './controllers/BookmarksController';
 import { createBookmarkIcon, svgToUri } from './utils/icon';
 import logger from './utils/logger';
@@ -22,17 +22,12 @@ export let decorations = {} as Record<
   BookmarkDecorationKey,
   TextEditorDecorationType
 >;
-export function initDecorations(context: ExtensionContext) {
+export function initDecorations(context?: ExtensionContext) {
   decorations = {};
   const colors = getAllColors(true);
   Object.keys(colors).forEach((item) => {
     decorations[item] = createDecoration(item);
   });
-  const config = workspace.getConfiguration(`${EXTENSION_ID}`);
-  decorations.default = createDecoration(
-    'default',
-    config.get('defaultBookmarkIconColor')
-  );
 }
 
 export function createDecoration(
@@ -143,13 +138,16 @@ export const updateDecorationsByEditor = (
     editor.document.uri
   );
   const bookmarks = bookmarkStore?.bookmarks || [];
-  const decorationsGroupByLevel = bookmarks.reduce((a, b) => {
-    if (!a[b.color]) {
-      a[b.color] = [];
+  const colors = getAllColors();
+  const decorationsGroupByLevel: StringIndexType<any[]> = {};
+  Object.keys(colors).forEach((color) => {
+    if (!decorationsGroupByLevel[color]) {
+      decorationsGroupByLevel[color] = [] as any;
     }
-    a[b.color].push(b);
-    return a;
-  }, {} as { [key: string]: any }) as { [key: string]: any[] };
+    decorationsGroupByLevel[color].push(
+      ...bookmarks.filter((it) => it.color == color)
+    );
+  });
   Object.keys(decorationsGroupByLevel).forEach((it) => {
     updateDecoration(editor, {
       color: it as BookmarkColor,

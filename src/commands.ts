@@ -42,6 +42,12 @@ export function registerCommands(context: ExtensionContext) {
 
   registerCommand(context, CMD_CLEAR_ALL, (args) => {
     updateActiveEditorAllDecorations(true);
+    let fileUri;
+    if (args && args.meta) {
+      fileUri = args.meta.fileUri;
+      BookmarksController.instance.clearAllBookmarkInFile(fileUri);
+      return;
+    }
     BookmarksController.instance.clearAll();
   });
 
@@ -264,6 +270,28 @@ async function toggleLineBookmark() {
     line.lineNumber,
     line.range.end.character
   );
+  const bookmarkStore =
+    BookmarksController.instance.getBookmarkStoreByFileUri(fileUri);
+  if (bookmarkStore) {
+    const existedBookmaks = bookmarkStore.bookmarks;
+    let item;
+    try {
+      for (item of existedBookmaks) {
+        if (range.isEqual(item.selection)) {
+          throw new Error(item.id);
+        }
+      }
+    } catch (error) {
+      const _bookmark = existedBookmaks.find(
+        (it) => it.id === (error as any).message
+      );
+      if (_bookmark) {
+        BookmarksController.instance.remove(_bookmark);
+        updateDecorationsByEditor(editor);
+        return;
+      }
+    }
+  }
   BookmarksController.instance.add(editor, {
     color: choosedColor,
     fileUri,

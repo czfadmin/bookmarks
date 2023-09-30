@@ -1,5 +1,5 @@
 import { workspace } from 'vscode';
-import { EXTENSION_ID } from './constants';
+import { DEFAULT_BOOKMARK_COLOR, EXTENSION_ID } from './constants';
 import { StringIndexType } from './types';
 
 let $colors = {} as StringIndexType<string>;
@@ -12,11 +12,13 @@ export function getAllColors(isRestore: boolean = false) {
     return $colors;
   }
   $colors = {} as StringIndexType<string>;
-  const colors = workspace.getConfiguration(`${EXTENSION_ID}.colors`);
-  Object.entries(colors).filter(([key, value]) => {
+  const config = workspace.getConfiguration(`${EXTENSION_ID}`);
+  Object.entries(config.get('colors') as object).filter(([key, value]) => {
     if (typeof value === 'string') {
       $colors[key] = value;
     }
   });
+  $colors['default'] =
+    config.get('defaultBookmarkIconColor') || DEFAULT_BOOKMARK_COLOR;
   return $colors;
 }
