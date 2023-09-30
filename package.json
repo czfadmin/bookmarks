@@ -18,60 +18,69 @@
     "commands": [
       {
         "command": "bookmarks.toggleLineBookmark",
-        "title": "Bookmarks: Toggle line bookmark",
-        "icon": "$(bookmark)"
+        "title": "Toggle line bookmark",
+        "icon": "$(bookmark)",
+        "category": "Bookmarks"
       },
       {
         "command": "bookmarks.toggleLabelBookmark",
-        "title": "Bookmarks: Toggle bookmark with label",
-        "icon": "$(bookmark)"
+        "title": "Toggle bookmark with label",
+        "icon": "$(bookmark)",
+        "category": "Bookmarks"
       },
       {
         "command": "bookmarks.toggleBookmarkWithSelections",
-        "title": "Bookmarks: Toggle bookmark with selections",
-        "icon": "$(bookmark)"
+        "title": "Toggle bookmark with selections",
+        "icon": "$(bookmark)",
+        "category": "Bookmarks"
       },
       {
         "command": "bookmarks.bookmarkEditDescription",
-        "title": "Bookmarks: Edit description",
-        "icon": "$(bookmark)"
+        "title": "Edit description",
+        "icon": "$(bookmark)",
+        "category": "Bookmarks"
       },
       {
         "command": "bookmarks.clearAllBookmarks",
-        "title": "Bookmarks: Clear All bookmarks",
+        "title": "Clear All bookmarks",
         "icon": {
           "light": "resources/light/clearAll.svg",
           "dark": "resources/dark/clearAll.svg"
-        }
+        },
+        "category": "Bookmarks"
       },
       {
         "command": "bookmarks.deleteBookmark",
-        "title": "Bookmarks: Delete",
+        "title": "Delete",
         "icon": {
           "light": "resources/light/close.svg",
           "dark": "resources/dark/close.svg"
-        }
+        },
+        "category": "Bookmarks"
       },
       {
         "command": "bookmarks.editLabel",
-        "title": "Bookmarks: Edit label",
+        "title": "Edit label",
         "icon": {
           "light": "resources/light/edit.svg",
           "dark": "resources/dark/edit.svg"
-        }
+        },
+        "category": "Bookmarks"
       },
       {
         "command": "bookmarks.gotoSourceLocation",
-        "title": "Bookmarks: Go to locations",
+        "title": "Go to locations",
         "icon": {
           "light": "resources/light/location.svg",
           "dark": "resources/dark/location.svg"
-        }
+        },
+        "category": "Bookmarks"
       },
       {
         "command": "bookmarks.quickJumpTo",
-        "title": "Bookmarks: Quickly jump to",
-        "icon": "$(bookmark)"
+        "title": "Quickly jump to bookmark",
+        "icon": "$(bookmark)",
+        "category": "Bookmarks"
       }
     ],
     "views": {
@@ -153,6 +162,17 @@
       }
     },
     "menus": {
+      "editor/context": [
+        {
+          "submenu": "bookmarks",
+          "group": "z_commands"
+        }
+      ],
+      "bookmarks": [
+        {
+          "command": "bookmarks.toggleBookmarkWithSelections"
+        }
+      ],
       "view/title": [
         {
           "command": "bookmarks.clearAllBookmarks",
@@ -186,7 +206,13 @@
           "when": "view==bookmarks && viewItem === item"
         }
       ]
-    }
+    },
+    "submenus": [
+      {
+        "id": "bookmarks",
+        "label": "Bookmarks"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "yarn run package",
