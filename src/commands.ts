@@ -315,7 +315,7 @@ export async function quicklyJumpToBookmark() {
       ...b.bookmarks.map((it) => ({
         filename: b.filename,
         detail: b.filename,
-        iconPath: gutters[it.color] || gutters['default']
+        iconPath: gutters[it.color] || gutters['default'],
         ...it,
       }))
     );
