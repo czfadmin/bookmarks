@@ -18,23 +18,27 @@
     "commands": [
       {
         "command": "bookmarks.toggleLineBookmark",
-        "title": "Toggle line bookmark"
+        "title": "Bookmarks: Toggle line bookmark",
+        "icon": "$(bookmark)"
       },
       {
         "command": "bookmarks.toggleLabelBookmark",
-        "title": "Toggle bookmark with label"
+        "title": "Bookmarks: Toggle bookmark with label",
+        "icon": "$(bookmark)"
       },
       {
         "command": "bookmarks.toggleBookmarkWithSelections",
-        "title": "Toggle bookmark with selections"
+        "title": "Bookmarks: Toggle bookmark with selections",
+        "icon": "$(bookmark)"
       },
       {
         "command": "bookmarks.bookmarkEditDescription",
-        "title": "Edit description"
+        "title": "Bookmarks: Edit description",
+        "icon": "$(bookmark)"
       },
       {
         "command": "bookmarks.clearAllBookmarks",
-        "title": "Clear All bookmarks",
+        "title": "Bookmarks: Clear All bookmarks",
         "icon": {
           "light": "resources/light/clearAll.svg",
           "dark": "resources/dark/clearAll.svg"
@@ -42,7 +46,7 @@
       },
       {
         "command": "bookmarks.deleteBookmark",
-        "title": "Delete",
+        "title": "Bookmarks: Delete",
         "icon": {
           "light": "resources/light/close.svg",
           "dark": "resources/dark/close.svg"
@@ -50,7 +54,7 @@
       },
       {
         "command": "bookmarks.editLabel",
-        "title": "Edit label",
+        "title": "Bookmarks: Edit label",
         "icon": {
           "light": "resources/light/edit.svg",
           "dark": "resources/dark/edit.svg"
@@ -58,11 +62,16 @@
       },
       {
         "command": "bookmarks.gotoSourceLocation",
-        "title": "Location",
+        "title": "Bookmarks: Go to locations",
         "icon": {
           "light": "resources/light/location.svg",
           "dark": "resources/dark/location.svg"
         }
+      },
+      {
+        "command": "bookmarks.quickJumpTo",
+        "title": "Bookmarks: Quickly jump to",
+        "icon": "$(bookmark)"
       }
     ],
     "views": {

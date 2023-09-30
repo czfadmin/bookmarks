@@ -19,6 +19,7 @@ import {
   CMD_GO_TO_SOURCE_LOCATION,
   CMD_TOGGLE_BOOKMARK_WITH_SECTIONS,
   CMD_BOOKMARK_ADD_MORE_MEMO,
+  CMD_JUMP_TO_BOOKMARK,
 } from './constants';
 import {
   updateActiveEditorAllDecorations,
@@ -100,6 +101,10 @@ export function registerCommands(context: ExtensionContext) {
 
         editBookmarkDescription(args.meta, input);
       });
+  });
+
+  registerCommand(context, CMD_JUMP_TO_BOOKMARK, (args) => {
+    quicklyJumpToBookmark();
   });
 }
 
@@ -285,9 +290,7 @@ export async function chooseBookmarkColor() {
   const pickItems = Object.keys(colors).map((color) => {
     return {
       label: color,
-      iconPath: gutters[color],
-      // description: `$(bookmark) ${color}`,
-      // detail: colors[color],
+      iconPath: gutters[color] || gutters['default'],
     } as QuickPickItem;
   });
   const choosedColor = await window.showQuickPick(pickItems, {
@@ -296,4 +299,36 @@ export async function chooseBookmarkColor() {
     canPickMany: false,
   });
   return choosedColor?.label;
+}
+
+/**
+ * 快速跳转到书签指定位置
+ */
+export async function quicklyJumpToBookmark() {
+  const datasource = BookmarksController.instance.datasource;
+  if (!datasource) {
+    return;
+  }
+  const bookmarksGroupByFile = datasource?.data;
+  const pickItems = bookmarksGroupByFile.reduce((arr, b) => {
+    arr.push(
+      ...b.bookmarks.map((it) => ({
+        filename: b.filename,
+        detail: b.filename,
+        iconPath: gutters[it.color] || gutters['default']
+        ...it,
+      }))
+    );
+    return arr;
+  }, [] as any[]);
+  const choosedBookmarks = await window.showQuickPick(pickItems, {
+    title: '选择书签以跳转到对应所在位置',
+    placeHolder: '请选择想要打开的书签',
+    canPickMany: false,
+  });
+  if (!choosedBookmarks) {
+    return;
+  }
+
+  gotoSourceLocation(choosedBookmarks);
 }
