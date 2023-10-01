@@ -176,7 +176,28 @@
       ],
       "bookmarks": [
         {
-          "command": "bookmarks.toggleBookmarkWithSelections"
+          "command": "bookmarks.toggleLineBookmark",
+          "group": "bookmarksSubMenuGroup@1"
+        },
+        {
+          "command": "bookmarks.toggleBookmarkWithSelections",
+          "group": "bookmarksSubMenuGroup@2"
+        },
+        {
+          "command": "bookmarks.editLabel",
+          "group": "bookmarksEditActionGroup@1"
+        },
+        {
+          "command": "bookmarks.changeBookmarkColor",
+          "group": "bookmarksEditActionGroup@2"
+        },
+        {
+          "command": "bookmarks.bookmarkEditDescription",
+          "group": "bookmarksEditActionGroup@3"
+        },
+        {
+          "command": "bookmarks.deleteBookmark",
+          "group": "bookmarksEditActionGroup@4"
         }
       ],
       "view/title": [
@@ -224,7 +245,12 @@
         "id": "bookmarks",
         "label": "Bookmarks"
       }
-    ]
+    ],
+    "keybindings": {
+      "command": "bookmarks.focus",
+      "key": "ctrl+m ctrl+b",
+      "mac": "cmd+m cmd+b"
+    }
   },
   "scripts": {
     "vscode:prepublish": "yarn run package",

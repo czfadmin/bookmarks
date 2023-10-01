@@ -5,7 +5,9 @@ import {
   Range,
   Selection,
   TextEditor,
+  TextEditorRevealType,
   Uri,
+  ViewColumn,
   window,
   workspace,
 } from 'vscode';
@@ -194,14 +196,12 @@ async function openDocumentAndGotoLocation(fileUri: Uri, range: Range) {
   if (!editor) {
     return;
   }
-  const { start } = range;
-  const line = editor.document.lineAt(new Position(start.line, 0));
-  const lineRange = line.range;
+  const { start, end } = range;
   highlightSelection(
     editor,
-    lineRange,
-    new Position(lineRange.start.line, 0),
-    new Position(lineRange.end.line, 0)
+    range,
+    new Position(start.line, start.character),
+    new Position(end.line, end.character)
   );
 }
 
@@ -361,9 +361,14 @@ export async function quicklyJumpToBookmark() {
     arr.push(
       ...b.bookmarks.map((it) => ({
         filename: b.filename,
+        label: it.label,
+        description: it.description || it.label,
         detail: b.filename,
         iconPath: gutters[it.color] || gutters['default'],
-        ...it,
+        meta: {
+          ...it,
+          selection: new Selection(it.selection.anchor, it.selection.active),
+        },
       }))
     );
     return arr;
@@ -372,10 +377,32 @@ export async function quicklyJumpToBookmark() {
     title: '选择书签以跳转到对应所在位置',
     placeHolder: '请选择想要打开的书签',
     canPickMany: false,
+    ignoreFocusOut: false,
+    async onDidSelectItem(item) {
+      // @ts-ignore
+      let bookmark = typeof item === 'object' ? item.meta : undefined;
+      if (bookmark) {
+        const doc = await workspace.openTextDocument(
+          Uri.parse(bookmark.fileUri.path)
+        );
+        const editor = await window.showTextDocument(doc, {
+          preview: true,
+          preserveFocus: true,
+        });
+        editor.selection = new Selection(
+          bookmark.selection.start,
+          bookmark.selection.end
+        );
+        editor.revealRange(
+          bookmark.selection,
+          TextEditorRevealType.InCenterIfOutsideViewport
+        );
+      }
+    },
   });
   if (!choosedBookmarks) {
     return;
   }
 
-  gotoSourceLocation(choosedBookmarks);
+  gotoSourceLocation(choosedBookmarks.meta);
 }
