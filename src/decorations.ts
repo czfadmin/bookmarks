@@ -2,6 +2,7 @@ import {
   DecorationRangeBehavior,
   ExtensionContext,
   MarkdownString,
+  OverviewRulerLane,
   TextEditor,
   TextEditorDecorationType,
   window,
@@ -13,7 +14,7 @@ import { BookmarksController } from './controllers/BookmarksController';
 import { createBookmarkIcon, svgToUri } from './utils/icon';
 import logger from './utils/logger';
 import { DEFAULT_BOOKMARK_COLOR, EXTENSION_ID } from './constants';
-import { getAllColors } from './configurations';
+import { getAllColors, getConfiguration } from './configurations';
 import gutters from './gutter';
 
 export type BookmarkDecorationKey = string | 'default';
@@ -22,16 +23,33 @@ export let decorations = {} as Record<
   BookmarkDecorationKey,
   TextEditorDecorationType
 >;
+
+export interface CreateDecorationOptions {
+  showGutterIcon: boolean;
+  showGutterInOverviewRuler: boolean;
+}
+/**
+ * 初始化`decorations`
+ * @param context {ExtensionContext}
+ */
 export function initDecorations(context?: ExtensionContext) {
+  disposeAllDiscorations();
   decorations = {};
+  const configuration = getConfiguration();
   const colors = getAllColors(true);
+  const options: CreateDecorationOptions = {
+    showGutterIcon: configuration.get('showGutterIcon') || false,
+    showGutterInOverviewRuler:
+      configuration.get('showGutterInOverviewRuler') || false,
+  };
   Object.keys(colors).forEach((item) => {
-    decorations[item] = createDecoration(item);
+    decorations[item] = createDecoration(item, options);
   });
 }
 
 export function createDecoration(
   colorLabel: string,
+  options: CreateDecorationOptions,
   defaultColor: string = DEFAULT_BOOKMARK_COLOR
 ) {
   const colors = getAllColors();
@@ -41,8 +59,17 @@ export function createDecoration(
   // 初始化gutter 颜色
   gutters[colorLabel] = gutterIconPath;
 
+  let overviewRulerColor;
+  let overviewRulerLane: OverviewRulerLane | undefined = undefined;
+
+  if (options.showGutterInOverviewRuler) {
+    overviewRulerColor = color;
+    overviewRulerLane = OverviewRulerLane.Center;
+  } else {
+    overviewRulerColor = undefined;
+  }
   const decoration = window.createTextEditorDecorationType({
-    gutterIconPath,
+    gutterIconPath: options.showGutterIcon ? gutterIconPath : undefined,
     rangeBehavior: DecorationRangeBehavior.ClosedClosed,
     textDecoration: `underline ${color}`,
     isWholeLine: false,
@@ -50,12 +77,15 @@ export function createDecoration(
     borderColor: `${color}`,
     border: `0 solid ${color}`,
     fontWeight: 'bold',
+    overviewRulerLane,
+    overviewRulerColor,
     after: {
       backgroundColor: `${color}`,
       color: '#ffff',
       margin: '0 6px 0 6px',
     },
   });
+
   return decoration;
 }
 

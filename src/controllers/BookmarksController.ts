@@ -137,7 +137,12 @@ export class BookmarksController {
     if (idx === -1) {
       return;
     }
-    return this._datasource!.data[idx];
+    const store = this._datasource!.data[idx];
+    store.bookmarks.forEach((it) => ({
+      ...it,
+      selection: new vscode.Selection(it.selection.anchor, it.selection.active),
+    }));
+    return store;
   }
 
   restore() {

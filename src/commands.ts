@@ -7,7 +7,6 @@ import {
   TextEditor,
   TextEditorRevealType,
   Uri,
-  ViewColumn,
   window,
   workspace,
 } from 'vscode';
@@ -378,7 +377,7 @@ export async function quicklyJumpToBookmark() {
     placeHolder: '请选择想要打开的书签',
     canPickMany: false,
     ignoreFocusOut: false,
-    async onDidSelectItem(item) {
+    async onDidSelectItem(item: QuickPickItem & { meta: BookmarkMeta }) {
       // @ts-ignore
       let bookmark = typeof item === 'object' ? item.meta : undefined;
       if (bookmark) {

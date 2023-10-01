@@ -12,7 +12,7 @@ export function getAllColors(isRestore: boolean = false) {
     return $colors;
   }
   $colors = {} as StringIndexType<string>;
-  const config = workspace.getConfiguration(`${EXTENSION_ID}`);
+  const config = getConfiguration();
   Object.entries(config.get('colors') as object).filter(([key, value]) => {
     if (typeof value === 'string') {
       $colors[key] = value;
@@ -21,4 +21,8 @@ export function getAllColors(isRestore: boolean = false) {
   $colors['default'] =
     config.get('defaultBookmarkIconColor') || DEFAULT_BOOKMARK_COLOR;
   return $colors;
+}
+
+export function getConfiguration() {
+  return workspace.getConfiguration(EXTENSION_ID);
 }

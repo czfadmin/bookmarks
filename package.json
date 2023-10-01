@@ -124,17 +124,25 @@
     "configuration": {
       "title": "bookmarks",
       "properties": {
-        "bookmarks.showInoverviewRuler": {
+        "bookmarks.showGutterInOverviewRuler": {
           "type": "boolean",
-          "description": "Whether to display the corresponding position of the bookmark on the overview ruler"
+          "description": "Whether to display the corresponding position of the bookmark on the overview ruler",
+          "default": false
         },
         "bookmarks.onlyShowFilename": {
           "type": "boolean",
-          "description": "Whether to display only the file name where the bookmark is located. Otherwise, display the name of the file where the bookmark is located."
+          "description": "Whether to display only the file name where the bookmark is located. Otherwise, display the name of the file where the bookmark is located.",
+          "default": false
         },
         "bookmarks.showTextDecoration": {
           "type": "boolean",
-          "description": "Whether to display the text decoration of the bookmark's location"
+          "description": "Whether to display the text decoration of the bookmark's location",
+          "default": true
+        },
+        "bookmarks.showGutterIcon": {
+          "type": "boolean",
+          "description": "Whether to display the gutter icon of the bookmark",
+          "default": true
         },
         "bookmarks.boldActiveLine": {
           "type": "boolean",
