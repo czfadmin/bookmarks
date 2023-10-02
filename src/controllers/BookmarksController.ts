@@ -138,7 +138,7 @@ export class BookmarksController {
       return;
     }
     const store = this._datasource!.data[idx];
-    store.bookmarks.forEach((it) => ({
+    store.bookmarks = store.bookmarks.map((it) => ({
       ...it,
       selection: new vscode.Selection(it.selection.anchor, it.selection.active),
     }));

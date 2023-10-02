@@ -6,7 +6,6 @@ import {
   TextEditor,
   TextEditorDecorationType,
   window,
-  workspace,
 } from 'vscode';
 
 import { BookmarkColor, BookmarkMeta, StringIndexType } from './types';

@@ -273,10 +273,6 @@ async function toggleLineBookmark() {
   if (editor.document.isUntitled) {
     return;
   }
-  const choosedColor = await chooseBookmarkColor();
-  if (!choosedColor) {
-    return;
-  }
   const fileUri = editor.document.uri;
 
   const line = editor.document.lineAt(selection.active.line);
@@ -288,6 +284,39 @@ async function toggleLineBookmark() {
     line.lineNumber,
     line.range.end.character
   );
+
+  if (checkCurrentLineExistBookmark(editor, fileUri, range)) {
+    return;
+  }
+  const choosedColor = await chooseBookmarkColor();
+  if (!choosedColor) {
+    return;
+  }
+
+  BookmarksController.instance.add(editor, {
+    color: choosedColor,
+    fileUri,
+    label,
+    selection: range,
+    rangesOrOptions: {
+      range,
+      hoverMessage: '',
+      renderOptions: {
+        after: {},
+      },
+    },
+  });
+
+  updateDecorationsByEditor(editor);
+}
+/**
+ * 检查当前行是否存在标签
+ */
+function checkCurrentLineExistBookmark(
+  editor: TextEditor,
+  fileUri: Uri,
+  range: Range
+) {
   const bookmarkStore =
     BookmarksController.instance.getBookmarkStoreByFileUri(fileUri);
   if (bookmarkStore) {
@@ -306,25 +335,11 @@ async function toggleLineBookmark() {
       if (_bookmark) {
         BookmarksController.instance.remove(_bookmark);
         updateDecorationsByEditor(editor);
-        return;
+        return true;
       }
     }
   }
-  BookmarksController.instance.add(editor, {
-    color: choosedColor,
-    fileUri,
-    label,
-    selection: range,
-    rangesOrOptions: {
-      range,
-      hoverMessage: '',
-      renderOptions: {
-        after: {},
-      },
-    },
-  });
-
-  updateDecorationsByEditor(editor);
+  return false;
 }
 
 /**
