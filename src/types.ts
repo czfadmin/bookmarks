@@ -3,6 +3,11 @@ import { Uri, DecorationOptions, Selection } from 'vscode';
 export type StringIndexType<T> = { [key: string]: T };
 export type BookmarkColor = string | 'none';
 
+export type LineBookmarkContext =
+  | Uri
+  | { uri: Uri; lineNumber: number }
+  | undefined;
+
 export interface BookmarkMeta {
   id: string;
   fileUri: Uri;

@@ -23,7 +23,7 @@
         "category": "Bookmarks"
       },
       {
-        "command": "bookmarks.toggleLabelBookmark",
+        "command": "bookmarks.toggleLineBookmarkWithLabel",
         "title": "Toggle bookmark with label",
         "icon": "$(bookmark)",
         "category": "Bookmarks"
@@ -182,14 +182,19 @@
           "group": "z_commands"
         }
       ],
+      "editor/lineNumber/context": [
+        {
+          "submenu": "bookmarks"
+        }
+      ],
       "bookmarks": [
         {
           "command": "bookmarks.toggleLineBookmark",
-          "group": "bookmarksSubMenuGroup@1"
+          "group": "bookmarksActionsGroup@1"
         },
         {
           "command": "bookmarks.toggleBookmarkWithSelections",
-          "group": "bookmarksSubMenuGroup@2"
+          "group": "bookmarksActionsGroup@2"
         },
         {
           "command": "bookmarks.editLabel",

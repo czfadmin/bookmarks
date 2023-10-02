@@ -27,20 +27,39 @@ import {
   updateActiveEditorAllDecorations,
   updateDecorationsByEditor,
 } from './decorations';
-import { BookmarkMeta } from './types';
+import { BookmarkMeta, LineBookmarkContext } from './types';
 import { BookmarksController } from './controllers/BookmarksController';
 import { getAllColors } from './configurations';
 import gutters from './gutter';
+import { checkIfBookmarkExistInSelection } from './utils/bookmark';
 
 /**
  * 注册所需要的命令
  * @param context
  */
 export function registerCommands(context: ExtensionContext) {
-  registerCommand(context, CMD_TOGGLE_LINE_BOOKMARK, async (args) => {
-    toggleLineBookmark();
-  });
-  registerCommand(context, CMD_TOGGLE_BOOKMARK_WITH_LABEL, (args) => {});
+  registerCommand(
+    context,
+    CMD_TOGGLE_LINE_BOOKMARK,
+    async (args: LineBookmarkContext) => {
+      toggleLineBookmark(args);
+    }
+  );
+  registerCommand(
+    context,
+    CMD_TOGGLE_BOOKMARK_WITH_LABEL,
+    async (context: LineBookmarkContext) => {
+      const input = await window.showInputBox({
+        placeHolder: 'Type a label for your bookmarks',
+        title:
+          'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
+      });
+      if (!input) {
+        return;
+      }
+      toggleLineBookmark(context, input);
+    }
+  );
 
   registerCommand(context, CMD_CLEAR_ALL, (args) => {
     updateActiveEditorAllDecorations(true);
@@ -257,27 +276,39 @@ export async function toggleBookmarksWithSelections(input: string) {
  * @param level
  * @returns
  */
-async function toggleLineBookmark() {
+async function toggleLineBookmark(
+  context: LineBookmarkContext,
+  label?: string
+) {
   const editor = window.activeTextEditor;
   if (!editor) {
-    return;
-  }
-  const selection = editor.selection;
-  if (!selection) {
-    return;
-  }
-
-  if (!BookmarksController.instance) {
     return;
   }
   if (editor.document.isUntitled) {
     return;
   }
-  const fileUri = editor.document.uri;
+  if (!BookmarksController.instance) {
+    return;
+  }
+
+  let selection = editor.selection;
+
+  if (context && 'lineNumber' in context) {
+    const { lineNumber } = context;
+    const line = editor.document.lineAt(lineNumber - 1);
+    const startPos = line.text.indexOf(line.text.trim());
+    selection = new Selection(
+      new Position(lineNumber - 1, startPos),
+      new Position(lineNumber - 1, line.range.end.character)
+    );
+  }
+  if (!selection) {
+    return;
+  }
 
   const line = editor.document.lineAt(selection.active.line);
-  const label = line.text.trim();
-  const startPos = line.text.indexOf(label);
+  const _label = label || line.text.trim();
+  const startPos = line.text.indexOf(line.text.trim());
   const range = new Selection(
     line.lineNumber,
     startPos,
@@ -285,7 +316,7 @@ async function toggleLineBookmark() {
     line.range.end.character
   );
 
-  if (checkCurrentLineExistBookmark(editor, fileUri, range)) {
+  if (checkIfBookmarkExistInSelection(editor, range)) {
     return;
   }
   const choosedColor = await chooseBookmarkColor();
@@ -295,8 +326,8 @@ async function toggleLineBookmark() {
 
   BookmarksController.instance.add(editor, {
     color: choosedColor,
-    fileUri,
-    label,
+    fileUri: editor.document.uri,
+    label: _label,
     selection: range,
     rangesOrOptions: {
       range,
@@ -308,38 +339,6 @@ async function toggleLineBookmark() {
   });
 
   updateDecorationsByEditor(editor);
-}
-/**
- * 检查当前行是否存在标签
- */
-function checkCurrentLineExistBookmark(
-  editor: TextEditor,
-  fileUri: Uri,
-  range: Range
-) {
-  const bookmarkStore =
-    BookmarksController.instance.getBookmarkStoreByFileUri(fileUri);
-  if (bookmarkStore) {
-    const existedBookmaks = bookmarkStore.bookmarks;
-    let item;
-    try {
-      for (item of existedBookmaks) {
-        if (range.isEqual(item.selection)) {
-          throw new Error(item.id);
-        }
-      }
-    } catch (error) {
-      const _bookmark = existedBookmaks.find(
-        (it) => it.id === (error as any).message
-      );
-      if (_bookmark) {
-        BookmarksController.instance.remove(_bookmark);
-        updateDecorationsByEditor(editor);
-        return true;
-      }
-    }
-  }
-  return false;
 }
 
 /**

@@ -1,12 +1,7 @@
-import {
-  Disposable,
-  TextEditorSelectionChangeKind,
-  debug,
-  window,
-  workspace,
-} from 'vscode';
+import { Disposable, commands, debug, window, workspace } from 'vscode';
 
 import { updateDecorationsByEditor } from './decorations';
+import { EXTENSION_ID } from './constants';
 import logger from './utils/logger';
 
 let onDidChangeActiveTextEditor: Disposable | undefined;
@@ -32,6 +27,9 @@ export function updateChangeActiveTextEditorListener() {
   });
 }
 
+/**
+ * 监听`onDidChangeVisibleTextEditors`事件: 当打开的`editor` 发生变化, 更新所有打开的`TextEditor`上的装饰器
+ */
 export function updateChangeVisibleTextEidtorsListener() {
   onDidChangeVisibleTextEditors?.dispose();
   onDidChangeVisibleTextEditors = window.onDidChangeVisibleTextEditors(
@@ -54,14 +52,24 @@ export function updateCursorChangeListener() {
   onDidCursorChangeDisposable = window.onDidChangeTextEditorSelection((ev) => {
     const { kind } = ev;
     const section = ev.selections[0];
-    if (
-      ev.selections.length === 1 &&
-      section.isEmpty &&
-      section.isSingleLine &&
-      kind === TextEditorSelectionChangeKind.Keyboard
-    ) {
-      // logger.info(ev);
+    if (ev.selections.length === 1 && section.isEmpty && section.isSingleLine) {
+      // logger.info(
+      //   'singleLine',
+      //   ev.selections,
+      //   ev.textEditor.document.getText(ev.selections[0])
+      // );
       // TODO: 更新bookmark的位置
+    }
+
+    if (!ev.textEditor.document.isUntitled) {
+      const cursorPos = ev.selections[0].active;
+      if (cursorPos.character === 0) {
+        commands.executeCommand(
+          'setContext',
+          `${EXTENSION_ID}.currentLineHasBookmark`,
+          false
+        );
+      }
     }
   });
 }

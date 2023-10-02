@@ -4,7 +4,7 @@ export const EXTENSION_VIEW_ID = 'bookmarks';
 export const DEFAULT_BOOKMARK_COLOR = '#0e69d8';
 
 /** Commands */
-export const CMD_TOGGLE_BOOKMARK_WITH_LABEL = 'toggleLabelBookmark';
+export const CMD_TOGGLE_BOOKMARK_WITH_LABEL = 'toggleLineBookmarkWithLabel';
 export const CMD_TOGGLE_LINE_BOOKMARK = 'toggleLineBookmark';
 export const CMD_CLEAR_ALL = 'clearAllBookmarks';
 export const CMD_DELETE_BOOKMARK = 'deleteBookmark';
