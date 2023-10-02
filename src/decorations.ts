@@ -8,25 +8,26 @@ import {
   window,
 } from 'vscode';
 
-import { BookmarkColor, BookmarkMeta, StringIndexType } from './types';
+import {
+  BookmarkColor,
+  BookmarkDecorationKey,
+  BookmarkMeta,
+  CreateDecorationOptions,
+  StringIndexType,
+} from './types';
 import { BookmarksController } from './controllers/BookmarksController';
 import { createBookmarkIcon, svgToUri } from './utils/icon';
 import logger from './utils/logger';
 import { DEFAULT_BOOKMARK_COLOR, EXTENSION_ID } from './constants';
 import { getAllColors, getConfiguration } from './configurations';
 import gutters from './gutter';
-
-export type BookmarkDecorationKey = string | 'default';
+import { createHoverMessage } from './utils/bookmark';
 
 export let decorations = {} as Record<
   BookmarkDecorationKey,
   TextEditorDecorationType
 >;
 
-export interface CreateDecorationOptions {
-  showGutterIcon: boolean;
-  showGutterInOverviewRuler: boolean;
-}
 /**
  * 初始化`decorations`
  * @param context {ExtensionContext}
@@ -128,19 +129,7 @@ export function createRangeOrOptions(bookmarks: BookmarkMeta[]) {
   };
 
   return bookmarks.map((bookmark) => {
-    let hoverMessage =
-      bookmark.rangesOrOptions.hoverMessage || new MarkdownString('', true);
-
-    if (Array.isArray(hoverMessage)) {
-      const markdownString = new MarkdownString('', true);
-      appendMarkdown(bookmark, markdownString);
-      hoverMessage.push(markdownString);
-    } else if (hoverMessage instanceof MarkdownString) {
-      appendMarkdown(bookmark, hoverMessage);
-    } else if (!Object.keys(hoverMessage).length) {
-      hoverMessage = new MarkdownString('', true);
-      appendMarkdown(bookmark, hoverMessage);
-    }
+    let hoverMessage = createHoverMessage(bookmark, true);
     return {
       ...bookmark.rangesOrOptions,
       hoverMessage,
@@ -199,6 +188,7 @@ export function updateActiveEditorAllDecorations(clear: boolean = false) {
     updateDecorationsByEditor(editor, clear);
   }
 }
+
 /**
  * Dispose all decorations
  */

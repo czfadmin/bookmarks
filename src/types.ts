@@ -14,8 +14,10 @@ export interface BookmarkMeta {
   color: BookmarkColor;
   selection: Selection;
   label?: string;
+  selectionContent?: string;
   description?: string;
   fileUriHash?: string;
+  languageId?: string;
   rangesOrOptions: DecorationOptions;
 }
 
@@ -55,3 +57,10 @@ export type BookmarkStoreRootType = {
   workspace: string;
   data: BookmarkStoreType[];
 };
+
+export interface CreateDecorationOptions {
+  showGutterIcon: boolean;
+  showGutterInOverviewRuler: boolean;
+}
+
+export type BookmarkDecorationKey = string | 'default';
