@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { createHash } from '../utils/hash';
 import { EXTENSION_ID } from '../constants';
 import { BookmarkMeta, BookmarkStoreRootType } from '../types';
 import { createID } from '../utils';
@@ -26,7 +25,7 @@ export class BookmarksController {
       this.workspaceState.get<BookmarkStoreRootType>(EXTENSION_ID);
     if (!_datasource) {
       this._datasource = {
-        workspace: createHash(context.storageUri?.toString()) || '',
+        workspace: context.storageUri?.toString() || '',
         data: [],
       };
       this.save(this._datasource);
@@ -41,34 +40,32 @@ export class BookmarksController {
 
   add(editor: vscode.TextEditor, bookmark: Partial<Omit<BookmarkMeta, 'id'>>) {
     const fileUri = editor.document.uri;
-    const fileHash = createHash(fileUri.toString());
-    if (fileHash) {
-      const idx = this._datasource!.data.findIndex((it) => it.id === fileHash);
-      let bookmarkStore;
-      if (idx === -1) {
-        bookmarkStore = {
-          id: fileHash,
-          fileUri,
-          filename: editor.document.fileName,
-          bookmarks: [] as BookmarkMeta[],
-        };
-        this._datasource?.data.push(bookmarkStore);
-      } else {
-        bookmarkStore = this._datasource!.data[idx];
-      }
-      // @ts-ignore
-      bookmarkStore.bookmarks.push({
-        ...bookmark,
-        id: createID(),
-        fileUri: fileUri,
-        fileUriHash: fileHash,
-      });
-      this.save();
+    const idx = this._datasource!.data.findIndex(
+      (it) => it.id === fileUri.fsPath
+    );
+    let bookmarkStore;
+    if (idx === -1) {
+      bookmarkStore = {
+        id: fileUri.fsPath,
+        fileUri,
+        filename: editor.document.fileName,
+        bookmarks: [] as BookmarkMeta[],
+      };
+      this._datasource?.data.push(bookmarkStore);
+    } else {
+      bookmarkStore = this._datasource!.data[idx];
     }
+    // @ts-ignore
+    bookmarkStore.bookmarks.push({
+      ...bookmark,
+      id: createID(),
+      fileUri: fileUri,
+    });
+    this.save();
   }
   remove(bookmark: BookmarkMeta) {
     const idx = this._datasource.data.findIndex(
-      (it) => it.id === bookmark.fileUriHash
+      (it) => it.id === bookmark.fileUri.fsPath
     );
     if (idx === -1) {
       return;
@@ -89,12 +86,12 @@ export class BookmarksController {
     bookmark: BookmarkMeta,
     bookmarkDto: Partial<Omit<BookmarkMeta, 'id'>>
   ) {
-    if (!bookmark.fileUriHash) {
+    if (!bookmark.fileUri.fsPath) {
       return;
     }
 
     let idx = this._datasource!.data.findIndex(
-      (it) => it.id === bookmark.fileUriHash
+      (it) => it.id === bookmark.fileUri.fsPath
     );
     if (idx === -1) {
       return;
@@ -118,12 +115,10 @@ export class BookmarksController {
     this.save();
   }
   detail(bookmark: BookmarkMeta) {
-    const { id, fileUriHash } = bookmark;
-    if (!fileUriHash) {
-      return;
-    }
-
-    let idx = this._datasource!.data.findIndex((it) => it.id === fileUriHash);
+    const { id, fileUri } = bookmark;
+    let idx = this._datasource!.data.findIndex(
+      (it) => it.id === fileUri.fsPath
+    );
     if (idx === -1) {
       return;
     }
@@ -131,9 +126,9 @@ export class BookmarksController {
   }
 
   getBookmarkStoreByFileUri(fileUri: vscode.Uri) {
-    const hash = createHash(fileUri.toString());
-    if (!hash) return;
-    const idx = this._datasource!.data.findIndex((it) => it.id === hash);
+    const idx = this._datasource!.data.findIndex(
+      (it) => it.id === fileUri.fsPath
+    );
     if (idx === -1) {
       return;
     }
@@ -147,7 +142,7 @@ export class BookmarksController {
 
   restore() {
     this.save({
-      workspace: createHash(this._context.storageUri?.toString()) || '',
+      workspace: this._context.storageUri?.toString() || '',
       data: [],
     });
   }

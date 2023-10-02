@@ -2,7 +2,6 @@ import { Disposable, commands, debug, window, workspace } from 'vscode';
 
 import { updateDecorationsByEditor } from './decorations';
 import { EXTENSION_ID } from './constants';
-import logger from './utils/logger';
 
 let onDidChangeActiveTextEditor: Disposable | undefined;
 let onDidChangeVisibleTextEditors: Disposable | undefined;

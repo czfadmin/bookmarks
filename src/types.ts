@@ -16,7 +16,6 @@ export interface BookmarkMeta {
   label?: string;
   selectionContent?: string;
   description?: string;
-  fileUriHash?: string;
   languageId?: string;
   rangesOrOptions: DecorationOptions;
 }
@@ -33,7 +32,7 @@ export interface BookmarkMeta {
  */
 export type BookmarkStoreType = {
   /**
-   * 根据`当前打开的文件(Uri) + 当前行(Uri)` 进行生成hash 作为id
+   * fileUri.fsPath
    */
   id: string;
   fileUri: Uri;
@@ -52,7 +51,7 @@ export type BookmarkStoreType = {
  */
 export type BookmarkStoreRootType = {
   /**
-   * 根据当前的工作区目录信息生成的hash
+   * 根据当前的工作区目录信息
    */
   workspace: string;
   data: BookmarkStoreType[];
