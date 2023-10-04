@@ -2,7 +2,7 @@
   "name": "bookmarks",
   "displayName": "bookmarks",
   "description": "bookmark",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.82.0"
   },
@@ -277,6 +277,7 @@
     "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.26.2",
     "@types/glob": "^8.1.0",
     "@types/lodash": "^4.14.199",
     "@types/mocha": "^10.0.1",
