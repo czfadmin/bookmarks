@@ -1,7 +1,6 @@
 import {
   DecorationRangeBehavior,
   ExtensionContext,
-  MarkdownString,
   OverviewRulerLane,
   TextEditor,
   TextEditorDecorationType,
@@ -21,7 +20,6 @@ import logger from './utils/logger';
 import { DEFAULT_BOOKMARK_COLOR, EXTENSION_ID } from './constants';
 import { getAllColors, getConfiguration } from './configurations';
 import gutters from './gutter';
-import { createHoverMessage } from './utils/bookmark';
 
 export let decorations = {} as Record<
   BookmarkDecorationKey,
@@ -114,27 +112,7 @@ export function updateDecoration(
  * @returns
  */
 export function createRangeOrOptions(bookmarks: BookmarkMeta[]) {
-  const appendMarkdown = (
-    bookmark: BookmarkMeta,
-    markdownString: MarkdownString
-  ) => {
-    if (bookmark.label) {
-      markdownString.appendMarkdown(
-        `### $(bookmark~sync) ${EXTENSION_ID} \n#### ${bookmark.label}`
-      );
-    }
-    if (bookmark.description) {
-      markdownString.appendMarkdown(`\n ${bookmark.description}`);
-    }
-  };
-
-  return bookmarks.map((bookmark) => {
-    let hoverMessage = createHoverMessage(bookmark, true);
-    return {
-      ...bookmark.rangesOrOptions,
-      hoverMessage,
-    };
-  });
+  return bookmarks.map((bookmark) => bookmark.rangesOrOptions);
 }
 
 /**

@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { EXTENSION_ID } from '../constants';
 import { BookmarkMeta, BookmarkStoreRootType } from '../types';
 import { createID } from '../utils';
+import { createHoverMessage } from '../utils/bookmark';
 
 export class BookmarksController {
   private static _instance: BookmarksController;
@@ -30,6 +31,24 @@ export class BookmarksController {
       };
       this.save(this._datasource);
     } else {
+      const temp = _datasource.data.map((store) => {
+        const bookmarks = store.bookmarks.map((bookmark) => ({
+          ...bookmark,
+          selection: new vscode.Selection(
+            bookmark.selection.anchor,
+            bookmark.selection.active
+          ),
+          rangesOrOptions: {
+            ...bookmark.rangesOrOptions,
+            hoverMessage: createHoverMessage(bookmark, true),
+          },
+        }));
+        return {
+          ...store,
+          bookmarks,
+        };
+      });
+      _datasource.data = temp;
       this._datasource = _datasource;
     }
   }
@@ -40,7 +59,7 @@ export class BookmarksController {
 
   add(editor: vscode.TextEditor, bookmark: Partial<Omit<BookmarkMeta, 'id'>>) {
     const fileUri = editor.document.uri;
-    const idx = this._datasource!.data.findIndex(
+    const idx = this.datasource.data.findIndex(
       (it) => it.id === fileUri.fsPath
     );
     let bookmarkStore;
@@ -51,9 +70,9 @@ export class BookmarksController {
         filename: editor.document.fileName,
         bookmarks: [] as BookmarkMeta[],
       };
-      this._datasource?.data.push(bookmarkStore);
+      this.datasource.data.push(bookmarkStore);
     } else {
-      bookmarkStore = this._datasource!.data[idx];
+      bookmarkStore = this.datasource.data[idx];
     }
     // @ts-ignore
     bookmarkStore.bookmarks.push({
@@ -64,19 +83,19 @@ export class BookmarksController {
     this.save();
   }
   remove(bookmark: BookmarkMeta) {
-    const idx = this._datasource.data.findIndex(
+    const idx = this.datasource.data.findIndex(
       (it) => it.id === bookmark.fileUri.fsPath
     );
     if (idx === -1) {
       return;
     }
-    const bookmarkIdx = this._datasource.data[idx].bookmarks.findIndex(
+    const bookmarkIdx = this.datasource.data[idx].bookmarks.findIndex(
       (it) => it.id === bookmark.id
     );
     if (bookmarkIdx === -1) {
       return;
     }
-    this.datasource!.data[idx].bookmarks.splice(bookmarkIdx, 1);
+    this.datasource.data[idx].bookmarks.splice(bookmarkIdx, 1);
     if (!this.datasource.data[idx].bookmarks.length) {
       this.datasource.data.splice(idx, 1);
     }
@@ -90,21 +109,21 @@ export class BookmarksController {
       return;
     }
 
-    let idx = this._datasource!.data.findIndex(
+    let idx = this.datasource.data.findIndex(
       (it) => it.id === bookmark.fileUri.fsPath
     );
     if (idx === -1) {
       return;
     }
-    const bookmarkIdx = this._datasource!.data[idx].bookmarks.findIndex(
+    const bookmarkIdx = this.datasource.data[idx].bookmarks.findIndex(
       (it) => it.id === bookmark.id
     );
     if (bookmarkIdx === -1) {
       return;
     }
-    const existed = this._datasource!.data[idx].bookmarks[bookmarkIdx];
+    const existed = this.datasource.data[idx].bookmarks[bookmarkIdx];
     const { rangesOrOptions, ...rest } = bookmarkDto;
-    this._datasource!.data[idx].bookmarks[bookmarkIdx] = {
+    this.datasource.data[idx].bookmarks[bookmarkIdx] = {
       ...existed,
       ...rest,
       rangesOrOptions: {
@@ -116,28 +135,22 @@ export class BookmarksController {
   }
   detail(bookmark: BookmarkMeta) {
     const { id, fileUri } = bookmark;
-    let idx = this._datasource!.data.findIndex(
-      (it) => it.id === fileUri.fsPath
-    );
+    let idx = this.datasource.data.findIndex((it) => it.id === fileUri.fsPath);
     if (idx === -1) {
       return;
     }
-    return this._datasource!.data[idx].bookmarks.find((it) => it.id === id);
+    return this.datasource.data[idx].bookmarks.find((it) => it.id === id);
   }
 
   getBookmarkStoreByFileUri(fileUri: vscode.Uri) {
-    const idx = this._datasource!.data.findIndex(
+    const idx = this.datasource.data.findIndex(
       (it) => it.id === fileUri.fsPath
     );
     if (idx === -1) {
       return;
     }
-    const store = this._datasource!.data[idx];
-    store.bookmarks = store.bookmarks.map((it) => ({
-      ...it,
-      selection: new vscode.Selection(it.selection.anchor, it.selection.active),
-    }));
-    return store;
+
+    return this.datasource.data[idx];
   }
 
   restore() {
@@ -152,7 +165,7 @@ export class BookmarksController {
    * 清除所有标签
    */
   clearAll() {
-    if (!this._datasource?.data.length) {
+    if (!this.datasource.data.length) {
       return;
     }
     this.restore();
@@ -164,19 +177,19 @@ export class BookmarksController {
    * @returns
    */
   clearAllBookmarkInFile(fileUri: vscode.Uri) {
-    if (!this._datasource.data.length) {
+    if (!this.datasource.data.length) {
       return;
     }
     const idx = this.datasource.data.findIndex((it) => it.fileUri === fileUri);
     if (idx === -1) {
       return;
     }
-    this.datasource?.data.splice(idx, 1);
+    this.datasource.data.splice(idx, 1);
     this.refresh();
   }
 
   save(store?: BookmarkStoreRootType) {
-    this._datasource = store || this._datasource;
+    this._datasource = store || this.datasource;
     this.workspaceState.update(EXTENSION_ID, this._datasource).then();
     this._fire();
   }

@@ -4,7 +4,6 @@ import { MarkdownString } from 'vscode';
 import { BookmarksController } from '../controllers/BookmarksController';
 import { BookmarkMeta, BookmarkStoreType } from '../types';
 import gutters from '../gutter';
-import { createHoverMessage } from '../utils/bookmark';
 
 export class BookmarksTreeItem extends vscode.TreeItem {
   constructor(
@@ -22,14 +21,15 @@ export class BookmarksTreeItem extends vscode.TreeItem {
   }
 
   private _createTooltip() {
-    if ('color' in this.meta) {
-      const hoverMessage = createHoverMessage(this.meta) as
+    if (this.contextValue === 'item' && 'color' in this.meta) {
+      const hoverMessage = this.meta.rangesOrOptions.hoverMessage as
         | MarkdownString
         | MarkdownString[]
         | string;
       this.tooltip = Array.isArray(hoverMessage)
         ? hoverMessage.join('\n')
         : hoverMessage;
+      this.description = this.meta.selectionContent?.trim();
     }
   }
 }

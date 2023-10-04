@@ -191,11 +191,12 @@ export async function toggleBookmarksWithSelections(input: string) {
     return;
   }
 
-  const bookmark: Partial<BookmarkMeta> = {
+  const bookmark: Omit<BookmarkMeta, 'id'> = {
     selection: range,
     label: input,
     selectionContent: editor.document.getText(range).trim(),
     color,
+    fileUri: editor.document.uri,
     languageId: editor.document.languageId,
     rangesOrOptions: {
       range: range,
@@ -203,6 +204,7 @@ export async function toggleBookmarksWithSelections(input: string) {
       renderOptions: {},
     },
   };
+  bookmark.rangesOrOptions.hoverMessage = createHoverMessage(bookmark, true);
   BookmarksController.instance.add(editor, bookmark);
   updateDecorationsByEditor(editor);
 }
@@ -257,7 +259,7 @@ export async function toggleLineBookmark(
     return;
   }
 
-  BookmarksController.instance.add(editor, {
+  const bookmark: Omit<BookmarkMeta, 'id'> = {
     color: choosedColor,
     fileUri: editor.document.uri,
     label: _label,
@@ -270,7 +272,9 @@ export async function toggleLineBookmark(
         after: {},
       },
     },
-  });
+  };
+  bookmark.rangesOrOptions.hoverMessage = createHoverMessage(bookmark, true);
+  BookmarksController.instance.add(editor, bookmark);
 
   updateDecorationsByEditor(editor);
 }
@@ -403,7 +407,7 @@ export async function quicklyJumpToBookmark() {
 }
 
 function appendMarkdown(
-  bookmark: BookmarkMeta,
+  bookmark: Omit<BookmarkMeta, 'id'>,
   markdownString: MarkdownString,
   showExtIcon: boolean = false
 ) {
@@ -432,7 +436,7 @@ function appendMarkdown(
  * @returns
  */
 export function createHoverMessage(
-  bookmark: BookmarkMeta,
+  bookmark: Omit<BookmarkMeta, 'id'>,
   showExtIcon: boolean = false
 ) {
   const {
