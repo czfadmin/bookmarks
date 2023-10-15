@@ -1,71 +1,24 @@
-# bookmarks README
-
-This is the README for your extension "bookmarks". After writing up a brief description, we recommend including the following sections.
+# bookmarks
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
-
-## Requirements
-
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- 单行书签切换
+- 选中内容设置标签
+- 书签装饰器以及自定义颜色高亮
+- 书签管理视图
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
 This extension contributes the following settings:
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+- `bookmarks.showGutterInOverviewRuler`: 是否在概览尺上显示`Gutter`图标.
+- `bookmarks.showTextDecoration`: 设置是否显示书签的文本装饰器.
+- `bookmarks.showGutterIcon`: 是否显示`gutter`图标.
 
-## Known Issues
+- `bookmarks.boldActiveLine`: 是否加粗激活的书签的内容文本.
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+- `bookmarks.colors`: 内置的颜色以及用户自定义书签颜色.
 
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+- `bookmarks.defaultBookmarkIconColor`: 设置默认的书签颜色.
 
 **Enjoy!**

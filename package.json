@@ -144,10 +144,15 @@
           "description": "Whether to display the gutter icon of the bookmark",
           "default": true
         },
-        "bookmarks.boldActiveLine": {
-          "type": "boolean",
-          "description": "Bold the line where the bookmark is located",
-          "default": false
+        "bookmarks.fontWeight": {
+          "type": "string",
+          "default": "bold",
+          "enum": [
+            "normal",
+            "bold",
+            "bolder",
+            "unset"
+          ]
         },
         "bookmarks.colors": {
           "type": "object",

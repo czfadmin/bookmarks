@@ -60,6 +60,8 @@ export type BookmarkStoreRootType = {
 export interface CreateDecorationOptions {
   showGutterIcon: boolean;
   showGutterInOverviewRuler: boolean;
+  showTextDecoration?: boolean;
+  fontWeight: 'normal' | 'bold' | 'bolder' | 'unset';
 }
 
 export type BookmarkDecorationKey = string | 'default';

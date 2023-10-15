@@ -39,6 +39,8 @@ export function initDecorations(context?: ExtensionContext) {
     showGutterIcon: configuration.get('showGutterIcon') || false,
     showGutterInOverviewRuler:
       configuration.get('showGutterInOverviewRuler') || false,
+    showTextDecoration: configuration.get('showTextDecoration'),
+    fontWeight: configuration.get('fontWeight') || 'bold',
   };
   Object.keys(colors).forEach((item) => {
     decorations[item] = createDecoration(item, options);
@@ -53,6 +55,13 @@ export function createDecoration(
   const colors = getAllColors();
   const color = colors[colorLabel];
   const gutterIconPath = svgToUri(createBookmarkIcon(color || defaultColor));
+  // 用户配置
+  const {
+    fontWeight,
+    showTextDecoration,
+    showGutterIcon,
+    showGutterInOverviewRuler,
+  } = options;
 
   // 初始化gutter 颜色
   gutters[colorLabel] = gutterIconPath;
@@ -60,21 +69,30 @@ export function createDecoration(
   let overviewRulerColor;
   let overviewRulerLane: OverviewRulerLane | undefined = undefined;
 
-  if (options.showGutterInOverviewRuler) {
+  if (showGutterInOverviewRuler) {
     overviewRulerColor = color;
     overviewRulerLane = OverviewRulerLane.Center;
   } else {
     overviewRulerColor = undefined;
   }
+  let _showGutterIfon = showGutterIcon;
+
+  if (!(showGutterIcon || showGutterInOverviewRuler || showTextDecoration)) {
+    window.showInformationMessage(
+      `'showGutterIcon', 'showGutterInOverviewRuler','showTextDecoration'不可以同时这只为'false'`
+    );
+    _showGutterIfon = true;
+  }
+
   const decoration = window.createTextEditorDecorationType({
-    gutterIconPath: options.showGutterIcon ? gutterIconPath : undefined,
+    gutterIconPath: _showGutterIfon ? gutterIconPath : undefined,
     rangeBehavior: DecorationRangeBehavior.ClosedClosed,
-    textDecoration: `underline ${color}`,
+    textDecoration: showTextDecoration ? `underline ${color}` : '',
     isWholeLine: false,
     borderRadius: '2px',
     borderColor: `${color}`,
     border: `0 solid ${color}`,
-    fontWeight: 'bold',
+    fontWeight,
     overviewRulerLane,
     overviewRulerColor,
     after: {
