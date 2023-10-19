@@ -11,6 +11,7 @@ export type LineBookmarkContext =
 export interface BookmarkMeta {
   id: string;
   fileUri: Uri;
+  type: 'line' | 'selection';
   color: BookmarkColor;
   selection: Selection;
   label?: string;
@@ -61,6 +62,7 @@ export interface CreateDecorationOptions {
   showGutterIcon: boolean;
   showGutterInOverviewRuler: boolean;
   showTextDecoration?: boolean;
+  alwaysUseDefaultColor?: boolean;
   fontWeight: 'normal' | 'bold' | 'bolder' | 'unset';
 }
 

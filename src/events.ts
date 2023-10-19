@@ -2,13 +2,14 @@ import { Disposable, commands, debug, window, workspace } from 'vscode';
 
 import { updateDecorationsByEditor } from './decorations';
 import { EXTENSION_ID } from './constants';
+import { BookmarksController } from './controllers/BookmarksController';
 
 let onDidChangeActiveTextEditor: Disposable | undefined;
 let onDidChangeVisibleTextEditors: Disposable | undefined;
 let onDidSaveTextDocumentDisposable: Disposable | undefined;
 let onDidCursorChangeDisposable: Disposable | undefined;
 let onDidChangeBreakpoints: Disposable | undefined;
-
+let onDidChangeTextDocumentDisposable: Disposable | undefined;
 export function updateChangeActiveTextEditorListener() {
   onDidChangeActiveTextEditor?.dispose();
   // 当打开多个editor group时,更新每个editor的中的decorations
@@ -48,26 +49,50 @@ export function updateSaveTextDocumentListener() {
 export function updateCursorChangeListener() {
   onDidCursorChangeDisposable?.dispose();
   let lastPositionLine = -1;
-  onDidCursorChangeDisposable = window.onDidChangeTextEditorSelection((ev) => {
-    const { kind } = ev;
-    const section = ev.selections[0];
-    if (ev.selections.length === 1 && section.isEmpty && section.isSingleLine) {
-      // logger.info(
-      //   'singleLine',
-      //   ev.selections,
-      //   ev.textEditor.document.getText(ev.selections[0])
-      // );
-      // TODO: 更新bookmark的位置
-    }
+  // onDidCursorChangeDisposable = window.onDidChangeTextEditorSelection((ev) => {
+  //   const { kind } = ev;
+  //   const section = ev.selections[0];
+  //   if (ev.selections.length === 1 && section.isEmpty && section.isSingleLine) {
+  //     // logger.info(
+  //     //   'singleLine',
+  //     //   ev.selections,
+  //     //   ev.textEditor.document.getText(ev.selections[0])
+  //     // );
+  //     // TODO: 更新bookmark的位置
+  //   }
 
-    if (!ev.textEditor.document.isUntitled) {
-      const cursorPos = ev.selections[0].active;
-      if (cursorPos.character === 0) {
-        commands.executeCommand(
-          'setContext',
-          `${EXTENSION_ID}.currentLineHasBookmark`,
-          false
-        );
+  //   if (!ev.textEditor.document.isUntitled) {
+  //     const cursorPos = ev.selections[0].active;
+  //     if (cursorPos.character === 0) {
+  //       commands.executeCommand(
+  //         'setContext',
+  //         `${EXTENSION_ID}.currentLineHasBookmark`,
+  //         false
+  //       );
+  //     }
+  //   }
+  // });
+}
+
+export function updateBookmarkInfoWhenTextChangeListener() {
+  onDidChangeTextDocumentDisposable?.dispose();
+  onDidChangeTextDocumentDisposable = workspace.onDidChangeTextDocument((e) => {
+    const { contentChanges, document, reason } = e;
+
+    // 代表存在文档发生变化
+    if (contentChanges.length) {
+      const bookmarkStore =
+        BookmarksController.instance.getBookmarkStoreByFileUri(document.uri);
+      let change;
+      for (let change of contentChanges) {
+        // 表示换行
+        if (/\r\n(\s.*?)/.test(change.text)) {
+          console.log('换行了: ', change);
+        }
+
+        if (/(\s.*?)/.test(change.text)) {
+          console.log('增加空格', change);
+        }
       }
     }
   });
@@ -84,4 +109,5 @@ export function disablAllEvents() {
   onDidCursorChangeDisposable?.dispose();
   onDidSaveTextDocumentDisposable?.dispose();
   onDidChangeVisibleTextEditors?.dispose();
+  onDidChangeTextDocumentDisposable?.dispose();
 }

@@ -39,6 +39,7 @@ export function initDecorations(context?: ExtensionContext) {
     showGutterIcon: configuration.get('showGutterIcon') || false,
     showGutterInOverviewRuler:
       configuration.get('showGutterInOverviewRuler') || false,
+    alwaysUseDefaultColor: configuration.get('alwaysUseDefaultColor') || false,
     showTextDecoration: configuration.get('showTextDecoration'),
     fontWeight: configuration.get('fontWeight') || 'bold',
   };
@@ -53,7 +54,7 @@ export function createDecoration(
   defaultColor: string = DEFAULT_BOOKMARK_COLOR
 ) {
   const colors = getAllColors();
-  const color = colors[colorLabel];
+  let color = colors[colorLabel];
   const gutterIconPath = svgToUri(createBookmarkIcon(color || defaultColor));
   // 用户配置
   const {
@@ -61,6 +62,7 @@ export function createDecoration(
     showTextDecoration,
     showGutterIcon,
     showGutterInOverviewRuler,
+    alwaysUseDefaultColor,
   } = options;
 
   // 初始化gutter 颜色
@@ -82,6 +84,10 @@ export function createDecoration(
       `'showGutterIcon', 'showGutterInOverviewRuler','showTextDecoration'不可以同时这只为'false'`
     );
     _showGutterIfon = true;
+  }
+
+  if (alwaysUseDefaultColor) {
+    color = colors.default;
   }
 
   const decoration = window.createTextEditorDecorationType({

@@ -18,7 +18,8 @@ import {
 } from '../decorations';
 import { getAllColors } from '../configurations';
 import gutters from '../gutter';
-import { BookmarkMeta, LineBookmarkContext } from '../types';
+import { BookmarkMeta, BookmarkStoreType, LineBookmarkContext } from '../types';
+import { DEFAULT_BOOKMARK_COLOR } from '../constants';
 
 /**
  * 检查当前行是否存在标签
@@ -54,6 +55,17 @@ export function checkIfBookmarkIsInGivenSelection(
     }
   }
   return false;
+}
+
+/**
+ * 检查给定的editor中是否存在书签
+ * @param editor
+ */
+export function checkIfBookmarksIsInCurrentEditor(editor: TextEditor) {
+  const bookmarkStore = BookmarksController.instance.getBookmarkStoreByFileUri(
+    editor.document.uri
+  );
+  return bookmarkStore && bookmarkStore.bookmarks.length;
 }
 
 /**
@@ -172,59 +184,39 @@ export function editBookmarkDescription(bookmark: BookmarkMeta, memo: string) {
 
 /**
  * 开启选择区域的书签,并包含标签
- * @param input
+ * @param label
  * @returns
  */
-export async function toggleBookmarksWithSelections(input: string) {
-  const editor = window.activeTextEditor;
-  if (!editor) {
-    return;
-  }
-  const range = editor.selection;
-  if (range.isEmpty) {
-    window.showInformationMessage('所选内容不可以为空,请重新操作!');
-    return;
-  }
-
-  const color = await chooseBookmarkColor();
-  if (!color) {
-    return;
-  }
-
-  const bookmark: Omit<BookmarkMeta, 'id'> = {
-    selection: range,
-    label: input,
-    selectionContent: editor.document.getText(range).trim(),
-    color,
-    fileUri: editor.document.uri,
-    languageId: editor.document.languageId,
-    rangesOrOptions: {
-      range: range,
-      hoverMessage: '',
-      renderOptions: {},
-    },
-  };
-  bookmark.rangesOrOptions.hoverMessage = createHoverMessage(bookmark, true);
-  BookmarksController.instance.add(editor, bookmark);
-  updateDecorationsByEditor(editor);
+export async function toggleBookmarksWithSelections(label: string) {
+  toggleBookmark(undefined, {
+    type: 'selection',
+    label,
+  });
 }
 
 /**
- * 开启当前行的行书签
+ * 开启行书签
  * @param level
+ * @param extra 额外信息
  * @returns
  */
-export async function toggleLineBookmark(
-  context: LineBookmarkContext,
-  label?: string
+export async function toggleBookmark(
+  context: LineBookmarkContext | undefined,
+  extra: {
+    type: 'line' | 'selection';
+    label?: string;
+    withColor?: boolean;
+  }
 ) {
   const editor = window.activeTextEditor;
   if (!editor) {
     return;
   }
+
   if (editor.document.isUntitled) {
     return;
   }
+
   if (!BookmarksController.instance) {
     return;
   }
@@ -236,35 +228,57 @@ export async function toggleLineBookmark(
     const line = editor.document.lineAt(lineNumber - 1);
     selection = getSelectionFromLine(line);
   }
+
   if (!selection) {
     return;
   }
 
-  const line = editor.document.lineAt(selection.active.line);
-  const _label = label || line.text.trim();
+  const { type: bookmarkType, label: _label, withColor = false } = extra;
 
-  const startPos = line.text.indexOf(line.text.trim());
-  const range = new Selection(
-    line.lineNumber,
-    startPos,
-    line.lineNumber,
-    line.range.end.character
-  );
+  let label, range, selectionContent;
+  if (bookmarkType === 'line') {
+    const line = editor.document.lineAt(selection.active.line);
+    const startPos = line.text.indexOf(line.text.trim());
+    range = new Selection(
+      line.lineNumber,
+      startPos,
+      line.lineNumber,
+      line.range.end.character
+    );
+    label = _label || line.text.trim();
+    selectionContent = line.text.trim();
+  } else {
+    label = _label;
+    range = editor.selection;
+    if (range.isEmpty) {
+      return;
+    }
+    selectionContent = editor.document.getText(range);
+  }
 
-  if (checkIfBookmarkIsInGivenSelection(editor, range)) {
+  if (
+    bookmarkType === 'line' &&
+    checkIfBookmarkIsInGivenSelection(editor, range)
+  ) {
     return;
   }
-  const choosedColor = await chooseBookmarkColor();
-  if (!choosedColor) {
-    return;
+
+  let choosedColor: string | undefined = getAllColors().default;
+  if (withColor) {
+    choosedColor = await chooseBookmarkColor();
+    if (!choosedColor) {
+      return;
+    }
   }
 
   const bookmark: Omit<BookmarkMeta, 'id'> = {
-    color: choosedColor,
-    fileUri: editor.document.uri,
+    type: bookmarkType,
     label: _label,
+    color: choosedColor,
     selection: range,
-    selectionContent: line.text.trim(),
+    fileUri: editor.document.uri,
+    languageId: editor.document.languageId,
+    selectionContent,
     rangesOrOptions: {
       range,
       hoverMessage: '',
@@ -273,12 +287,16 @@ export async function toggleLineBookmark(
       },
     },
   };
+
   bookmark.rangesOrOptions.hoverMessage = createHoverMessage(bookmark, true);
   BookmarksController.instance.add(editor, bookmark);
-
   updateDecorationsByEditor(editor);
 }
-
+/**
+ * 删除行标签
+ * @param context
+ * @returns
+ */
 export function deleteLineBookmark(context: LineBookmarkContext) {
   if (!context) {
     return;
@@ -327,6 +345,7 @@ export function getSelectionFromLine(
     new Position(line.lineNumber, endPos)
   );
 }
+
 /**
  * 用户所选择的颜色
  * @returns 用户选取的颜色

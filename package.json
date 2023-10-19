@@ -29,6 +29,12 @@
         "category": "Bookmarks"
       },
       {
+        "command": "bookmarks.toggleLineBookmarkWithColor",
+        "title": "Toggle line bookmark with color",
+        "icon": "$(bookmark)",
+        "category": "Bookmarks"
+      },
+      {
         "command": "bookmarks.toggleBookmarkWithSelections",
         "title": "Toggle bookmark with selections",
         "icon": "$(bookmark)",
@@ -37,6 +43,12 @@
       {
         "command": "bookmarks.bookmarkEditDescription",
         "title": "Edit description",
+        "icon": "$(bookmark)",
+        "category": "Bookmarks"
+      },
+      {
+        "command": "bookmarks.clearAllBookmarksInCurrentFile",
+        "title": "Clear all bookmarks in current file",
         "icon": "$(bookmark)",
         "category": "Bookmarks"
       },
@@ -127,6 +139,11 @@
         "bookmarks.showGutterInOverviewRuler": {
           "type": "boolean",
           "description": "Whether to display the corresponding position of the bookmark on the overview ruler",
+          "default": false
+        },
+        "bookmarks.alwaysUseDefaultColor": {
+          "type": "boolean",
+          "description": "一直使用默认的颜色装饰书签图标",
           "default": false
         },
         "bookmarks.onlyShowFilename": {

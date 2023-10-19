@@ -9,6 +9,7 @@ import {
 } from './decorations';
 import {
   disablAllEvents,
+  updateBookmarkInfoWhenTextChangeListener,
   updateChangeActiveTextEditorListener,
   updateChangeBreakpointsListener,
   updateChangeVisibleTextEidtorsListener,
@@ -39,6 +40,7 @@ export function activate(context: vscode.ExtensionContext) {
   updateChangeVisibleTextEidtorsListener();
   updateCursorChangeListener();
   updateSaveTextDocumentListener();
+  updateBookmarkInfoWhenTextChangeListener();
 }
 
 function updateEverything(context: vscode.ExtensionContext) {
@@ -49,6 +51,7 @@ function updateEverything(context: vscode.ExtensionContext) {
   updateCursorChangeListener();
   updateSaveTextDocumentListener();
   updateActiveEditorAllDecorations();
+  updateBookmarkInfoWhenTextChangeListener();
   BookmarksController.instance.refresh();
 }
 

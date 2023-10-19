@@ -1,6 +1,10 @@
 import * as vscode from 'vscode';
 import { EXTENSION_ID } from '../constants';
-import { BookmarkMeta, BookmarkStoreRootType } from '../types';
+import {
+  BookmarkMeta,
+  BookmarkStoreRootType,
+  BookmarkStoreType,
+} from '../types';
 import { createID } from '../utils';
 import { createHoverMessage } from '../utils/bookmark';
 
@@ -142,7 +146,9 @@ export class BookmarksController {
     return this.datasource.data[idx].bookmarks.find((it) => it.id === id);
   }
 
-  getBookmarkStoreByFileUri(fileUri: vscode.Uri) {
+  getBookmarkStoreByFileUri(
+    fileUri: vscode.Uri
+  ): BookmarkStoreType | undefined {
     const idx = this.datasource.data.findIndex(
       (it) => it.id === fileUri.fsPath
     );
@@ -180,11 +186,14 @@ export class BookmarksController {
     if (!this.datasource.data.length) {
       return;
     }
-    const idx = this.datasource.data.findIndex((it) => it.fileUri === fileUri);
+    const idx = this.datasource.data.findIndex(
+      (it) => it.id === fileUri.fsPath
+    );
     if (idx === -1) {
       return;
     }
     this.datasource.data.splice(idx, 1);
+    this.save();
     this.refresh();
   }
 
