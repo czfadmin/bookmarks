@@ -19,12 +19,11 @@ import {
 import { getAllColors } from '../configurations';
 import gutters from '../gutter';
 import { BookmarkMeta, BookmarkStoreType, LineBookmarkContext } from '../types';
-import { DEFAULT_BOOKMARK_COLOR } from '../constants';
 
 /**
- * 检查当前行是否存在标签
+ * 检查当前行是否存在标签, 并移除对应标签
  */
-export function checkIfBookmarkIsInGivenSelection(
+export function checkIfBookmarkIsInGivenSelectionAndRemove(
   editor: TextEditor | undefined,
   range: Range
 ) {
@@ -69,13 +68,14 @@ export function checkIfBookmarksIsInCurrentEditor(editor: TextEditor) {
 }
 
 /**
- * 从当前的行或者选取筛选出书签
- * @param editor
+ * 从当前的行或者选择区域筛选出书签
+ * @param bookmarkStore {BookmarkStoreType}
+ * @param ranges {Range[]}
  */
-export function getBookmarkFromSelection(editor: TextEditor, ranges: Range[]) {
-  const bookmarkStore = BookmarksController.instance.getBookmarkStoreByFileUri(
-    editor.document.uri
-  );
+export function getBookmarkFromSelection(
+  bookmarkStore: BookmarkStoreType | undefined,
+  ranges: Range[]
+): BookmarkMeta | undefined {
   if (bookmarkStore) {
     const existedBookmaks = bookmarkStore.bookmarks;
     let item;
@@ -83,7 +83,42 @@ export function getBookmarkFromSelection(editor: TextEditor, ranges: Range[]) {
       for (item of existedBookmaks) {
         let range: Range;
         for (range of ranges) {
-          if (range.isEqual(item.selection)) {
+          if (item.type === 'line' && range.isEqual(item.selection)) {
+            throw new Error(item.id);
+          }
+          if (item.type === 'selection' && item.selection.contains(range)) {
+            throw new Error(item.id);
+          }
+        }
+      }
+    } catch (error) {
+      const _bookmark = existedBookmaks.find(
+        (it) => it.id === (error as any).message
+      );
+      if (_bookmark) {
+        return _bookmark;
+      }
+    }
+  }
+}
+
+/**
+ * 从当前选中区域选取筛选出书签
+ * @param bookmarkStore {BookmarkStoreType}
+ * @param ranges {Range[]}
+ */
+export function getBookmarkFromRanges(
+  bookmarkStore: BookmarkStoreType | undefined,
+  ranges: Range[]
+): BookmarkMeta | undefined {
+  if (bookmarkStore) {
+    const existedBookmaks = bookmarkStore.bookmarks;
+    let item;
+    try {
+      for (item of existedBookmaks) {
+        let range: Range;
+        for (range of ranges) {
+          if (item.selection.contains(range)) {
             throw new Error(item.id);
           }
         }
@@ -236,19 +271,19 @@ export async function toggleBookmark(
   const { type: bookmarkType, label: _label, withColor = false } = extra;
 
   let label, range, selectionContent;
+  const activedLine = editor.document.lineAt(selection.active.line);
+  label = _label || activedLine.text.trim();
   if (bookmarkType === 'line') {
-    const line = editor.document.lineAt(selection.active.line);
-    const startPos = line.text.indexOf(line.text.trim());
+    const startPos = activedLine.text.indexOf(activedLine.text.trim());
     range = new Selection(
-      line.lineNumber,
+      activedLine.lineNumber,
       startPos,
-      line.lineNumber,
-      line.range.end.character
+      activedLine.lineNumber,
+      activedLine.range.end.character
     );
-    label = _label || line.text.trim();
-    selectionContent = line.text.trim();
+
+    selectionContent = activedLine.text.trim();
   } else {
-    label = _label;
     range = editor.selection;
     if (range.isEmpty) {
       return;
@@ -258,7 +293,7 @@ export async function toggleBookmark(
 
   if (
     bookmarkType === 'line' &&
-    checkIfBookmarkIsInGivenSelection(editor, range)
+    checkIfBookmarkIsInGivenSelectionAndRemove(editor, range)
   ) {
     return;
   }
@@ -273,7 +308,7 @@ export async function toggleBookmark(
 
   const bookmark: Omit<BookmarkMeta, 'id'> = {
     type: bookmarkType,
-    label: _label,
+    label,
     color: choosedColor,
     selection: range,
     fileUri: editor.document.uri,
@@ -319,7 +354,10 @@ export function deleteLineBookmark(context: LineBookmarkContext) {
     )
   );
   // 获取当前行所在的`bookmark`信息
-  const bookmark = getBookmarkFromSelection(editor, ranges);
+  const bookmark = getBookmarkFromSelection(
+    BookmarksController.instance.getBookmarkStoreByFileUri(doc.uri),
+    ranges
+  );
   if (!bookmark) {
     return;
   }

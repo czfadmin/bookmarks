@@ -1,8 +1,8 @@
-import { Disposable, commands, debug, window, workspace } from 'vscode';
+import { Disposable, debug, window, workspace } from 'vscode';
 
 import { updateDecorationsByEditor } from './decorations';
-import { EXTENSION_ID } from './constants';
 import { BookmarksController } from './controllers/BookmarksController';
+import { getBookmarkFromRanges } from './utils/bookmark';
 
 let onDidChangeActiveTextEditor: Disposable | undefined;
 let onDidChangeVisibleTextEditors: Disposable | undefined;
@@ -83,8 +83,11 @@ export function updateBookmarkInfoWhenTextChangeListener() {
     if (contentChanges.length) {
       const bookmarkStore =
         BookmarksController.instance.getBookmarkStoreByFileUri(document.uri);
-      let change;
+      if (!bookmarkStore) return;
+      console.log(contentChanges.length, contentChanges);
       for (let change of contentChanges) {
+        const bookmark = getBookmarkFromRanges(bookmarkStore, [change.range]);
+        if (!bookmark) return;
         // 表示换行
         if (/\r\n(\s.*?)/.test(change.text)) {
           console.log('换行了: ', change);
