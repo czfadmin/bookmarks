@@ -87,15 +87,25 @@ export function updateBookmarkInfoWhenTextChangeListener() {
       console.log(contentChanges.length, contentChanges);
       for (let change of contentChanges) {
         const bookmark = getBookmarkFromRanges(bookmarkStore, [change.range]);
-        if (!bookmark) return;
+        if (!bookmark) {
+          // TODO: 1. 在存在是否在书签的上方发生了改动 ,如果是的话, 更新在当前range改动下方的书签选区; 2. 在下方的时候不用草最
+          // TODO: 1. 删除行 2. 删除 某些选择区域; 3. 新增.
+          // TODO: 1. 删除书签所在行, 删除行书签 2. 删除区域书签的部分或者全部区域, 删除当前所涉及的区域的 区域书签
+          continue;
+        }
+        // 当前编辑的地方命中书签的区域中
         // 表示换行
         if (/\r\n(\s.*?)/.test(change.text)) {
           console.log('换行了: ', change);
+          // TODO: 如果是行书签 将 行书签转换成 区域标签; 如果是在区域书签中的range中, 扩大 区域书签的 selection
         }
-
+        // 判断在行中进行编辑, 将当前行的书签range 重新设置当前行
         if (/(\s.*?)/.test(change.text)) {
           console.log('增加空格', change);
+          // TODO: 如果行书签, 重新选择当前行
         }
+
+        // TODO: 1. 删除书签所在行, 删除行书签 2. 删除区域书签的部分或者全部区域, 删除当前区域书签的所涉及的区域的选区
       }
     }
   });
