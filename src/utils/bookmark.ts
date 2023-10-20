@@ -10,6 +10,9 @@ import {
   workspace,
   TextLine,
   MarkdownString,
+  TextDocumentContentChangeEvent,
+  TextDocument,
+  TextDocumentChangeEvent,
 } from 'vscode';
 import { BookmarksController } from '../controllers/BookmarksController';
 import {
@@ -89,6 +92,69 @@ export function getBookmarkFromCurrentActivedLine(): BookmarkMeta | undefined {
   );
 
   return getBookmarkFromSelection(store, [range]);
+}
+
+/**
+ * 从当前编辑的行号获取当前位置存在的书签
+ */
+export function getBookmarkFromLineNumber(
+  store?: BookmarkStoreType
+): BookmarkMeta | undefined {
+  const editor = window.activeTextEditor;
+  if (!editor) return;
+
+  let _store = store;
+  if (!_store) {
+    _store = BookmarksController.instance.getBookmarkStoreByFileUri(
+      editor.document.uri
+    );
+  }
+  if (!store) return;
+
+  const lineNumber = editor.selection.active.line;
+  let bookmark;
+  const bookmarks = store.bookmarks;
+  try {
+    for (bookmark of bookmarks) {
+      if (bookmark.selection.active.line === lineNumber) {
+        throw new Error(bookmark.id);
+      }
+    }
+  } catch (error) {
+    const id = (error as any).message;
+    return bookmarks.find((it) => it.id === id);
+  }
+}
+
+/**
+ * 从当前编辑的行号获取当前位置存在的书签
+ * @param store {BookmarkStoreType | undefined}
+ * @returns  返回书签列表或者 `undefined`
+ */
+export function getBookmarksBelowChangedLine(
+  store?: BookmarkStoreType
+): BookmarkMeta[] | undefined {
+  const editor = window.activeTextEditor;
+  if (!editor) return;
+
+  let _store = store;
+  if (!_store) {
+    _store = BookmarksController.instance.getBookmarkStoreByFileUri(
+      editor.document.uri
+    );
+  }
+  if (!store) return;
+
+  const lineNumber = editor.selection.active.line;
+  const bookmarks = store.bookmarks
+    .map((it) => ({
+      ...it,
+      startLine: it.selection.start.line,
+      endLine: it.selection.end.line,
+    }))
+    .sort((a, b) => a.startLine - b.startLine);
+
+  return bookmarks.filter((it) => it.startLine > lineNumber);
 }
 
 /**
@@ -498,30 +564,6 @@ export async function quicklyJumpToBookmark() {
   gotoSourceLocation(choosedBookmarks.meta);
 }
 
-function appendMarkdown(
-  bookmark: Omit<BookmarkMeta, 'id'>,
-  markdownString: MarkdownString,
-  showExtIcon: boolean = false
-) {
-  if (bookmark.label) {
-    markdownString.appendMarkdown(
-      `### ${showExtIcon ? `$(bookmark~sync) Bookmarks\n#### ` : ''}${
-        bookmark.label
-      }`
-    );
-  }
-  if (bookmark.description) {
-    markdownString.appendMarkdown(`\n${bookmark.description} `);
-  }
-  if (bookmark.selectionContent) {
-    markdownString.appendMarkdown(
-      `\n\`\`\`${bookmark.languageId || 'javascript'} \n${
-        bookmark.selectionContent
-      }\n\`\`\``
-    );
-  }
-}
-
 /**
  * 创建`hoverMessage`
  * @param bookmark
@@ -550,3 +592,111 @@ export function createHoverMessage(
   }
   return markdownString;
 }
+
+function appendMarkdown(
+  bookmark: Omit<BookmarkMeta, 'id'>,
+  markdownString: MarkdownString,
+  showExtIcon: boolean = false
+) {
+  if (bookmark.label) {
+    markdownString.appendMarkdown(
+      `### ${showExtIcon ? `$(bookmark~sync) Bookmarks\n#### ` : ''}${
+        bookmark.label
+      }`
+    );
+  }
+  if (bookmark.description) {
+    markdownString.appendMarkdown(`\n${bookmark.description} `);
+  }
+  if (bookmark.selectionContent) {
+    markdownString.appendMarkdown(
+      `\n\`\`\`${bookmark.languageId || 'javascript'} \n${
+        bookmark.selectionContent
+      }\n\`\`\``
+    );
+  }
+}
+
+export function updateBookmarksGroupByChangedLine(
+  store: BookmarkStoreType,
+  event: TextDocumentChangeEvent,
+  change: TextDocumentContentChangeEvent
+) {
+  const { document } = event;
+
+  const bookmarkInCurrentLine = getBookmarkFromLineNumber(store);
+  // 1. 当发生改变的区域存在行书签
+  if (bookmarkInCurrentLine) {
+    // 发生改变的行
+    const changedLine = document.lineAt(change.range.start.line);
+    // 当前所在行的位置
+    const range = new Selection(
+      new Position(
+        changedLine.lineNumber,
+        changedLine.text.indexOf(changedLine.text.trim())
+      ),
+      new Position(changedLine.lineNumber, changedLine.range.end.character)
+    );
+    // 更新当前行的书签信息
+    BookmarksController.instance.update(bookmarkInCurrentLine, {
+      selection: range,
+      selectionContent: changedLine.text.trim(),
+      rangesOrOptions: {
+        ...bookmarkInCurrentLine.rangesOrOptions,
+        range,
+        hoverMessage: createHoverMessage(bookmarkInCurrentLine, true, true),
+      },
+    });
+    // TODO: 当前行存在行书签, 进行回车, 转换成区域书签,后续可能删除之前新增的行, 重新计算 range
+    return;
+  }
+
+  // 2. 当前所发生改变的change 不存在书签 1> 发生改变的行下方的书签, 回车, 新增 , 以及删除
+  const bookmarksBlowChangedLine = getBookmarksBelowChangedLine(store);
+  if (bookmarksBlowChangedLine && bookmarksBlowChangedLine.length) {
+    console.log(bookmarksBlowChangedLine);
+    let bookmark, range;
+    for (bookmark of bookmarksBlowChangedLine) {
+      range = bookmark.rangesOrOptions.range;
+      // TODO: 判断 文档改变的类型,是新增还是删除
+      range = new Selection(
+        new Position(range.start.line + 1, range.start.character),
+        new Position(range.end.line + 1, range.end.character)
+      );
+
+      // 更新当前行的书签信息
+      updateLineBookmarkRangeWhenDocumentChange(bookmark, {
+        range,
+        selectionContent: bookmark.selectionContent,
+      });
+    }
+  }
+}
+export function updateLineBookmarkRangeWhenDocumentChange(
+  bookmark: any,
+  dto: any
+) {
+  const { range, selectionContent } = dto;
+  // 更新当前行的书签信息
+  BookmarksController.instance.update(bookmark, {
+    selection: range,
+    selectionContent,
+    rangesOrOptions: {
+      ...bookmark.rangesOrOptions,
+      range,
+      hoverMessage: createHoverMessage(bookmark, true, true),
+    },
+  });
+}
+/**
+ * TODO: 当change关联区域标签
+ * @param store
+ * @param extra
+ */
+export function updateBookmarksBySelection(
+  store: BookmarkStoreType,
+  extra: {
+    event: TextDocumentChangeEvent;
+    change: TextDocumentContentChangeEvent;
+  }
+) {}

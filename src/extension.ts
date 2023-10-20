@@ -13,7 +13,6 @@ import {
   updateChangeActiveTextEditorListener,
   updateChangeBreakpointsListener,
   updateChangeVisibleTextEidtorsListener,
-  updateCursorChangeListener,
   updateSaveTextDocumentListener,
 } from './events';
 import { BookmarksController } from './controllers/BookmarksController';
@@ -38,7 +37,6 @@ export function activate(context: vscode.ExtensionContext) {
   updateChangeActiveTextEditorListener();
   updateChangeBreakpointsListener();
   updateChangeVisibleTextEidtorsListener();
-  updateCursorChangeListener();
   updateSaveTextDocumentListener();
   updateBookmarkInfoWhenTextChangeListener();
 }
@@ -48,7 +46,6 @@ function updateEverything(context: vscode.ExtensionContext) {
   updateChangeActiveTextEditorListener();
   updateChangeBreakpointsListener();
   updateChangeVisibleTextEidtorsListener();
-  updateCursorChangeListener();
   updateSaveTextDocumentListener();
   updateActiveEditorAllDecorations();
   updateBookmarkInfoWhenTextChangeListener();

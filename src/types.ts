@@ -19,6 +19,7 @@ export interface BookmarkMeta {
   description?: string;
   languageId?: string;
   rangesOrOptions: DecorationOptions;
+
 }
 
 /**
