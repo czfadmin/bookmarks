@@ -25,6 +25,8 @@ import {
   quicklyJumpToBookmark,
   toggleBookmarksWithSelections,
   toggleBookmark,
+  getBookmarkFromCurrentActivedLine,
+  editBookmarkLabel,
 } from './utils/bookmark';
 import { BookmarksTreeItem } from './providers/BookmarksTreeProvider';
 
@@ -113,13 +115,17 @@ export function registerCommands(context: ExtensionContext) {
         title:
           'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
       })
-      .then((input) => {
-        if (!input) {
+      .then((label) => {
+        if (!label) {
           return;
         }
         if (args.contextValue === 'item') {
-          BookmarksController.instance.editLabel(args.meta, input);
+          editBookmarkLabel(args.meta, label);
+          return;
         }
+        let bookmark = getBookmarkFromCurrentActivedLine();
+        if (!bookmark) return;
+        editBookmarkLabel(bookmark, label);
       });
   });
 
@@ -127,6 +133,7 @@ export function registerCommands(context: ExtensionContext) {
   registerCommand(context, CMD_GO_TO_SOURCE_LOCATION, (args) => {
     gotoSourceLocation(args.meta);
   });
+
   // 为选中的区域增加书签
   registerCommand(context, CMD_TOGGLE_BOOKMARK_WITH_SECTIONS, (args) => {
     window
@@ -135,14 +142,15 @@ export function registerCommands(context: ExtensionContext) {
         title:
           'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
       })
-      .then((input) => {
-        if (!input) {
+      .then((label) => {
+        if (!label) {
           return;
         }
 
-        toggleBookmarksWithSelections(input);
+        toggleBookmarksWithSelections(label);
       });
   });
+
   // 为书签增加备注信息
   registerCommand(context, CMD_BOOKMARK_ADD_MORE_MEMO, (args) => {
     window
@@ -151,12 +159,12 @@ export function registerCommands(context: ExtensionContext) {
         title:
           'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
       })
-      .then((input) => {
-        if (!input) {
+      .then((description) => {
+        if (!description) {
           return;
         }
 
-        editBookmarkDescription(args.meta, input);
+        editBookmarkDescription(args.meta, description);
       });
   });
 

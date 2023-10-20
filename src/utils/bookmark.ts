@@ -68,6 +68,30 @@ export function checkIfBookmarksIsInCurrentEditor(editor: TextEditor) {
 }
 
 /**
+ * 从当前行获取书签,如果存在返回书签, 反之undefined
+ * @returns
+ */
+export function getBookmarkFromCurrentActivedLine(): BookmarkMeta | undefined {
+  const editor = window.activeTextEditor;
+  if (!editor) return;
+
+  const store = BookmarksController.instance.getBookmarkStoreByFileUri(
+    editor.document.uri
+  );
+  if (!store) return;
+  const lineNumber = editor.selection.active.line;
+  const line = editor.document.lineAt(lineNumber);
+  const range = new Selection(
+    line.lineNumber,
+    line.text.indexOf(line.text.trim()),
+    line.lineNumber,
+    line.range.end.character
+  );
+
+  return getBookmarkFromSelection(store, [range]);
+}
+
+/**
  * 从当前的行或者选择区域筛选出书签
  * @param bookmarkStore {BookmarkStoreType}
  * @param ranges {Range[]}
@@ -210,9 +234,20 @@ export async function openDocumentAndGotoLocation(fileUri: Uri, range: Range) {
  * @param memo
  */
 export function editBookmarkDescription(bookmark: BookmarkMeta, memo: string) {
+  bookmark.description = memo;
   BookmarksController.instance.update(bookmark, {
     description: memo,
+    rangesOrOptions: {
+      ...bookmark.rangesOrOptions,
+      hoverMessage: createHoverMessage(bookmark, true, true),
+    },
   });
+  updateActiveEditorAllDecorations();
+  BookmarksController.instance.refresh();
+}
+
+export function editBookmarkLabel(bookmark: BookmarkMeta, label: string) {
+  BookmarksController.instance.editLabel(bookmark, label);
   updateActiveEditorAllDecorations();
   BookmarksController.instance.refresh();
 }
@@ -494,12 +529,15 @@ function appendMarkdown(
  */
 export function createHoverMessage(
   bookmark: Omit<BookmarkMeta, 'id'>,
-  showExtIcon: boolean = false
+  showExtIcon: boolean = false,
+  isRestore: boolean = false
 ) {
   const {
     rangesOrOptions: { hoverMessage: _hoverMessage },
   } = bookmark;
-  let markdownString = _hoverMessage || new MarkdownString('', true);
+  let markdownString = isRestore
+    ? new MarkdownString('', true)
+    : _hoverMessage || new MarkdownString('', true);
   if (Array.isArray(markdownString)) {
     const _markdownString = new MarkdownString('', true);
     appendMarkdown(bookmark, _markdownString, showExtIcon);

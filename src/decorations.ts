@@ -17,7 +17,7 @@ import {
 import { BookmarksController } from './controllers/BookmarksController';
 import { createBookmarkIcon, svgToUri } from './utils/icon';
 import logger from './utils/logger';
-import { DEFAULT_BOOKMARK_COLOR, EXTENSION_ID } from './constants';
+import { DEFAULT_BOOKMARK_COLOR } from './constants';
 import { getAllColors, getConfiguration } from './configurations';
 import gutters from './gutter';
 

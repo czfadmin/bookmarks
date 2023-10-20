@@ -208,7 +208,15 @@ export class BookmarksController {
    * @param label
    */
   editLabel(bookmark: BookmarkMeta, label: string) {
-    this.update(bookmark, { label });
+    bookmark.label = label;
+
+    this.update(bookmark, {
+      label,
+      rangesOrOptions: {
+        ...bookmark.rangesOrOptions,
+        hoverMessage: createHoverMessage(bookmark, true, true),
+      },
+    });
   }
 
   refresh() {
