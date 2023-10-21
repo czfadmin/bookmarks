@@ -11,7 +11,6 @@ import {
   TextLine,
   MarkdownString,
   TextDocumentContentChangeEvent,
-  TextDocument,
   TextDocumentChangeEvent,
 } from 'vscode';
 import { BookmarksController } from '../controllers/BookmarksController';
@@ -98,7 +97,8 @@ export function getBookmarkFromCurrentActivedLine(): BookmarkMeta | undefined {
  * 从当前编辑的行号获取当前位置存在的书签
  */
 export function getBookmarkFromLineNumber(
-  store?: BookmarkStoreType
+  store?: BookmarkStoreType,
+  line?: number
 ): BookmarkMeta | undefined {
   const editor = window.activeTextEditor;
   if (!editor) return;
@@ -111,12 +111,19 @@ export function getBookmarkFromLineNumber(
   }
   if (!store) return;
 
-  const lineNumber = editor.selection.active.line;
+  const lineNumber = line || editor.selection.active.line;
   let bookmark;
-  const bookmarks = store.bookmarks;
+  const bookmarks = store.bookmarks.map((it) => ({
+    ...it,
+    startLine: it.selection.start.line,
+    endLine:
+      it.selection.end.line > it.selection.start.line
+        ? it.selection.end.line
+        : it.selection.start.line,
+  }));
   try {
     for (bookmark of bookmarks) {
-      if (bookmark.selection.active.line === lineNumber) {
+      if (bookmark.startLine <= lineNumber && lineNumber <= bookmark.endLine) {
         throw new Error(bookmark.id);
       }
     }
@@ -132,7 +139,8 @@ export function getBookmarkFromLineNumber(
  * @returns  返回书签列表或者 `undefined`
  */
 export function getBookmarksBelowChangedLine(
-  store?: BookmarkStoreType
+  store?: BookmarkStoreType,
+  line?: number
 ): BookmarkMeta[] | undefined {
   const editor = window.activeTextEditor;
   if (!editor) return;
@@ -145,7 +153,7 @@ export function getBookmarksBelowChangedLine(
   }
   if (!store) return;
 
-  const lineNumber = editor.selection.active.line;
+  const lineNumber = line || editor.selection.active.line;
   const bookmarks = store.bookmarks
     .map((it) => ({
       ...it,
@@ -616,37 +624,96 @@ function appendMarkdown(
     );
   }
 }
-
-const isNewLineRegex = /\r\n(\s.*?)/g;
 export function updateBookmarksGroupByChangedLine(
   store: BookmarkStoreType,
   event: TextDocumentChangeEvent,
-  change: TextDocumentContentChangeEvent,
-  changeNumber: number
+  change: TextDocumentContentChangeEvent
 ) {
   const { document } = event;
-  const isNewLine = isNewLineRegex.test(change.text);
+
+  const changeText = change.text;
+  const isNewLine = /(\r\n)|(\n)(\s.*?)/g.test(changeText);
 
   const isDeleteLine = change.range.end.line > change.range.start.line;
+  console.log(isNewLine, isDeleteLine);
+
   const bookmarkInCurrentLine = getBookmarkFromLineNumber(store);
   // 1. 当发生改变的区域存在行书签
   if (bookmarkInCurrentLine) {
     // 发生改变的行
     const changedLine = document.lineAt(change.range.start.line);
-    // 当前所在行的位置
-    const range = new Selection(
-      new Position(
-        changedLine.lineNumber,
-        changedLine.text.indexOf(changedLine.text.trim())
-      ),
-      new Position(changedLine.lineNumber, changedLine.range.end.character)
-    );
+    let selection,
+      startPos,
+      selectionContent,
+      bookmarkType = bookmarkInCurrentLine.type,
+      hasChanged = false;
+    startPos = changedLine.text.indexOf(changedLine.text.trim());
+    // 取已保存的书签的其实位置
+    const originalSelection = bookmarkInCurrentLine.selection;
+    // 只在当前行上进行编辑操作, 未进行换行操作
+    if (!isNewLine) {
+      if (isDeleteLine && bookmarkType === 'selection') {
+        const startLineNumber =
+          originalSelection.start.line < changedLine.lineNumber
+            ? originalSelection.start.line
+            : changedLine.lineNumber;
+        const startLine = document.lineAt(startLineNumber);
+        const endLineNumber =
+          originalSelection.end.line > changedLine.lineNumber
+            ? originalSelection.end.line +
+              (change.range.start.line - change.range.end.line)
+            : originalSelection.end.line;
+        const endLine = document.lineAt(endLineNumber);
+
+        selection = new Selection(
+          new Position(startLineNumber, startLine.range.start.character),
+          new Position(endLineNumber, endLine.range.end.character)
+        );
+        selectionContent = document.getText(selection);
+        hasChanged = true;
+      } else if (bookmarkType !== 'selection') {
+        // 当在行标签上发生编辑时
+        selection = new Selection(
+          new Position(changedLine.lineNumber, startPos),
+          new Position(changedLine.lineNumber, changedLine.range.end.character)
+        );
+        selectionContent = changedLine.text.trim();
+        hasChanged = true;
+      }
+    } else if (isNewLine) {
+      // 进行换行操作, 转换为区域标签
+      let newLines = 1;
+      const matches = change.text.match(/\r\n/g);
+      if (matches) {
+        newLines = matches.length;
+      }
+
+      // let endLineNumber = change.range.end.line + newLines;
+      // const endLine = document.lineAt(endLineNumber);
+      selection = new Selection(
+        new Position(
+          originalSelection.start.line,
+          originalSelection.start.character
+        ),
+        new Position(
+          originalSelection.end.line + newLines,
+          originalSelection.end.character
+        )
+      );
+      bookmarkType = 'selection';
+      selectionContent = document.getText(selection);
+      hasChanged = true;
+    }
+
+    if (!hasChanged) {
+      return;
+    }
     // 更新当前行的书签信息
     updateLineBookmarkRangeWhenDocumentChange(bookmarkInCurrentLine, {
-      range,
-      selectionContent: changedLine.text.trim(),
+      selection,
+      type: bookmarkType,
+      selectionContent,
     });
-    // TODO: 当前行存在行书签, 进行回车, 转换成区域书签,后续可能删除之前新增的行, 重新计算 range
     return;
   }
 
@@ -654,27 +721,35 @@ export function updateBookmarksGroupByChangedLine(
   // 2. 当前所发生改变的change 不存在书签 1> 发生改变的行下方的书签, 回车, 新增 , 以及删除
   const bookmarksBlowChangedLine = getBookmarksBelowChangedLine(store);
   if (bookmarksBlowChangedLine && bookmarksBlowChangedLine.length) {
+    let bookmark,
+      selection,
+      line,
+      startLine,
+      startPos,
+      matchedNewLines,
+      newLines = 1;
+    matchedNewLines = change.text.match(/\r\n/g);
+    if (matchedNewLines) {
+      newLines = matchedNewLines.length;
+    }
     const changeLines = isDeleteLine
       ? change.range.start.line - change.range.end.line
       : isNewLine
-      ? change.text.match(/\r\n/g)!.length
+      ? newLines
       : 0;
-    console.log(bookmarksBlowChangedLine);
-    let bookmark, range, line, startLine, startPos;
     for (bookmark of bookmarksBlowChangedLine) {
       startLine = bookmark.rangesOrOptions.range.start.line + changeLines;
       line = document.lineAt(startLine);
       startPos = line.text.indexOf(line.text.trim());
-      range = bookmark.rangesOrOptions.range;
-      // TODO: 判断 文档改变的类型,是新增还是删除
-      range = new Selection(
+      selection = bookmark.rangesOrOptions.range;
+      selection = new Selection(
         new Position(startLine, startPos),
         new Position(startLine, line.range.end.character)
       );
 
       // 更新当前行的书签信息
       updateLineBookmarkRangeWhenDocumentChange(bookmark, {
-        range,
+        selection,
         selectionContent: bookmark.selectionContent,
       });
     }
@@ -684,27 +759,16 @@ export function updateLineBookmarkRangeWhenDocumentChange(
   bookmark: any,
   dto: any
 ) {
-  const { range, selectionContent } = dto;
+  const { selection, selectionContent, ...rest } = dto;
   // 更新当前行的书签信息
   BookmarksController.instance.update(bookmark, {
-    selection: range,
+    selection,
     selectionContent,
+    ...(rest || {}),
     rangesOrOptions: {
       ...bookmark.rangesOrOptions,
-      range,
+      range: selection,
       hoverMessage: createHoverMessage(bookmark, true, true),
     },
   });
 }
-/**
- * TODO: 当change关联区域标签
- * @param store
- * @param extra
- */
-export function updateBookmarksBySelection(
-  store: BookmarkStoreType,
-  extra: {
-    event: TextDocumentChangeEvent;
-    change: TextDocumentContentChangeEvent;
-  }
-) {}

@@ -102,7 +102,6 @@ export function updateBookmarkInfoWhenTextChangeListener() {
           bookmarkStore,
           e,
           change,
-          contentChanges.length
         );
       }
       updateActiveEditorAllDecorations();
