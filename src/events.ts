@@ -98,7 +98,12 @@ export function updateBookmarkInfoWhenTextChangeListener() {
       if (!bookmarkStore) return;
       console.log(contentChanges.length, contentChanges);
       for (let change of contentChanges) {
-        updateBookmarksGroupByChangedLine(bookmarkStore, e, change);
+        updateBookmarksGroupByChangedLine(
+          bookmarkStore,
+          e,
+          change,
+          contentChanges.length
+        );
       }
       updateActiveEditorAllDecorations();
     }

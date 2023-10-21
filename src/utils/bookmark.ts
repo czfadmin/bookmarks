@@ -617,13 +617,17 @@ function appendMarkdown(
   }
 }
 
+const isNewLineRegex = /\r\n(\s.*?)/g;
 export function updateBookmarksGroupByChangedLine(
   store: BookmarkStoreType,
   event: TextDocumentChangeEvent,
-  change: TextDocumentContentChangeEvent
+  change: TextDocumentContentChangeEvent,
+  changeNumber: number
 ) {
   const { document } = event;
+  const isNewLine = isNewLineRegex.test(change.text);
 
+  const isDeleteLine = change.range.end.line > change.range.start.line;
   const bookmarkInCurrentLine = getBookmarkFromLineNumber(store);
   // 1. 当发生改变的区域存在行书签
   if (bookmarkInCurrentLine) {
@@ -638,30 +642,34 @@ export function updateBookmarksGroupByChangedLine(
       new Position(changedLine.lineNumber, changedLine.range.end.character)
     );
     // 更新当前行的书签信息
-    BookmarksController.instance.update(bookmarkInCurrentLine, {
-      selection: range,
+    updateLineBookmarkRangeWhenDocumentChange(bookmarkInCurrentLine, {
+      range,
       selectionContent: changedLine.text.trim(),
-      rangesOrOptions: {
-        ...bookmarkInCurrentLine.rangesOrOptions,
-        range,
-        hoverMessage: createHoverMessage(bookmarkInCurrentLine, true, true),
-      },
     });
     // TODO: 当前行存在行书签, 进行回车, 转换成区域书签,后续可能删除之前新增的行, 重新计算 range
     return;
   }
 
+  if (!isNewLine && !isDeleteLine) return;
   // 2. 当前所发生改变的change 不存在书签 1> 发生改变的行下方的书签, 回车, 新增 , 以及删除
   const bookmarksBlowChangedLine = getBookmarksBelowChangedLine(store);
   if (bookmarksBlowChangedLine && bookmarksBlowChangedLine.length) {
+    const changeLines = isDeleteLine
+      ? change.range.start.line - change.range.end.line
+      : isNewLine
+      ? change.text.match(/\r\n/g)!.length
+      : 0;
     console.log(bookmarksBlowChangedLine);
-    let bookmark, range;
+    let bookmark, range, line, startLine, startPos;
     for (bookmark of bookmarksBlowChangedLine) {
+      startLine = bookmark.rangesOrOptions.range.start.line + changeLines;
+      line = document.lineAt(startLine);
+      startPos = line.text.indexOf(line.text.trim());
       range = bookmark.rangesOrOptions.range;
       // TODO: 判断 文档改变的类型,是新增还是删除
       range = new Selection(
-        new Position(range.start.line + 1, range.start.character),
-        new Position(range.end.line + 1, range.end.character)
+        new Position(startLine, startPos),
+        new Position(startLine, line.range.end.character)
       );
 
       // 更新当前行的书签信息
