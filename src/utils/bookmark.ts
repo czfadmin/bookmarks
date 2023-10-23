@@ -624,6 +624,14 @@ function appendMarkdown(
     );
   }
 }
+
+/**
+ * 根据发生的行进行更新书签的位置信息
+ * @param store
+ * @param event
+ * @param change
+ * @returns
+ */
 export function updateBookmarksGroupByChangedLine(
   store: BookmarkStoreType,
   event: TextDocumentChangeEvent,
@@ -700,9 +708,6 @@ export function updateBookmarksGroupByChangedLine(
       if (matches) {
         newLines = matches.length;
       }
-
-      // let endLineNumber = change.range.end.line + newLines;
-      // const endLine = document.lineAt(endLineNumber);
       selection = new Selection(
         new Position(
           originalSelection.start.line,

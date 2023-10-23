@@ -161,6 +161,26 @@
           "description": "Whether to display the gutter icon of the bookmark",
           "default": true
         },
+        "bookmarks.isWholeLine": {
+          "type": "boolean",
+          "description": "是否选择整行",
+          "default": false
+        },
+        "bookmarks.textDecorationLine": {
+          "type": "string",
+          "description": "设置使用的装饰类型，例如 `underline` 或者 `line-through`。",
+          "default": "underline"
+        },
+        "bookmarks.textDecorationStyle": {
+          "type": "string",
+          "description": "设置装饰的线条的颜色，例如 `solid`、`wavy` 或者 `dashed`。",
+          "default": "wavy"
+        },
+        "bookmarks.textDecorationThickness": {
+          "type": "string",
+          "description": "设置用于装饰的线条粗细",
+          "default": "auto"
+        },
         "bookmarks.fontWeight": {
           "type": "string",
           "default": "bold",

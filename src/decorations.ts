@@ -42,6 +42,11 @@ export function initDecorations(context?: ExtensionContext) {
     alwaysUseDefaultColor: configuration.get('alwaysUseDefaultColor') || false,
     showTextDecoration: configuration.get('showTextDecoration'),
     fontWeight: configuration.get('fontWeight') || 'bold',
+    isWholeLine: configuration.get('isWholeLine') || false,
+    textDecorationLine: configuration.get('textDecorationLine') || 'underline',
+    textDecorationStyle: configuration.get('textDecorationStyle') || 'wavy',
+    textDecorationThickness:
+      configuration.get('textDecorationThickness') || 'auto',
   };
   Object.keys(colors).forEach((item) => {
     decorations[item] = createDecoration(item, options);
@@ -63,6 +68,10 @@ export function createDecoration(
     showGutterIcon,
     showGutterInOverviewRuler,
     alwaysUseDefaultColor,
+    isWholeLine,
+    textDecorationLine,
+    textDecorationStyle,
+    textDecorationThickness,
   } = options;
 
   // 初始化gutter 颜色
@@ -93,8 +102,15 @@ export function createDecoration(
   const decoration = window.createTextEditorDecorationType({
     gutterIconPath: _showGutterIfon ? gutterIconPath : undefined,
     rangeBehavior: DecorationRangeBehavior.ClosedClosed,
-    textDecoration: showTextDecoration ? `underline ${color}` : '',
-    isWholeLine: false,
+    textDecoration: showTextDecoration
+      ? buildTextDecoration({
+          color,
+          textDecorationLine,
+          textDecorationStyle,
+          textDecorationThickness,
+        })
+      : '',
+    isWholeLine,
     borderRadius: '2px',
     borderColor: `${color}`,
     border: `0 solid ${color}`,
@@ -111,6 +127,25 @@ export function createDecoration(
   return decoration;
 }
 
+/**
+ * 构建文本装饰器样式
+ * @param decorationOptions
+ * @returns
+ */
+function buildTextDecoration(decorationOptions: {
+  textDecorationLine: string;
+  textDecorationStyle: string;
+  textDecorationThickness: string;
+  color: string;
+}) {
+  const {
+    textDecorationLine,
+    textDecorationStyle,
+    textDecorationThickness,
+    color,
+  } = decorationOptions;
+  return `${textDecorationLine} ${textDecorationStyle} ${textDecorationThickness} ${color}`;
+}
 export function updateDecoration(
   editor: TextEditor,
   options: {

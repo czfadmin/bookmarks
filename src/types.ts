@@ -19,7 +19,6 @@ export interface BookmarkMeta {
   description?: string;
   languageId?: string;
   rangesOrOptions: DecorationOptions;
-
 }
 
 /**
@@ -65,6 +64,10 @@ export interface CreateDecorationOptions {
   showTextDecoration?: boolean;
   alwaysUseDefaultColor?: boolean;
   fontWeight: 'normal' | 'bold' | 'bolder' | 'unset';
+  isWholeLine: boolean;
+  textDecorationLine: string;
+  textDecorationStyle: string;
+  textDecorationThickness: string;
 }
 
 export type BookmarkDecorationKey = string | 'default';
