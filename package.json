@@ -10,6 +10,15 @@
     "Other"
   ],
   "publisher": "czfadmin",
+  "author": "czfadmin",
+  "homepage": "https://github.com/czfadmin/bookmarks",
+  "repository": {
+    "url": "https://github.com/czfadmin/bookmarks"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/czfadmin/bookmarks/issues"
+  },
   "activationEvents": [
     "onStartupFinished"
   ],
