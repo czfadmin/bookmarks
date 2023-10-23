@@ -658,6 +658,7 @@ export function updateBookmarksGroupByChangedLine(
             ? originalSelection.start.line
             : changedLine.lineNumber;
         const startLine = document.lineAt(startLineNumber);
+
         const endLineNumber =
           originalSelection.end.line > changedLine.lineNumber
             ? originalSelection.end.line +
@@ -678,6 +679,18 @@ export function updateBookmarksGroupByChangedLine(
           new Position(changedLine.lineNumber, changedLine.range.end.character)
         );
         selectionContent = changedLine.text.trim();
+        hasChanged = true;
+      } else if (!isDeleteLine && bookmarkType === 'selection') {
+        // 更新区域标签内容
+        const startLine = originalSelection.start.line;
+        const startText = document.lineAt(startLine).text;
+        const startPos = startText.indexOf(startText.trim());
+        const endLine = originalSelection.end.line;
+        selection = new Selection(
+          new Position(startLine, startPos),
+          new Position(endLine, document.lineAt(endLine).range.end.character)
+        );
+        selectionContent = document.getText(selection);
         hasChanged = true;
       }
     } else if (isNewLine) {
@@ -770,6 +783,9 @@ export function updateLineBookmarkRangeWhenDocumentChange(
   dto: any
 ) {
   const { selection, selectionContent, ...rest } = dto;
+  if (selectionContent) {
+    bookmark.selectionContent = selectionContent;
+  }
   // 更新当前行的书签信息
   BookmarksController.instance.update(bookmark, {
     selection,
