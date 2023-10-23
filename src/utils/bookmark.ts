@@ -742,10 +742,20 @@ export function updateBookmarksGroupByChangedLine(
       line = document.lineAt(startLine);
       startPos = line.text.indexOf(line.text.trim());
       selection = bookmark.rangesOrOptions.range;
-      selection = new Selection(
-        new Position(startLine, startPos),
-        new Position(startLine, line.range.end.character)
-      );
+      // 当书签为行标签时
+      if (bookmark.type === 'line') {
+        selection = new Selection(
+          new Position(startLine, startPos),
+          new Position(startLine, line.range.end.character)
+        );
+      } else {
+        // 当是区域标签的时候, 同时更新end的行数
+        const endLine = bookmark.rangesOrOptions.range.end.line + changeLines;
+        selection = new Selection(
+          new Position(startLine, startPos),
+          new Position(endLine, bookmark.rangesOrOptions.range.end.character)
+        );
+      }
 
       // 更新当前行的书签信息
       updateLineBookmarkRangeWhenDocumentChange(bookmark, {
