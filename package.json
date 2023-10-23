@@ -2,7 +2,7 @@
   "name": "bookmarks",
   "displayName": "bookmarks",
   "description": "bookmark",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "engines": {
     "vscode": "^1.82.0"
   },
@@ -160,6 +160,31 @@
           "type": "boolean",
           "description": "Whether to display the gutter icon of the bookmark",
           "default": true
+        },
+        "bookmarks.highlightBackground": {
+          "type": "boolean",
+          "description": "使用书签颜色高亮书签所在区域或行的背景色",
+          "default": false
+        },
+        "bookmarks.showBorder": {
+          "type": "boolean",
+          "description": "显示书签边框(Border)",
+          "default": false
+        },
+        "bookmarks.border": {
+          "type": "string",
+          "description": "自定义边框样式. 注意: 边框颜色默认为书签颜色",
+          "default": ""
+        },
+        "bookmarks.showOutline": {
+          "type": "boolean",
+          "description": "显示书签轮廓(Outline)",
+          "default": false
+        },
+        "bookmarks.outline": {
+          "type": "string",
+          "description": "自定义轮廓样式. 注意: 轮廓颜色默认为书签颜色",
+          "default": ""
         },
         "bookmarks.isWholeLine": {
           "type": "boolean",

@@ -47,6 +47,11 @@ export function initDecorations(context?: ExtensionContext) {
     textDecorationStyle: configuration.get('textDecorationStyle') || 'wavy',
     textDecorationThickness:
       configuration.get('textDecorationThickness') || 'auto',
+    highlightBackground: configuration.get('highlightBackground') || false,
+    showBorder: configuration.get('showBorder') || false,
+    border: configuration.get('border') || '1px solid',
+    showOutline: configuration.get('showOutline') || false,
+    outline: configuration.get('outline') || '1px solid',
   };
   Object.keys(colors).forEach((item) => {
     decorations[item] = createDecoration(item, options);
@@ -72,6 +77,11 @@ export function createDecoration(
     textDecorationLine,
     textDecorationStyle,
     textDecorationThickness,
+    highlightBackground,
+    showBorder,
+    border,
+    showOutline,
+    outline,
   } = options;
 
   // 初始化gutter 颜色
@@ -100,8 +110,18 @@ export function createDecoration(
   }
 
   const decoration = window.createTextEditorDecorationType({
-    gutterIconPath: _showGutterIfon ? gutterIconPath : undefined,
+    isWholeLine,
+    borderRadius: '2px',
+    borderColor: color,
+    outlineColor: color,
+    fontWeight,
+    overviewRulerLane,
+    overviewRulerColor,
     rangeBehavior: DecorationRangeBehavior.ClosedClosed,
+    gutterIconPath: _showGutterIfon ? gutterIconPath : undefined,
+    border: showBorder ? border : '',
+    outline: showOutline ? outline : '',
+    backgroundColor: highlightBackground ? color : '',
     textDecoration: showTextDecoration
       ? buildTextDecoration({
           color,
@@ -110,13 +130,6 @@ export function createDecoration(
           textDecorationThickness,
         })
       : '',
-    isWholeLine,
-    borderRadius: '2px',
-    borderColor: `${color}`,
-    border: `0 solid ${color}`,
-    fontWeight,
-    overviewRulerLane,
-    overviewRulerColor,
     after: {
       backgroundColor: `${color}`,
       color: '#ffff',

@@ -68,6 +68,11 @@ export interface CreateDecorationOptions {
   textDecorationLine: string;
   textDecorationStyle: string;
   textDecorationThickness: string;
+  highlightBackground: boolean;
+  showBorder: boolean;
+  border: string;
+  showOutline: boolean;
+  outline: string;
 }
 
 export type BookmarkDecorationKey = string | 'default';
