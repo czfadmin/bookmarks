@@ -64,7 +64,7 @@ export interface CreateDecorationOptions {
   showTextDecoration?: boolean;
   alwaysUseDefaultColor?: boolean;
   fontWeight: 'normal' | 'bold' | 'bolder' | 'unset';
-  isWholeLine: boolean;
+  wholeLine: boolean;
   textDecorationLine: string;
   textDecorationStyle: string;
   textDecorationThickness: string;

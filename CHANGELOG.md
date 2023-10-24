@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.0.4
+
+### Patch Changes
+
+- 85d292c: add license.md
+- 6e8e436: update package.json
+- 代码优化,增加 lineBlame 功能
+
 ## 0.0.3
 
 ### Patch Changes

@@ -14,11 +14,12 @@ import {
   CreateDecorationOptions,
   StringIndexType,
 } from './types';
+
 import { BookmarksController } from './controllers/BookmarksController';
 import { createBookmarkIcon, svgToUri } from './utils/icon';
 import logger from './utils/logger';
 import { DEFAULT_BOOKMARK_COLOR } from './constants';
-import { getAllColors, getConfiguration } from './configurations';
+import { getAllColors, getCreateDecorationOptions } from './configurations';
 import gutters from './gutter';
 
 export let decorations = {} as Record<
@@ -33,26 +34,8 @@ export let decorations = {} as Record<
 export function initDecorations(context?: ExtensionContext) {
   disposeAllDiscorations();
   decorations = {};
-  const configuration = getConfiguration();
   const colors = getAllColors(true);
-  const options: CreateDecorationOptions = {
-    showGutterIcon: configuration.get('showGutterIcon') || false,
-    showGutterInOverviewRuler:
-      configuration.get('showGutterInOverviewRuler') || false,
-    alwaysUseDefaultColor: configuration.get('alwaysUseDefaultColor') || false,
-    showTextDecoration: configuration.get('showTextDecoration'),
-    fontWeight: configuration.get('fontWeight') || 'bold',
-    isWholeLine: configuration.get('isWholeLine') || false,
-    textDecorationLine: configuration.get('textDecorationLine') || 'underline',
-    textDecorationStyle: configuration.get('textDecorationStyle') || 'wavy',
-    textDecorationThickness:
-      configuration.get('textDecorationThickness') || 'auto',
-    highlightBackground: configuration.get('highlightBackground') || false,
-    showBorder: configuration.get('showBorder') || false,
-    border: configuration.get('border') || '1px solid',
-    showOutline: configuration.get('showOutline') || false,
-    outline: configuration.get('outline') || '1px solid',
-  };
+  const options: CreateDecorationOptions = getCreateDecorationOptions();
   Object.keys(colors).forEach((item) => {
     decorations[item] = createDecoration(item, options);
   });
@@ -73,7 +56,7 @@ export function createDecoration(
     showGutterIcon,
     showGutterInOverviewRuler,
     alwaysUseDefaultColor,
-    isWholeLine,
+    wholeLine,
     textDecorationLine,
     textDecorationStyle,
     textDecorationThickness,
@@ -110,7 +93,7 @@ export function createDecoration(
   }
 
   const decoration = window.createTextEditorDecorationType({
-    isWholeLine,
+    isWholeLine: wholeLine,
     borderRadius: '2px',
     borderColor: color,
     outlineColor: color,
@@ -130,11 +113,7 @@ export function createDecoration(
           textDecorationThickness,
         })
       : '',
-    after: {
-      backgroundColor: `${color}`,
-      color: '#ffff',
-      margin: '0 6px 0 6px',
-    },
+
   });
 
   return decoration;

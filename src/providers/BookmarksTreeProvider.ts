@@ -85,7 +85,7 @@ export class BookmarksTreeProvider
         );
 
         return new BookmarksTreeItem(
-          it.label || it.id,
+          it.label || it.selectionContent || it.id,
           vscode.TreeItemCollapsibleState.None,
           'item',
           {

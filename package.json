@@ -2,7 +2,7 @@
   "name": "bookmarks",
   "displayName": "bookmarks",
   "description": "bookmark",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "engines": {
     "vscode": "^1.82.0"
   },
@@ -195,7 +195,7 @@
           "description": "自定义轮廓样式. 注意: 轮廓颜色默认为书签颜色",
           "default": ""
         },
-        "bookmarks.isWholeLine": {
+        "bookmarks.wholeLine": {
           "type": "boolean",
           "description": "是否选择整行",
           "default": false
@@ -215,9 +215,15 @@
           "description": "设置用于装饰的线条粗细",
           "default": "auto"
         },
+        "bookmarks.lineBlame": {
+          "type": "boolean",
+          "description": "是否跟随鼠标位置显示书签信息",
+          "default": false
+        },
         "bookmarks.fontWeight": {
           "type": "string",
           "default": "bold",
+          "description": "书签字体权重",
           "enum": [
             "normal",
             "bold",

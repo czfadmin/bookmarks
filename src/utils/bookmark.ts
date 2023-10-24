@@ -377,11 +377,10 @@ export async function toggleBookmark(
     return;
   }
 
-  const { type: bookmarkType, label: _label, withColor = false } = extra;
+  const { type: bookmarkType, label, withColor = false } = extra;
 
-  let label, range, selectionContent;
+  let range, selectionContent;
   const activedLine = editor.document.lineAt(selection.active.line);
-  label = _label || activedLine.text.trim();
   if (bookmarkType === 'line') {
     const startPos = activedLine.text.indexOf(activedLine.text.trim());
     range = new Selection(

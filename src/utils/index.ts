@@ -5,3 +5,5 @@ export * from './resources';
 export function createID() {
   return uuid();
 }
+
+export function getShortPath(p: string) {}
