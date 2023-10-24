@@ -406,7 +406,7 @@ export async function toggleBookmark(
     return;
   }
 
-  let choosedColor: string | undefined = getAllColors().default;
+  let choosedColor: string | undefined = 'default';
   if (withColor) {
     choosedColor = await chooseBookmarkColor();
     if (!choosedColor) {
@@ -525,7 +525,7 @@ export async function quicklyJumpToBookmark() {
     arr.push(
       ...b.bookmarks.map((it) => ({
         filename: b.filename,
-        label: it.label,
+        label: it.label || it.description || it.selectionContent,
         description: it.description || it.label,
         detail: b.filename,
         iconPath: gutters[it.color] || gutters['default'],

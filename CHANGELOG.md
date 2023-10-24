@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.0.6
+
+### Patch Changes
+
+- 更改插件名称为`bookmark-manager`
+
 ## 0.0.5
 
 ### Patch Changes

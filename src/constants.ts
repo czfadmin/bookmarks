@@ -1,5 +1,5 @@
-export const EXTENSION_ID = 'bookmarks';
-export const EXTENSION_VIEW_ID = 'bookmarks';
+export const EXTENSION_ID = 'bookmark-manager';
+export const EXTENSION_VIEW_ID = 'bookmark-manager';
 
 export const DEFAULT_BOOKMARK_COLOR = '#0e69d8';
 
