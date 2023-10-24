@@ -2,7 +2,7 @@
   "name": "bookmarks",
   "displayName": "bookmarks",
   "description": "bookmark",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "engines": {
     "vscode": "^1.82.0"
   },
@@ -153,11 +153,6 @@
         "bookmarks.alwaysUseDefaultColor": {
           "type": "boolean",
           "description": "一直使用默认的颜色装饰书签图标",
-          "default": false
-        },
-        "bookmarks.onlyShowFilename": {
-          "type": "boolean",
-          "description": "Whether to display only the file name where the bookmark is located. Otherwise, display the name of the file where the bookmark is located.",
           "default": false
         },
         "bookmarks.showTextDecoration": {

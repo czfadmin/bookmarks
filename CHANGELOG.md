@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.0.5
+
+### Patch Changes
+
+- 更新说明文档
+
 ## 0.0.4
 
 ### Patch Changes
