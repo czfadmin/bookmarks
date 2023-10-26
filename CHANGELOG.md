@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.0.7
+
+### Patch Changes
+
+- 2b99062: 代码优化,改善从命令面板和上下文菜单中操作书签的交互
+
 ## 0.0.6
 
 ### Patch Changes
