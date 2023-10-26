@@ -225,4 +225,5 @@ export function disposeAllDiscorations() {
   for (let decoration of Object.values(decorations)) {
     decoration?.dispose();
   }
+  
 }

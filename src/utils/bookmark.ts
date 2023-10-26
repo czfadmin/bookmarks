@@ -70,30 +70,6 @@ export function checkIfBookmarksIsInCurrentEditor(editor: TextEditor) {
 }
 
 /**
- * 从当前行获取书签,如果存在返回书签, 反之undefined
- * @returns
- */
-export function getBookmarkFromCurrentActivedLine(): BookmarkMeta | undefined {
-  const editor = window.activeTextEditor;
-  if (!editor) return;
-
-  const store = BookmarksController.instance.getBookmarkStoreByFileUri(
-    editor.document.uri
-  );
-  if (!store) return;
-  const lineNumber = editor.selection.active.line;
-  const line = editor.document.lineAt(lineNumber);
-  const range = new Selection(
-    line.lineNumber,
-    line.text.indexOf(line.text.trim()),
-    line.lineNumber,
-    line.range.end.character
-  );
-
-  return getBookmarkFromSelection(store, [range]);
-}
-
-/**
  * 从当前编辑的行号获取当前位置存在的书签
  */
 export function getBookmarkFromLineNumber(
@@ -109,11 +85,11 @@ export function getBookmarkFromLineNumber(
       editor.document.uri
     );
   }
-  if (!store) return;
+  if (!_store) return;
 
   const lineNumber = line || editor.selection.active.line;
   let bookmark;
-  const bookmarks = store.bookmarks.map((it) => ({
+  const bookmarks = _store.bookmarks.map((it) => ({
     ...it,
     startLine: it.selection.start.line,
     endLine:
@@ -163,73 +139,6 @@ export function getBookmarksBelowChangedLine(
     .sort((a, b) => a.startLine - b.startLine);
 
   return bookmarks.filter((it) => it.startLine > lineNumber);
-}
-
-/**
- * 从当前的行或者选择区域筛选出书签
- * @param bookmarkStore {BookmarkStoreType}
- * @param ranges {Range[]}
- */
-export function getBookmarkFromSelection(
-  bookmarkStore: BookmarkStoreType | undefined,
-  ranges: Range[]
-): BookmarkMeta | undefined {
-  if (bookmarkStore) {
-    const existedBookmaks = bookmarkStore.bookmarks;
-    let item;
-    try {
-      for (item of existedBookmaks) {
-        let range: Range;
-        for (range of ranges) {
-          if (item.type === 'line' && range.isEqual(item.selection)) {
-            throw new Error(item.id);
-          }
-          if (item.type === 'selection' && item.selection.contains(range)) {
-            throw new Error(item.id);
-          }
-        }
-      }
-    } catch (error) {
-      const _bookmark = existedBookmaks.find(
-        (it) => it.id === (error as any).message
-      );
-      if (_bookmark) {
-        return _bookmark;
-      }
-    }
-  }
-}
-
-/**
- * 从当前选中区域选取筛选出书签
- * @param bookmarkStore {BookmarkStoreType}
- * @param ranges {Range[]}
- */
-export function getBookmarkFromRanges(
-  bookmarkStore: BookmarkStoreType | undefined,
-  ranges: Range[]
-): BookmarkMeta | undefined {
-  if (bookmarkStore) {
-    const existedBookmaks = bookmarkStore.bookmarks;
-    let item;
-    try {
-      for (item of existedBookmaks) {
-        let range: Range;
-        for (range of ranges) {
-          if (item.selection.contains(range)) {
-            throw new Error(item.id);
-          }
-        }
-      }
-    } catch (error) {
-      const _bookmark = existedBookmaks.find(
-        (it) => it.id === (error as any).message
-      );
-      if (_bookmark) {
-        return _bookmark;
-      }
-    }
-  }
 }
 
 /**
@@ -440,31 +349,21 @@ export async function toggleBookmark(
  * @param context
  * @returns
  */
-export function deleteLineBookmark(context: LineBookmarkContext) {
+export function deleteBookmark(context: LineBookmarkContext) {
   if (!context) {
     return;
   }
-  let ranges: Range[] = [];
   const editor = window.activeTextEditor;
 
   if (!editor) {
     return;
   }
-  const doc = editor.document;
-
-  ranges.push(
-    getSelectionFromLine(
-      doc.lineAt(
-        'lineNumber' in context
-          ? context.lineNumber - 1
-          : editor.selection.active.line
-      )
-    )
-  );
   // 获取当前行所在的`bookmark`信息
-  const bookmark = getBookmarkFromSelection(
-    BookmarksController.instance.getBookmarkStoreByFileUri(doc.uri),
-    ranges
+  const bookmark = getBookmarkFromLineNumber(
+    undefined,
+    'lineNumber' in context
+      ? context.lineNumber - 1
+      : editor.selection.active.line
   );
   if (!bookmark) {
     return;
@@ -782,6 +681,11 @@ export function updateBookmarksGroupByChangedLine(
     }
   }
 }
+/**
+ * 更新书签信息辅助函数
+ * @param bookmark
+ * @param dto
+ */
 export function updateLineBookmarkRangeWhenDocumentChange(
   bookmark: any,
   dto: any

@@ -14,21 +14,39 @@ import {
 } from './constants';
 
 import { updateActiveEditorAllDecorations } from './decorations';
-import { LineBookmarkContext } from './types';
+import { BookmarkMeta, LineBookmarkContext } from './types';
 import { BookmarksController } from './controllers/BookmarksController';
 import {
   checkIfBookmarksIsInCurrentEditor,
   chooseBookmarkColor,
-  deleteLineBookmark,
+  deleteBookmark,
   editBookmarkDescription,
   gotoSourceLocation,
   quicklyJumpToBookmark,
   toggleBookmarksWithSelections,
   toggleBookmark,
-  getBookmarkFromCurrentActivedLine,
   editBookmarkLabel,
+  getBookmarkFromLineNumber,
 } from './utils/bookmark';
 import { BookmarksTreeItem } from './providers/BookmarksTreeProvider';
+
+function getBookmarkFromCtx(
+  context: LineBookmarkContext | BookmarksTreeItem | undefined,
+  cb?: () => void
+) {
+  let bookmark: BookmarkMeta | undefined;
+  if (context && 'contextValue' in context && context.contextValue === 'item') {
+    bookmark = context.meta as BookmarkMeta;
+  } else {
+    bookmark = getBookmarkFromLineNumber(undefined);
+  }
+
+  if (!bookmark && cb) {
+    cb();
+    return;
+  }
+  return bookmark;
+}
 
 /**
  * 注册所需要的命令
@@ -102,32 +120,37 @@ export function registerCommands(context: ExtensionContext) {
       }
       // 从`decoration`或者`command palette`那边删除调用此命令
       if (!('bookmarks' in context)) {
-        deleteLineBookmark(context as LineBookmarkContext);
+        deleteBookmark(context as LineBookmarkContext);
       }
       updateActiveEditorAllDecorations();
     }
   );
   // 编辑书签标签
-  registerCommand(context, CMD_EDIT_LABEL, (args) => {
-    window
-      .showInputBox({
-        placeHolder: 'Type a label for your bookmarks',
-        title:
-          'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
-      })
-      .then((label) => {
-        if (!label) {
-          return;
-        }
-        if (args.contextValue === 'item') {
-          editBookmarkLabel(args.meta, label);
-          return;
-        }
-        let bookmark = getBookmarkFromCurrentActivedLine();
-        if (!bookmark) return;
-        editBookmarkLabel(bookmark, label);
-      });
-  });
+  registerCommand(
+    context,
+    CMD_EDIT_LABEL,
+    (context: LineBookmarkContext | BookmarksTreeItem | undefined) => {
+      let bookmark: BookmarkMeta | undefined = getBookmarkFromCtx(context);
+
+      if (!bookmark) {
+        window.showInformationMessage('请选择书签后再进行操作.', {});
+        return;
+      }
+
+      window
+        .showInputBox({
+          placeHolder: 'Type a label for your bookmarks',
+          title:
+            'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
+        })
+        .then((label) => {
+          if (!label || !bookmark) {
+            return;
+          }
+          editBookmarkLabel(bookmark, label);
+        });
+    }
+  );
 
   // 定位书签位置,并跳转到书签位置
   registerCommand(context, CMD_GO_TO_SOURCE_LOCATION, (args) => {
@@ -135,7 +158,7 @@ export function registerCommands(context: ExtensionContext) {
   });
 
   // 为选中的区域增加书签
-  registerCommand(context, CMD_TOGGLE_BOOKMARK_WITH_SECTIONS, (args) => {
+  registerCommand(context, CMD_TOGGLE_BOOKMARK_WITH_SECTIONS, (ctx) => {
     window
       .showInputBox({
         placeHolder: 'Type a label for your bookmarks',
@@ -152,21 +175,30 @@ export function registerCommands(context: ExtensionContext) {
   });
 
   // 为书签增加备注信息
-  registerCommand(context, CMD_BOOKMARK_ADD_MORE_MEMO, (args) => {
-    window
-      .showInputBox({
-        placeHolder: 'Type more info for your bookmarks',
-        title:
-          'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
-      })
-      .then((description) => {
-        if (!description) {
-          return;
-        }
+  registerCommand(
+    context,
+    CMD_BOOKMARK_ADD_MORE_MEMO,
+    (ctx: LineBookmarkContext | BookmarksTreeItem | undefined) => {
+      let bookmark: BookmarkMeta | undefined = getBookmarkFromCtx(ctx);
+      if (!bookmark) {
+        window.showInformationMessage('请选择书签后再进行操作.', {});
+        return;
+      }
+      window
+        .showInputBox({
+          placeHolder: 'Type more info for your bookmarks',
+          title:
+            'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
+        })
+        .then((description) => {
+          if (!description) {
+            return;
+          }
 
-        editBookmarkDescription(args.meta, description);
-      });
-  });
+          editBookmarkDescription(bookmark!, description);
+        });
+    }
+  );
 
   // 快速跳转到书签位置,并预览书签
   registerCommand(context, CMD_JUMP_TO_BOOKMARK, (args) => {
@@ -174,23 +206,26 @@ export function registerCommands(context: ExtensionContext) {
   });
 
   // 改变书签颜色
-  registerCommand(context, CMD_CHANGE_BOOKMARK_COLOR, async (args) => {
-    if (!args || !args.meta) {
-      window.showInformationMessage('请选择书签后再更改颜色.', {});
-      return;
-    }
-    const { meta } = args;
-    if ('color' in meta) {
+  registerCommand(
+    context,
+    CMD_CHANGE_BOOKMARK_COLOR,
+    async (ctx: LineBookmarkContext | BookmarksTreeItem | undefined) => {
+      let bookmark: BookmarkMeta | undefined = getBookmarkFromCtx(ctx);
+      if (!bookmark) {
+        window.showInformationMessage('请选择书签后再进行操作.', {});
+        return;
+      }
+
       const newColor = await chooseBookmarkColor();
       if (!newColor) {
         return;
       }
-      BookmarksController.instance.update(meta, {
+      BookmarksController.instance.update(bookmark, {
         color: newColor,
       });
       updateActiveEditorAllDecorations();
     }
-  });
+  );
 
   // 删除当前打开的文档中的已存在的书签
   registerCommand(context, 'clearAllBookmarksInCurrentFile', async (args) => {

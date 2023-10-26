@@ -1,7 +1,5 @@
 import {
   Disposable,
-  Position,
-  Selection,
   TextEditorDecorationType,
   debug,
   window,
@@ -15,8 +13,6 @@ import {
 import { BookmarksController } from './controllers/BookmarksController';
 import {
   getBookmarkFromLineNumber,
-  getBookmarkFromRanges,
-  getBookmarkFromSelection,
   updateBookmarksGroupByChangedLine,
 } from './utils/bookmark';
 import { getAllPrettierConfiguration } from './configurations';
@@ -59,10 +55,6 @@ export function updateChangeVisibleTextEidtorsListener() {
   );
 }
 
-export function updateSaveTextDocumentListener() {
-  onDidSaveTextDocumentDisposable?.dispose();
-  onDidSaveTextDocumentDisposable = workspace.onDidSaveTextDocument((ev) => {});
-}
 
 let lastPositionLine = -1;
 let decoration: TextEditorDecorationType | undefined;
@@ -162,4 +154,5 @@ export function disablAllEvents() {
   onDidSaveTextDocumentDisposable?.dispose();
   onDidChangeVisibleTextEditors?.dispose();
   onDidChangeTextDocumentDisposable?.dispose();
+  decoration?.dispose();
 }
