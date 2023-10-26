@@ -1,8 +1,8 @@
 {
   "name": "bookmark-manager",
-  "displayName": "Bookmark manager",
+  "displayName": "Bookmark Manager",
   "description": "Simple and easy to use bookmark manager",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "engines": {
     "vscode": "^1.82.0"
   },
@@ -11,7 +11,9 @@
   ],
   "keywords": [
     "bookmark",
-    "bookmark manager"
+    "bookmark manager",
+    "bookmarks",
+    "manager"
   ],
   "publisher": "czfadmin",
   "author": "czfadmin",
@@ -27,6 +29,7 @@
     "onStartupFinished"
   ],
   "main": "./dist/extension.js",
+  "icon": "./logo.png",
   "contributes": {
     "commands": [
       {
