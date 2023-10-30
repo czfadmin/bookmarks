@@ -51,7 +51,7 @@
         "category": "Bookmark Manager"
       },
       {
-        "command": "bookmark-manager.toggleBookmarkWithSelections",
+        "command": "bookmark-manager.toggleBookmarkWithSelection",
         "title": "Toggle bookmark with selections",
         "icon": "$(bookmark)",
         "category": "Bookmark Manager"
@@ -262,8 +262,7 @@
     "menus": {
       "editor/context": [
         {
-          "submenu": "bookmark-manager",
-          "group": "z_commands"
+          "submenu": "bookmark-manager"
         }
       ],
       "editor/lineNumber/context": [
@@ -277,7 +276,7 @@
           "group": "bookmarksActionsGroup@1"
         },
         {
-          "command": "bookmark-manager.toggleBookmarkWithSelections",
+          "command": "bookmark-manager.toggleBookmarkWithSelection",
           "group": "bookmarksActionsGroup@2"
         },
         {
@@ -335,12 +334,18 @@
           "when": "view==bookmark-manager && viewItem === item",
           "group": "itemContextGroup@2"
         }
+      ],
+      "commandPalette": [
+        {
+          "command": "bookmark-manager.toggleBookmarkWithSelection",
+          "when": "editorHasSelection"
+        }
       ]
     },
     "submenus": [
       {
         "id": "bookmark-manager",
-        "label": "Bookmarks"
+        "label": "Bookmark Manager"
       }
     ],
     "keybindings": {

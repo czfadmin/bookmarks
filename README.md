@@ -36,4 +36,7 @@ This extension contributes the following settings:
 - `bookmark-manager.outlitextDecorationThicknessne`: 自定义装饰的粗细
 - `bookmark-manager.lineBlame`: 开启书签的 `lineBlame`
 
+## 注意
+当在对行或者选择的区域添加书签后,如果开启了 `bookmark-manager.showGutterIcon`, 会出现无法直接设置断点的情况, 不过可以通过使用右键行号进行创建, 更多详情[VSCode issus#5923](https://github.com/Microsoft/vscode/issues/5923)
+
 **Enjoy!**
