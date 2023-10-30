@@ -1,3 +1,4 @@
+import * as vscode from 'vscode';
 export const EXTENSION_ID = 'bookmark-manager';
 export const EXTENSION_VIEW_ID = 'bookmark-manager';
 
@@ -16,3 +17,7 @@ export const CMD_BOOKMARK_ADD_MORE_MEMO = 'bookmarkEditDescription';
 export const CMD_JUMP_TO_BOOKMARK = 'quickJumpTo';
 
 export const CMD_CHANGE_BOOKMARK_COLOR = 'changeBookmarkColor';
+
+// ENV
+export const APP_ROOT = vscode.env.appRoot;
+export const APP_NAME = vscode.env.appName;

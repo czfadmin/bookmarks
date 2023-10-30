@@ -66,6 +66,7 @@ export function getAllPrettierConfiguration() {
     ...createDecoration,
     colors,
     lineBlame: configuration.get('lineBlame') || false,
+    relativePath: configuration.get('relativePath') || false,
     defaultBookmarkIconColor: configuration.get('defaultBookmarkIconColor'),
   };
 }

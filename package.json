@@ -162,6 +162,11 @@
           "description": "一直使用默认的颜色装饰书签图标",
           "default": false
         },
+        "bookmark-manager.relativePath": {
+          "type": "boolean",
+          "description": "书签列表使用相对路径",
+          "default": true
+        },
         "bookmark-manager.showTextDecoration": {
           "type": "boolean",
           "description": "Whether to display the text decoration of the bookmark's location",

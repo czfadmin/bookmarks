@@ -4,6 +4,8 @@ import { MarkdownString } from 'vscode';
 import { BookmarksController } from '../controllers/BookmarksController';
 import { BookmarkMeta, BookmarkStoreType } from '../types';
 import gutters from '../gutter';
+import { getAllPrettierConfiguration } from '../configurations';
+import { getRelativePath } from '../utils';
 
 export class BookmarksTreeItem extends vscode.TreeItem {
   constructor(
@@ -65,15 +67,20 @@ export class BookmarksTreeProvider
   ): vscode.ProviderResult<BookmarksTreeItem[]> {
     if (!element) {
       const bookmarkRootStoreArr = this.datasource?.data || [];
-      const children = bookmarkRootStoreArr.map(
-        (it) =>
-          new BookmarksTreeItem(
-            it.filename,
-            vscode.TreeItemCollapsibleState.Collapsed,
-            'file',
-            it
-          )
-      );
+      const configuration = getAllPrettierConfiguration();
+      const isRelativePath = configuration.relativePath;
+      const children = bookmarkRootStoreArr.map((it) => {
+        let label = it.filename;
+        if (isRelativePath) {
+          label = getRelativePath(it.filename);
+        }
+        return new BookmarksTreeItem(
+          label,
+          vscode.TreeItemCollapsibleState.Collapsed,
+          'file',
+          it
+        );
+      });
       return Promise.resolve(children);
     }
     let children: BookmarksTreeItem[] = [];
