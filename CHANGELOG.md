@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.0.9
+
+### Patch Changes
+
+- 书签列表视图支持相对路径展示
+
 ## 0.0.8
 
 ### Patch Changes
