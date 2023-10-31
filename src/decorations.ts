@@ -16,13 +16,18 @@ import {
 } from './types';
 
 import { BookmarksController } from './controllers/BookmarksController';
-import { createBookmarkIcon, svgToUri } from './utils/icon';
+import { createBookmarkIcon, createTagIcon, svgToUri } from './utils/icon';
 import logger from './utils/logger';
 import { DEFAULT_BOOKMARK_COLOR } from './constants';
 import { getAllColors, getCreateDecorationOptions } from './configurations';
-import gutters from './gutter';
+import gutters, { getTagGutters } from './gutter';
 
 export let decorations = {} as Record<
+  BookmarkDecorationKey,
+  TextEditorDecorationType
+>;
+
+export let tagDecorations = {} as Record<
   BookmarkDecorationKey,
   TextEditorDecorationType
 >;
@@ -38,17 +43,21 @@ export function initDecorations(context?: ExtensionContext) {
   const options: CreateDecorationOptions = getCreateDecorationOptions();
   Object.keys(colors).forEach((item) => {
     decorations[item] = createDecoration(item, options);
+    tagDecorations[item] = createDecoration(item, options, true);
   });
 }
 
 export function createDecoration(
   colorLabel: string,
   options: CreateDecorationOptions,
+  hasTag: boolean = false,
   defaultColor: string = DEFAULT_BOOKMARK_COLOR
 ) {
   const colors = getAllColors();
+  const tagGutters = getTagGutters();
   let color = colors[colorLabel];
-  const gutterIconPath = svgToUri(createBookmarkIcon(color || defaultColor));
+  let gutterIconPath = gutters[colorLabel];
+  let tagGutterIconPath = tagGutters[colorLabel];
   // 用户配置
   const {
     fontWeight,
@@ -67,8 +76,16 @@ export function createDecoration(
     outline,
   } = options;
 
-  // 初始化gutter 颜色
-  gutters[colorLabel] = gutterIconPath;
+  if (!gutterIconPath && !hasTag) {
+    gutterIconPath = svgToUri(createBookmarkIcon(color || defaultColor));
+    // 初始化gutter 颜色
+    gutters[colorLabel] = gutterIconPath;
+  }
+
+  if (!tagGutterIconPath && hasTag) {
+    tagGutterIconPath = svgToUri(createTagIcon(color || defaultColor));
+    tagGutters[colorLabel] = tagGutterIconPath;
+  }
 
   let overviewRulerColor;
   let overviewRulerLane: OverviewRulerLane | undefined = undefined;
@@ -79,19 +96,24 @@ export function createDecoration(
   } else {
     overviewRulerColor = undefined;
   }
-  let _showGutterIfon = showGutterIcon;
+  let _showGutterIcon = showGutterIcon;
 
   if (!(showGutterIcon || showGutterInOverviewRuler || showTextDecoration)) {
     window.showInformationMessage(
       `'showGutterIcon', 'showGutterInOverviewRuler','showTextDecoration'不可以同时这只为'false'`
     );
-    _showGutterIfon = true;
+    _showGutterIcon = true;
   }
 
   if (alwaysUseDefaultColor) {
     color = colors.default;
   }
-
+  
+  const decorationGutterIconPath = _showGutterIcon
+    ? hasTag
+      ? tagGutterIconPath
+      : gutterIconPath
+    : undefined;
   const decoration = window.createTextEditorDecorationType({
     isWholeLine: wholeLine,
     borderRadius: '2px',
@@ -101,7 +123,7 @@ export function createDecoration(
     overviewRulerLane,
     overviewRulerColor,
     rangeBehavior: DecorationRangeBehavior.ClosedClosed,
-    gutterIconPath: _showGutterIfon ? gutterIconPath : undefined,
+    gutterIconPath: decorationGutterIconPath,
     border: showBorder ? border : '',
     outline: showOutline ? outline : '',
     backgroundColor: highlightBackground ? color : '',
@@ -145,12 +167,23 @@ export function updateDecoration(
   }
 ) {
   try {
-    const rangeOrOptions = createRangeOrOptions(options.bookmarks);
-    const _decorations = decorations;
-    editor?.setDecorations(
-      decorations[options.color] || _decorations['default'],
-      rangeOrOptions
-    );
+    const hasLabelBookmarks = options.bookmarks.filter((it) => it.label);
+    const noLabelBookmarks = options.bookmarks.filter((it) => !it.label);
+
+    if (hasLabelBookmarks.length) {
+      const tagRangeOrOptions = createRangeOrOptions(hasLabelBookmarks);
+      editor?.setDecorations(
+        tagDecorations[options.color] || tagDecorations['default'],
+        tagRangeOrOptions
+      );
+    }
+    if (noLabelBookmarks.length) {
+      const noTagRangeOrOptions = createRangeOrOptions(noLabelBookmarks);
+      editor?.setDecorations(
+        decorations[options.color] || decorations['default'],
+        noTagRangeOrOptions
+      );
+    }
   } catch (error) {
     logger.error(error);
   }
@@ -224,5 +257,4 @@ export function disposeAllDiscorations() {
   for (let decoration of Object.values(decorations)) {
     decoration?.dispose();
   }
-  
 }

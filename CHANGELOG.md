@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.0.10
+
+### Patch Changes
+
+- 增加有标签和无标签区分图标差异
+- 4ee1ae8: 活动栏视图增加数量 badge
+
 ## 0.0.9
 
 ### Patch Changes

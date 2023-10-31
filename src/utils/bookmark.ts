@@ -15,11 +15,12 @@ import {
 } from 'vscode';
 import { BookmarksController } from '../controllers/BookmarksController';
 import {
+  tagDecorations,
   updateActiveEditorAllDecorations,
   updateDecorationsByEditor,
 } from '../decorations';
 import { getAllColors } from '../configurations';
-import gutters from '../gutter';
+import gutters, { getTagGutters } from '../gutter';
 import { BookmarkMeta, BookmarkStoreType, LineBookmarkContext } from '../types';
 
 /**
@@ -420,19 +421,25 @@ export async function quicklyJumpToBookmark() {
     return;
   }
   const bookmarksGroupByFile = datasource?.data;
+  const tagGutters = getTagGutters();
   const pickItems = bookmarksGroupByFile.reduce((arr, b) => {
     arr.push(
-      ...b.bookmarks.map((it) => ({
-        filename: b.filename,
-        label: it.label || it.description || it.selectionContent,
-        description: it.description || it.label,
-        detail: b.filename,
-        iconPath: gutters[it.color] || gutters['default'],
-        meta: {
-          ...it,
-          selection: new Selection(it.selection.anchor, it.selection.active),
-        },
-      }))
+      ...b.bookmarks.map((it) => {
+        const iconPath = it.label
+          ? tagGutters[it.color] || tagGutters['default']
+          : gutters[it.color] || tagGutters['default'];
+        return {
+          filename: b.filename,
+          label: it.label || it.description || it.selectionContent,
+          description: it.description || it.label,
+          detail: b.filename,
+          iconPath: iconPath,
+          meta: {
+            ...it,
+            selection: new Selection(it.selection.anchor, it.selection.active),
+          },
+        };
+      })
     );
     return arr;
   }, [] as any[]);

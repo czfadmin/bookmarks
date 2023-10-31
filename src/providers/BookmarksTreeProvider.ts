@@ -3,7 +3,7 @@ import { MarkdownString } from 'vscode';
 
 import { BookmarksController } from '../controllers/BookmarksController';
 import { BookmarkMeta, BookmarkStoreType } from '../types';
-import gutters from '../gutter';
+import gutters, { getTagGutters } from '../gutter';
 import { getAllPrettierConfiguration } from '../configurations';
 import { getRelativePath } from '../utils';
 
@@ -16,8 +16,13 @@ export class BookmarksTreeItem extends vscode.TreeItem {
   ) {
     super(label, collapsibleState);
     this.contextValue = contextValue;
+    const tagGutters = getTagGutters();
     if ('color' in this.meta) {
-      this.iconPath = gutters[this.meta.color] || gutters['default'];
+      if ('label' in this.meta && this.meta.label) {
+        this.iconPath = tagGutters[this.meta.color] || tagGutters['default'];
+      } else {
+        this.iconPath = gutters[this.meta.color] || gutters['default'];
+      }
     }
     this._createTooltip();
   }
