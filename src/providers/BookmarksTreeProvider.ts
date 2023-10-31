@@ -54,7 +54,6 @@ export class BookmarksTreeProvider
 
   constructor(controller: BookmarksController) {
     this._controller = controller;
-    this._controller.updateChangeEvent(this._onDidChangeEvent);
   }
 
   getTreeItem(
@@ -105,5 +104,10 @@ export class BookmarksTreeProvider
     } catch (error) {
       return Promise.resolve([]);
     }
+  }
+
+  public refresh() {
+    // @ts-ignore
+    this._onDidChangeEvent.fire();
   }
 }

@@ -113,7 +113,6 @@ export function createDecoration(
           textDecorationThickness,
         })
       : '',
-
   });
 
   return decoration;

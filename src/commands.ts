@@ -226,7 +226,7 @@ export function registerCommands(context: ExtensionContext) {
       updateActiveEditorAllDecorations();
     }
   );
-
+  
   // 删除当前打开的文档中的已存在的书签
   registerCommand(context, 'clearAllBookmarksInCurrentFile', async (args) => {
     const activedEditor = window.activeTextEditor;

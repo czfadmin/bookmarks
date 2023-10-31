@@ -13,15 +13,26 @@ export class BookmarksController {
   private _datasource: BookmarkStoreRootType;
   private _context: vscode.ExtensionContext;
 
-  private _onDidChangeEvent:
-    | vscode.EventEmitter<any | undefined | void>
-    | undefined;
+  private _onDidChangeEvent = new vscode.EventEmitter<void>();
+
+  public onDidChangeEvent: vscode.Event<void> = this._onDidChangeEvent.event;
+
   public get datasource(): BookmarkStoreRootType {
     return this._datasource;
   }
 
   public get workspaceState(): vscode.Memento {
     return this._context.workspaceState;
+  }
+  
+  /**
+   * 返回书签的总个数
+   */
+  public get totalBookmarksNum(): number {
+    let count = 0;
+    if (!this.datasource) return 0;
+    count = this.datasource.data.reduce((a, b) => a + b.bookmarks.length, 0);
+    return count;
   }
 
   private constructor(context: vscode.ExtensionContext) {
@@ -55,10 +66,6 @@ export class BookmarksController {
       _datasource.data = temp;
       this._datasource = _datasource;
     }
-  }
-
-  updateChangeEvent(event: vscode.EventEmitter<any | undefined | void>) {
-    this._onDidChangeEvent = event;
   }
 
   add(editor: vscode.TextEditor, bookmark: Partial<Omit<BookmarkMeta, 'id'>>) {
@@ -224,8 +231,7 @@ export class BookmarksController {
   }
 
   private _fire() {
-    // @ts-ignore
-    this._onDidChangeEvent?.fire();
+    this._onDidChangeEvent.fire();
   }
 
   static getInstance(context: vscode.ExtensionContext): BookmarksController {
