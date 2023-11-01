@@ -23,6 +23,8 @@ export class BookmarksTreeItem extends vscode.TreeItem {
       } else {
         this.iconPath = gutters[this.meta.color] || gutters['default'];
       }
+    } else {
+      this.iconPath = vscode.ThemeIcon.File;
     }
     this._createTooltip();
   }

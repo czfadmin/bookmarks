@@ -8,9 +8,11 @@ import {
 
 import {
   updateActiveEditorAllDecorations,
-  updateDecorationsByEditor,
+  updateDecorationsByEditor,  
 } from './decorations';
+
 import {BookmarksController} from './controllers/BookmarksController';
+
 import {
   getBookmarkFromLineNumber,
   updateBookmarksGroupByChangedLine,
@@ -24,6 +26,8 @@ let onDidSaveTextDocumentDisposable: Disposable | undefined;
 let onDidCursorChangeDisposable: Disposable | undefined;
 let onDidChangeBreakpoints: Disposable | undefined;
 let onDidChangeTextDocumentDisposable: Disposable | undefined;
+let onDidRenameFilesDisposable: Disposable | undefined;
+let onDidDeleteFilesDisposable: Disposable | undefined;
 export function updateChangeActiveTextEditorListener() {
   onDidChangeActiveTextEditor?.dispose();
   // 当打开多个editor group时,更新每个editor的中的decorations
@@ -141,6 +145,58 @@ export function updateBookmarkInfoWhenTextChangeListener() {
   });
 }
 
+/**
+ * 创建文件系统监听器,并在文件改动时更改书签数据
+ */
+export function updateFilesRenameAndDeleteListeners() {
+  onDidRenameFilesDisposable?.dispose();
+  onDidDeleteFilesDisposable?.dispose();
+  // 监听文件重命名
+  onDidRenameFilesDisposable = workspace.onDidRenameFiles(e => {
+    const {files} = e;
+    if (!files) {
+      return;
+    }
+    let file;
+    for (file of files) {
+      const store = BookmarksController.instance.getBookmarkStoreByFileUri(
+        file.oldUri,
+      );
+      if (!store) {
+        continue;
+      }
+      const filePathArr = file.newUri.path.split('/');
+      store.id = file.newUri.fsPath;
+      store.fileUri = file.newUri;
+      store.filename = filePathArr[filePathArr.length - 1];
+      let bookmark: BookmarkMeta;
+      for (bookmark of store.bookmarks) {
+        bookmark.fileUri = file.newUri;
+      }
+    }
+    BookmarksController.instance.save();
+    updateActiveEditorAllDecorations();
+  });
+
+  // 监听文件删除
+  onDidDeleteFilesDisposable = workspace.onDidDeleteFiles(e => {
+    const {files} = e;
+    if (!files.length) {
+      return;
+    }
+    let file;
+    for (file of files) {
+      const store =
+        BookmarksController.instance.getBookmarkStoreByFileUri(file);
+      if (!store) {
+        continue;
+      }
+      BookmarksController.instance.clearAllBookmarkInFile(file);
+    }
+    updateActiveEditorAllDecorations();
+  });
+}
+
 export function updateChangeBreakpointsListener() {
   onDidChangeBreakpoints?.dispose();
   onDidChangeBreakpoints = debug.onDidChangeBreakpoints(ev => {});
@@ -153,5 +209,7 @@ export function disablAllEvents() {
   onDidSaveTextDocumentDisposable?.dispose();
   onDidChangeVisibleTextEditors?.dispose();
   onDidChangeTextDocumentDisposable?.dispose();
+  onDidDeleteFilesDisposable?.dispose();
+  onDidRenameFilesDisposable?.dispose();
   decoration?.dispose();
 }
