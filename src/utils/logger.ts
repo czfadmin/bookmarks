@@ -1,4 +1,4 @@
-import { EXTENSION_ID } from '../constants';
+import {EXTENSION_ID} from '../constants';
 
 function info(...msg: any[]) {
   console.log(
@@ -6,7 +6,7 @@ function info(...msg: any[]) {
     `background:#35495e ; padding: 1px; border-radius: 3px 0 0 3px;  color: #fff`,
     'background: green; padding: 1px; border-radius:0 3px 3px 0;  color: #fff',
     'background:unset',
-    ...msg
+    ...msg,
   );
 }
 
@@ -16,7 +16,7 @@ function warn(...msg: any[]) {
     `background:#35495e ; padding: 1px; border-radius: 3px 0 0 3px;  color: #fff`,
     'background: orange; padding: 1px; border-radius: 0 3px 3px 0;  color: #fff',
     'background:unset',
-    ...msg
+    ...msg,
   );
 }
 
@@ -26,7 +26,7 @@ function error(...msg: any[]) {
     `background:#35495e ; padding: 1px; border-radius: 3px 0 0 3px;  color: #fff`,
     'background: red; padding: 1px; border-radius: 0 3px 3px 0;  color: #fff',
     'background:unset',
-    ...msg
+    ...msg,
   );
 }
 
@@ -36,7 +36,7 @@ function log(...msg: any[]) {
     `background:#35495e ; padding: 1px; border-radius: 3px 0 0 3px;  color: #fff`,
     'background: blue; padding: 1px; border-radius:0 3px 3px 0;  color: #fff',
     'background:unset',
-    ...msg
+    ...msg,
   );
 }
 

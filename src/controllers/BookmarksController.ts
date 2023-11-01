@@ -1,12 +1,8 @@
 import * as vscode from 'vscode';
-import { EXTENSION_ID } from '../constants';
-import {
-  BookmarkMeta,
-  BookmarkStoreRootType,
-  BookmarkStoreType,
-} from '../types';
-import { createID } from '../utils';
-import { createHoverMessage } from '../utils/bookmark';
+import {EXTENSION_ID} from '../constants';
+import {BookmarkMeta, BookmarkStoreRootType, BookmarkStoreType} from '../types';
+import {createID} from '../utils';
+import {createHoverMessage} from '../utils/bookmark';
 
 export class BookmarksController {
   private static _instance: BookmarksController;
@@ -24,7 +20,7 @@ export class BookmarksController {
   public get workspaceState(): vscode.Memento {
     return this._context.workspaceState;
   }
-  
+
   /**
    * 返回书签的总个数
    */
@@ -46,12 +42,12 @@ export class BookmarksController {
       };
       this.save(this._datasource);
     } else {
-      const temp = _datasource.data.map((store) => {
-        const bookmarks = store.bookmarks.map((bookmark) => ({
+      const temp = _datasource.data.map(store => {
+        const bookmarks = store.bookmarks.map(bookmark => ({
           ...bookmark,
           selection: new vscode.Selection(
             bookmark.selection.anchor,
-            bookmark.selection.active
+            bookmark.selection.active,
           ),
           rangesOrOptions: {
             ...bookmark.rangesOrOptions,
@@ -70,9 +66,7 @@ export class BookmarksController {
 
   add(editor: vscode.TextEditor, bookmark: Partial<Omit<BookmarkMeta, 'id'>>) {
     const fileUri = editor.document.uri;
-    const idx = this.datasource.data.findIndex(
-      (it) => it.id === fileUri.fsPath
-    );
+    const idx = this.datasource.data.findIndex(it => it.id === fileUri.fsPath);
     let bookmarkStore;
     if (idx === -1) {
       bookmarkStore = {
@@ -95,13 +89,13 @@ export class BookmarksController {
   }
   remove(bookmark: BookmarkMeta) {
     const idx = this.datasource.data.findIndex(
-      (it) => it.id === bookmark.fileUri.fsPath
+      it => it.id === bookmark.fileUri.fsPath,
     );
     if (idx === -1) {
       return;
     }
     const bookmarkIdx = this.datasource.data[idx].bookmarks.findIndex(
-      (it) => it.id === bookmark.id
+      it => it.id === bookmark.id,
     );
     if (bookmarkIdx === -1) {
       return;
@@ -114,26 +108,26 @@ export class BookmarksController {
   }
   update(
     bookmark: BookmarkMeta,
-    bookmarkDto: Partial<Omit<BookmarkMeta, 'id'>>
+    bookmarkDto: Partial<Omit<BookmarkMeta, 'id'>>,
   ) {
     if (!bookmark.fileUri.fsPath) {
       return;
     }
 
     let idx = this.datasource.data.findIndex(
-      (it) => it.id === bookmark.fileUri.fsPath
+      it => it.id === bookmark.fileUri.fsPath,
     );
     if (idx === -1) {
       return;
     }
     const bookmarkIdx = this.datasource.data[idx].bookmarks.findIndex(
-      (it) => it.id === bookmark.id
+      it => it.id === bookmark.id,
     );
     if (bookmarkIdx === -1) {
       return;
     }
     const existed = this.datasource.data[idx].bookmarks[bookmarkIdx];
-    const { rangesOrOptions, ...rest } = bookmarkDto;
+    const {rangesOrOptions, ...rest} = bookmarkDto;
     this.datasource.data[idx].bookmarks[bookmarkIdx] = {
       ...existed,
       ...rest,
@@ -145,20 +139,18 @@ export class BookmarksController {
     this.save();
   }
   detail(bookmark: BookmarkMeta) {
-    const { id, fileUri } = bookmark;
-    let idx = this.datasource.data.findIndex((it) => it.id === fileUri.fsPath);
+    const {id, fileUri} = bookmark;
+    let idx = this.datasource.data.findIndex(it => it.id === fileUri.fsPath);
     if (idx === -1) {
       return;
     }
-    return this.datasource.data[idx].bookmarks.find((it) => it.id === id);
+    return this.datasource.data[idx].bookmarks.find(it => it.id === id);
   }
 
   getBookmarkStoreByFileUri(
-    fileUri: vscode.Uri
+    fileUri: vscode.Uri,
   ): BookmarkStoreType | undefined {
-    const idx = this.datasource.data.findIndex(
-      (it) => it.id === fileUri.fsPath
-    );
+    const idx = this.datasource.data.findIndex(it => it.id === fileUri.fsPath);
     if (idx === -1) {
       return;
     }
@@ -193,9 +185,7 @@ export class BookmarksController {
     if (!this.datasource.data.length) {
       return;
     }
-    const idx = this.datasource.data.findIndex(
-      (it) => it.id === fileUri.fsPath
-    );
+    const idx = this.datasource.data.findIndex(it => it.id === fileUri.fsPath);
     if (idx === -1) {
       return;
     }

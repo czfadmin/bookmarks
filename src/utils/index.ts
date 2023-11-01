@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { v4 as uuid } from 'uuid';
+import {v4 as uuid} from 'uuid';
 export * from './command';
 export * from './logger';
 export * from './resources';
@@ -15,7 +15,7 @@ export interface IDisposable {
 }
 export function dispose<T extends IDisposable>(disposables: T[] | T) {
   if (Array.isArray(disposables)) {
-    disposables.forEach((it) => it.dispose());
+    disposables.forEach(it => it.dispose());
     return;
   }
   disposables.dispose();

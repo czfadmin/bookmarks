@@ -1,5 +1,5 @@
-import { ExtensionContext, window } from 'vscode';
-import { registerCommand } from './utils';
+import {ExtensionContext, window} from 'vscode';
+import {registerCommand} from './utils';
 import {
   CMD_TOGGLE_LINE_BOOKMARK,
   CMD_TOGGLE_BOOKMARK_WITH_LABEL,
@@ -13,9 +13,9 @@ import {
   CMD_CHANGE_BOOKMARK_COLOR,
 } from './constants';
 
-import { updateActiveEditorAllDecorations } from './decorations';
-import { BookmarkMeta, LineBookmarkContext } from './types';
-import { BookmarksController } from './controllers/BookmarksController';
+import {updateActiveEditorAllDecorations} from './decorations';
+import {BookmarkMeta, LineBookmarkContext} from './types';
+import {BookmarksController} from './controllers/BookmarksController';
 import {
   checkIfBookmarksIsInCurrentEditor,
   chooseBookmarkColor,
@@ -28,11 +28,11 @@ import {
   editBookmarkLabel,
   getBookmarkFromLineNumber,
 } from './utils/bookmark';
-import { BookmarksTreeItem } from './providers/BookmarksTreeProvider';
+import {BookmarksTreeItem} from './providers/BookmarksTreeProvider';
 
 function getBookmarkFromCtx(
   context: LineBookmarkContext | BookmarksTreeItem | undefined,
-  cb?: () => void
+  cb?: () => void,
 ) {
   let bookmark: BookmarkMeta | undefined;
   if (context && 'contextValue' in context && context.contextValue === 'item') {
@@ -58,8 +58,8 @@ export function registerCommands(context: ExtensionContext) {
     context,
     CMD_TOGGLE_LINE_BOOKMARK,
     async (args: LineBookmarkContext) => {
-      toggleBookmark(args, { type: 'line' });
-    }
+      toggleBookmark(args, {type: 'line'});
+    },
   );
   // 开启带有标签的行书签
   registerCommand(
@@ -78,7 +78,7 @@ export function registerCommands(context: ExtensionContext) {
         label,
         type: 'line',
       });
-    }
+    },
   );
   // 开启行书签,并可以指定书签颜色
   registerCommand(
@@ -89,18 +89,21 @@ export function registerCommands(context: ExtensionContext) {
         withColor: true,
         type: 'line',
       });
-    }
+    },
   );
   // 清除书签
-  registerCommand(context, CMD_CLEAR_ALL, (args) => {
+  registerCommand(context, CMD_CLEAR_ALL, args => {
     updateActiveEditorAllDecorations(true);
-    let fileUri;
+    let fileUri,
+      clearAll = false;
     if (args && args.meta) {
       fileUri = args.meta.fileUri;
       BookmarksController.instance.clearAllBookmarkInFile(fileUri);
-      return;
+    } else {
+      BookmarksController.instance.clearAll();
+      clearAll = true;
     }
-    BookmarksController.instance.clearAll();
+    updateActiveEditorAllDecorations(clearAll);
   });
 
   // 删除书签
@@ -123,7 +126,7 @@ export function registerCommands(context: ExtensionContext) {
         deleteBookmark(context as LineBookmarkContext);
       }
       updateActiveEditorAllDecorations();
-    }
+    },
   );
   // 编辑书签标签
   registerCommand(
@@ -143,29 +146,29 @@ export function registerCommands(context: ExtensionContext) {
           title:
             'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
         })
-        .then((label) => {
+        .then(label => {
           if (!label || !bookmark) {
             return;
           }
           editBookmarkLabel(bookmark, label);
         });
-    }
+    },
   );
 
   // 定位书签位置,并跳转到书签位置
-  registerCommand(context, CMD_GO_TO_SOURCE_LOCATION, (args) => {
+  registerCommand(context, CMD_GO_TO_SOURCE_LOCATION, args => {
     gotoSourceLocation(args.meta);
   });
 
   // 为选中的区域增加书签
-  registerCommand(context, CMD_TOGGLE_BOOKMARK_WITH_SECTIONS, (ctx) => {
+  registerCommand(context, CMD_TOGGLE_BOOKMARK_WITH_SECTIONS, ctx => {
     window
       .showInputBox({
         placeHolder: 'Type a label for your bookmarks',
         title:
           'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
       })
-      .then((label) => {
+      .then(label => {
         if (!label) {
           return;
         }
@@ -190,18 +193,18 @@ export function registerCommands(context: ExtensionContext) {
           title:
             'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
         })
-        .then((description) => {
+        .then(description => {
           if (!description) {
             return;
           }
 
           editBookmarkDescription(bookmark!, description);
         });
-    }
+    },
   );
 
   // 快速跳转到书签位置,并预览书签
-  registerCommand(context, CMD_JUMP_TO_BOOKMARK, (args) => {
+  registerCommand(context, CMD_JUMP_TO_BOOKMARK, args => {
     quicklyJumpToBookmark();
   });
 
@@ -224,16 +227,16 @@ export function registerCommands(context: ExtensionContext) {
         color: newColor,
       });
       updateActiveEditorAllDecorations();
-    }
+    },
   );
-  
+
   // 删除当前打开的文档中的已存在的书签
-  registerCommand(context, 'clearAllBookmarksInCurrentFile', async (args) => {
+  registerCommand(context, 'clearAllBookmarksInCurrentFile', async args => {
     const activedEditor = window.activeTextEditor;
     if (!activedEditor) return;
     if (checkIfBookmarksIsInCurrentEditor(activedEditor)) {
       BookmarksController.instance.clearAllBookmarkInFile(
-        activedEditor.document.uri
+        activedEditor.document.uri,
       );
       updateActiveEditorAllDecorations();
     }

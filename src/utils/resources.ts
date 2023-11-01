@@ -1,8 +1,8 @@
-import { Uri, ExtensionContext } from 'vscode';
+import {Uri, ExtensionContext} from 'vscode';
 export function getResourceUri(
   context: ExtensionContext,
   filename: string,
-  dark: boolean = false
+  dark: boolean = false,
 ) {
   const resourceName = `resources/${dark ? 'dark' : 'light'}/${filename}`;
   return Uri.joinPath(context.extensionUri, resourceName);

@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
-import { EXTENSION_VIEW_ID } from '../constants';
-import { BookmarksController } from '../controllers/BookmarksController';
+import {EXTENSION_VIEW_ID} from '../constants';
+import {BookmarksController} from '../controllers/BookmarksController';
 import {
   BookmarksTreeItem,
   BookmarksTreeProvider,
 } from '../providers/BookmarksTreeProvider';
-import { dispose } from '../utils';
+import {dispose} from '../utils';
 
 export class BookmarksTreeView implements vscode.Disposable {
   private _provider: BookmarksTreeProvider;
@@ -18,7 +18,7 @@ export class BookmarksTreeView implements vscode.Disposable {
 
   constructor(
     private context: vscode.ExtensionContext,
-    controller: BookmarksController
+    controller: BookmarksController,
   ) {
     this._controller = controller;
     this._provider = new BookmarksTreeProvider(controller);
@@ -35,7 +35,7 @@ export class BookmarksTreeView implements vscode.Disposable {
       this._controller.onDidChangeEvent(() => {
         this._provider.refresh();
         this._buildViewBadge();
-      })
+      }),
     );
   }
 

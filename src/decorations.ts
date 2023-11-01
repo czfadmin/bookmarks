@@ -15,12 +15,12 @@ import {
   StringIndexType,
 } from './types';
 
-import { BookmarksController } from './controllers/BookmarksController';
-import { createBookmarkIcon, createTagIcon, svgToUri } from './utils/icon';
+import {BookmarksController} from './controllers/BookmarksController';
+import {createBookmarkIcon, createTagIcon, svgToUri} from './utils/icon';
 import logger from './utils/logger';
-import { DEFAULT_BOOKMARK_COLOR } from './constants';
-import { getAllColors, getCreateDecorationOptions } from './configurations';
-import gutters, { getTagGutters } from './gutter';
+import {DEFAULT_BOOKMARK_COLOR} from './constants';
+import {getAllColors, getCreateDecorationOptions} from './configurations';
+import gutters, {getTagGutters} from './gutter';
 
 export let decorations = {} as Record<
   BookmarkDecorationKey,
@@ -41,7 +41,7 @@ export function initDecorations(context?: ExtensionContext) {
   decorations = {};
   const colors = getAllColors(true);
   const options: CreateDecorationOptions = getCreateDecorationOptions();
-  Object.keys(colors).forEach((item) => {
+  Object.keys(colors).forEach(item => {
     decorations[item] = createDecoration(item, options);
     tagDecorations[item] = createDecoration(item, options, true);
   });
@@ -51,7 +51,7 @@ export function createDecoration(
   colorLabel: string,
   options: CreateDecorationOptions,
   hasTag: boolean = false,
-  defaultColor: string = DEFAULT_BOOKMARK_COLOR
+  defaultColor: string = DEFAULT_BOOKMARK_COLOR,
 ) {
   const colors = getAllColors();
   const tagGutters = getTagGutters();
@@ -100,7 +100,7 @@ export function createDecoration(
 
   if (!(showGutterIcon || showGutterInOverviewRuler || showTextDecoration)) {
     window.showInformationMessage(
-      `'showGutterIcon', 'showGutterInOverviewRuler','showTextDecoration'不可以同时这只为'false'`
+      `'showGutterIcon', 'showGutterInOverviewRuler','showTextDecoration'不可以同时这只为'false'`,
     );
     _showGutterIcon = true;
   }
@@ -108,7 +108,7 @@ export function createDecoration(
   if (alwaysUseDefaultColor) {
     color = colors.default;
   }
-  
+
   const decorationGutterIconPath = _showGutterIcon
     ? hasTag
       ? tagGutterIconPath
@@ -164,26 +164,23 @@ export function updateDecoration(
   options: {
     color: BookmarkColor;
     bookmarks: BookmarkMeta[];
-  }
+  },
 ) {
   try {
-    const hasLabelBookmarks = options.bookmarks.filter((it) => it.label);
-    const noLabelBookmarks = options.bookmarks.filter((it) => !it.label);
+    const hasLabelBookmarks = options.bookmarks.filter(it => it.label);
+    const noLabelBookmarks = options.bookmarks.filter(it => !it.label);
 
-    if (hasLabelBookmarks.length) {
-      const tagRangeOrOptions = createRangeOrOptions(hasLabelBookmarks);
-      editor?.setDecorations(
-        tagDecorations[options.color] || tagDecorations['default'],
-        tagRangeOrOptions
-      );
-    }
-    if (noLabelBookmarks.length) {
-      const noTagRangeOrOptions = createRangeOrOptions(noLabelBookmarks);
-      editor?.setDecorations(
-        decorations[options.color] || decorations['default'],
-        noTagRangeOrOptions
-      );
-    }
+    const tagRangeOrOptions = createRangeOrOptions(hasLabelBookmarks);
+
+    editor?.setDecorations(
+      tagDecorations[options.color] || tagDecorations['default'],
+      tagRangeOrOptions,
+    );
+    const noTagRangeOrOptions = createRangeOrOptions(noLabelBookmarks);
+    editor?.setDecorations(
+      decorations[options.color] || decorations['default'],
+      noTagRangeOrOptions,
+    );
   } catch (error) {
     logger.error(error);
   }
@@ -195,7 +192,7 @@ export function updateDecoration(
  * @returns
  */
 export function createRangeOrOptions(bookmarks: BookmarkMeta[]) {
-  return bookmarks.map((bookmark) => bookmark.rangesOrOptions);
+  return bookmarks.map(bookmark => bookmark.rangesOrOptions);
 }
 
 /**
@@ -205,7 +202,7 @@ export function createRangeOrOptions(bookmarks: BookmarkMeta[]) {
  */
 export const updateDecorationsByEditor = (
   editor: TextEditor,
-  clear: boolean = false
+  clear: boolean = false,
 ) => {
   if (!editor) {
     return;
@@ -214,20 +211,20 @@ export const updateDecorationsByEditor = (
     return;
   }
   const bookmarkStore = BookmarksController.instance.getBookmarkStoreByFileUri(
-    editor.document.uri
+    editor.document.uri,
   );
   const bookmarks = bookmarkStore?.bookmarks || [];
   const colors = getAllColors();
   const decorationsGroupByLevel: StringIndexType<any[]> = {};
-  Object.keys(colors).forEach((color) => {
+  Object.keys(colors).forEach(color => {
     if (!decorationsGroupByLevel[color]) {
       decorationsGroupByLevel[color] = [] as any;
     }
     decorationsGroupByLevel[color].push(
-      ...bookmarks.filter((it) => it.color == color)
+      ...bookmarks.filter(it => it.color == color),
     );
   });
-  Object.keys(decorationsGroupByLevel).forEach((it) => {
+  Object.keys(decorationsGroupByLevel).forEach(it => {
     updateDecoration(editor, {
       color: it as BookmarkColor,
       bookmarks: clear ? [] : decorationsGroupByLevel[it],

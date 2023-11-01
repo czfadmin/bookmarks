@@ -1,18 +1,18 @@
 import * as vscode from 'vscode';
-import { MarkdownString } from 'vscode';
+import {MarkdownString} from 'vscode';
 
-import { BookmarksController } from '../controllers/BookmarksController';
-import { BookmarkMeta, BookmarkStoreType } from '../types';
-import gutters, { getTagGutters } from '../gutter';
-import { getAllPrettierConfiguration } from '../configurations';
-import { getRelativePath } from '../utils';
+import {BookmarksController} from '../controllers/BookmarksController';
+import {BookmarkMeta, BookmarkStoreType} from '../types';
+import gutters, {getTagGutters} from '../gutter';
+import {getAllPrettierConfiguration} from '../configurations';
+import {getRelativePath} from '../utils';
 
 export class BookmarksTreeItem extends vscode.TreeItem {
   constructor(
     label: string,
     collapsibleState: vscode.TreeItemCollapsibleState,
     contextValue: string,
-    public meta: BookmarkStoreType | BookmarkMeta
+    public meta: BookmarkStoreType | BookmarkMeta,
   ) {
     super(label, collapsibleState);
     this.contextValue = contextValue;
@@ -62,18 +62,18 @@ export class BookmarksTreeProvider
   }
 
   getTreeItem(
-    element: BookmarksTreeItem
+    element: BookmarksTreeItem,
   ): vscode.TreeItem | Thenable<vscode.TreeItem> {
     return element;
   }
   getChildren(
-    element?: BookmarksTreeItem | undefined
+    element?: BookmarksTreeItem | undefined,
   ): vscode.ProviderResult<BookmarksTreeItem[]> {
     if (!element) {
       const bookmarkRootStoreArr = this.datasource?.data || [];
       const configuration = getAllPrettierConfiguration();
       const isRelativePath = configuration.relativePath;
-      const children = bookmarkRootStoreArr.map((it) => {
+      const children = bookmarkRootStoreArr.map(it => {
         let label = it.filename;
         if (isRelativePath) {
           label = getRelativePath(it.filename);
@@ -82,17 +82,17 @@ export class BookmarksTreeProvider
           label,
           vscode.TreeItemCollapsibleState.Collapsed,
           'file',
-          it
+          it,
         );
       });
       return Promise.resolve(children);
     }
     let children: BookmarksTreeItem[] = [];
     try {
-      children = (element.meta as BookmarkStoreType).bookmarks.map((it) => {
+      children = (element.meta as BookmarkStoreType).bookmarks.map(it => {
         const selection = new vscode.Selection(
           it.selection.anchor,
-          it.selection.active
+          it.selection.active,
         );
 
         return new BookmarksTreeItem(
@@ -102,7 +102,7 @@ export class BookmarksTreeProvider
           {
             ...it,
             selection,
-          }
+          },
         );
       });
       return Promise.resolve(children);

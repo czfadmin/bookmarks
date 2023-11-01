@@ -1,6 +1,6 @@
-import { workspace } from 'vscode';
-import { DEFAULT_BOOKMARK_COLOR, EXTENSION_ID } from './constants';
-import { CreateDecorationOptions, StringIndexType } from './types';
+import {workspace} from 'vscode';
+import {DEFAULT_BOOKMARK_COLOR, EXTENSION_ID} from './constants';
+import {CreateDecorationOptions, StringIndexType} from './types';
 
 let $colors = {} as StringIndexType<string>;
 

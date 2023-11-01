@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { registerCommands } from './commands';
-import { EXTENSION_ID } from './constants';
-import { BookmarksController } from './controllers/BookmarksController';
+import {registerCommands} from './commands';
+import {EXTENSION_ID} from './constants';
+import {BookmarksController} from './controllers/BookmarksController';
 import {
   disposeAllDiscorations,
   initDecorations,
@@ -16,8 +16,8 @@ import {
   updateCursorChangeListener,
 } from './events';
 import logger from './utils/logger';
-import { BookmarksTreeView } from './views/BookmarksTreeView';
-import { ensureEmojis } from './emojis';
+import {BookmarksTreeView} from './views/BookmarksTreeView';
+import {ensureEmojis} from './emojis';
 
 /**
  * 插件上下文
@@ -37,16 +37,16 @@ export async function activate(context: vscode.ExtensionContext) {
   registerCommands(context);
   await ensureEmojis();
   context.subscriptions.push(
-    new BookmarksTreeView(context, BookmarksController.getInstance(context))
+    new BookmarksTreeView(context, BookmarksController.getInstance(context)),
   );
   // 监听插件配置的变化
   context.subscriptions.push(
-    vscode.workspace.onDidChangeConfiguration((ev) => {
+    vscode.workspace.onDidChangeConfiguration(ev => {
       if (!ev.affectsConfiguration(EXTENSION_ID)) {
         return;
       }
       updateEverything(context);
-    })
+    }),
   );
 
   initDecorations(context);

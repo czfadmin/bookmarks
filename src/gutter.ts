@@ -1,4 +1,4 @@
-import { Uri } from 'vscode';
+import {Uri} from 'vscode';
 
 export interface Gutter {
   [key: string]: Uri | string;

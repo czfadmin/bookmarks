@@ -1,4 +1,4 @@
-import { Uri } from 'vscode';
+import {Uri} from 'vscode';
 
 export function svgToUri(svg: any) {
   return Uri.parse(`data:image/svg+xml;utf8,${svg}`);

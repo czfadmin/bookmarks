@@ -10,13 +10,13 @@ import {
   updateActiveEditorAllDecorations,
   updateDecorationsByEditor,
 } from './decorations';
-import { BookmarksController } from './controllers/BookmarksController';
+import {BookmarksController} from './controllers/BookmarksController';
 import {
   getBookmarkFromLineNumber,
   updateBookmarksGroupByChangedLine,
 } from './utils/bookmark';
-import { getAllPrettierConfiguration } from './configurations';
-import { BookmarkMeta } from './types';
+import {getAllPrettierConfiguration} from './configurations';
+import {BookmarkMeta} from './types';
 
 let onDidChangeActiveTextEditor: Disposable | undefined;
 let onDidChangeVisibleTextEditors: Disposable | undefined;
@@ -29,11 +29,11 @@ export function updateChangeActiveTextEditorListener() {
   // 当打开多个editor group时,更新每个editor的中的decorations
   const visibleTextEditors = window.visibleTextEditors;
   if (visibleTextEditors.length) {
-    visibleTextEditors.forEach((editor) => {
+    visibleTextEditors.forEach(editor => {
       updateDecorationsByEditor(editor);
     });
   }
-  onDidChangeActiveTextEditor = window.onDidChangeActiveTextEditor((ev) => {
+  onDidChangeActiveTextEditor = window.onDidChangeActiveTextEditor(ev => {
     if (!ev) {
       return;
     }
@@ -47,14 +47,13 @@ export function updateChangeActiveTextEditorListener() {
 export function updateChangeVisibleTextEidtorsListener() {
   onDidChangeVisibleTextEditors?.dispose();
   onDidChangeVisibleTextEditors = window.onDidChangeVisibleTextEditors(
-    (editors) => {
+    editors => {
       for (let editor of editors) {
         updateDecorationsByEditor(editor);
       }
-    }
+    },
   );
 }
-
 
 let lastPositionLine = -1;
 let decoration: TextEditorDecorationType | undefined;
@@ -66,7 +65,7 @@ export function updateCursorChangeListener() {
   decoration?.dispose();
   lastPositionLine = -1;
   const enableLineBlame = getAllPrettierConfiguration().lineBlame;
-  onDidCursorChangeDisposable = window.onDidChangeTextEditorSelection((ev) => {
+  onDidCursorChangeDisposable = window.onDidChangeTextEditorSelection(ev => {
     const editor = ev.textEditor;
     if (!enableLineBlame) {
       decoration && editor.setDecorations(decoration, []);
@@ -76,7 +75,7 @@ export function updateCursorChangeListener() {
     }
     const section = ev.selections[0];
     const store = BookmarksController.instance.getBookmarkStoreByFileUri(
-      editor.document.uri
+      editor.document.uri,
     );
     if (!store) {
       decoration?.dispose();
@@ -126,8 +125,8 @@ function buildLineBlameInfo(bookmark: BookmarkMeta) {
 
 export function updateBookmarkInfoWhenTextChangeListener() {
   onDidChangeTextDocumentDisposable?.dispose();
-  onDidChangeTextDocumentDisposable = workspace.onDidChangeTextDocument((e) => {
-    const { contentChanges, document } = e;
+  onDidChangeTextDocumentDisposable = workspace.onDidChangeTextDocument(e => {
+    const {contentChanges, document} = e;
     // 代表存在文档发生变化
     if (contentChanges.length) {
       const bookmarkStore =
@@ -144,7 +143,7 @@ export function updateBookmarkInfoWhenTextChangeListener() {
 
 export function updateChangeBreakpointsListener() {
   onDidChangeBreakpoints?.dispose();
-  onDidChangeBreakpoints = debug.onDidChangeBreakpoints((ev) => {});
+  onDidChangeBreakpoints = debug.onDidChangeBreakpoints(ev => {});
 }
 
 export function disablAllEvents() {
