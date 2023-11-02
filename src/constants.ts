@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 export const EXTENSION_ID = 'bookmark-manager';
+
+export const VIRTUAL_SCHEMA = 'bookmarkmanager';
 export const EXTENSION_VIEW_ID = 'bookmark-manager';
 
 export const DEFAULT_BOOKMARK_COLOR = '#0e69d8';

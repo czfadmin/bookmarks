@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import {registerCommands} from './commands';
-import {EXTENSION_ID} from './constants';
+import {EXTENSION_ID, VIRTUAL_SCHEMA} from './constants';
 import {BookmarksController} from './controllers/BookmarksController';
 import {
   disposeAllDiscorations,
@@ -36,7 +36,9 @@ export async function activate(context: vscode.ExtensionContext) {
   logger.log(`${EXTENSION_ID} is now active!`);
 
   registerCommands(context);
+
   await ensureEmojis();
+
   context.subscriptions.push(
     new BookmarksTreeView(context, BookmarksController.getInstance(context)),
   );
@@ -48,6 +50,25 @@ export async function activate(context: vscode.ExtensionContext) {
       }
       updateEverything(context);
     }),
+  );
+  const provider = new (class implements vscode.TextDocumentContentProvider {
+    onDidChangeEmitter: vscode.EventEmitter<vscode.Uri> =
+      new vscode.EventEmitter<vscode.Uri>();
+    onDidChange?: vscode.Event<vscode.Uri> = this.onDidChangeEmitter.event;
+    provideTextDocumentContent(
+      uri: vscode.Uri,
+      token: vscode.CancellationToken,
+    ): vscode.ProviderResult<string> {
+      // TODO
+      return 'Hello';
+    }
+  })();
+
+  context.subscriptions.push(
+    vscode.workspace.registerTextDocumentContentProvider(
+      VIRTUAL_SCHEMA,
+      provider,
+    ),
   );
 
   initDecorations(context);

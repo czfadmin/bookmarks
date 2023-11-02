@@ -115,6 +115,12 @@
         "title": "Quickly jump to bookmark",
         "icon": "$(bookmark)",
         "category": "Bookmark Manager"
+      },
+      {
+        "command": "bookmark-manager.openInEditor",
+        "title": "Open in editor",
+        "icon": "$(open-preview)",
+        "category": "Bookmark Manager"
       }
     ],
     "views": {
@@ -307,6 +313,10 @@
         {
           "command": "bookmark-manager.clearAllBookmarks",
           "when": "view == bookmark-manager",
+          "group": "navigation"
+        },
+        {
+          "command": "bookmark-manager.openInEditor",
           "group": "navigation"
         }
       ],

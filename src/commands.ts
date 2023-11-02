@@ -1,4 +1,4 @@
-import {ExtensionContext, window} from 'vscode';
+import {ExtensionContext, Uri, window, workspace} from 'vscode';
 import {registerCommand} from './utils';
 import {
   CMD_TOGGLE_LINE_BOOKMARK,
@@ -11,6 +11,7 @@ import {
   CMD_BOOKMARK_ADD_MORE_MEMO,
   CMD_JUMP_TO_BOOKMARK,
   CMD_CHANGE_BOOKMARK_COLOR,
+  VIRTUAL_SCHEMA,
 } from './constants';
 
 import {updateActiveEditorAllDecorations} from './decorations';
@@ -240,5 +241,13 @@ export function registerCommands(context: ExtensionContext) {
       );
       updateActiveEditorAllDecorations();
     }
+  });
+
+  registerCommand(context, 'openInEditor', async args => {
+    const uri = Uri.parse(`${VIRTUAL_SCHEMA}:`);
+    const doc = await workspace.openTextDocument(uri);
+    await window.showTextDocument(doc, {
+      preview: true,
+    });
   });
 }
