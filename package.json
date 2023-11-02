@@ -267,12 +267,14 @@
     "menus": {
       "editor/context": [
         {
-          "submenu": "bookmark-manager"
+          "submenu": "bookmark-manager",
+          "when": " !inOutput"
         }
       ],
       "editor/lineNumber/context": [
         {
-          "submenu": "bookmark-manager"
+          "submenu": "bookmark-manager",
+          "when": "!inOutput"
         }
       ],
       "bookmark-manager": [
@@ -373,7 +375,8 @@
     "changeset": "changeset",
     "changeset:publish": "changeset publish",
     "prettier": "prettier --fix  -w  ./src/**/*.{js,ts} ",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "publish:beta": "vsce package --pre-release"
   },
   "devDependencies": {
     "@changesets/cli": "^2.26.2",
