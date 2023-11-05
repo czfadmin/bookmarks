@@ -1,42 +1,56 @@
 # Bookmark Manager
 
+- [中文](./README-ZN.md)
+
 ## Features
 
-- 单行书签切换
-- 选中内容设置标签
-- 自定义书签样式以及文本装饰器颜色
-- 书签管理视图
-- 快速跳转预览书签
-- 自定义书签备注
+- Single line bookmark switching
+- Select the Content Settings tab
+- Customize bookmark style and text decorator color
+- Bookmark management view
+- Quickly jump to preview bookmarks
+- Customized bookmark notes
 
-![picture 0](images/92256c06851c209939b6a41f656db6f2eec9d3743cab5c48b4cc3668ab51ac10.png)
+### Preview
+1.  Sidebar bookmark management
+
+![picture 2](images/fc6ebe2e592745e20ddc62cc1cad20917ac6716efa2c403736b8083d9812e90b.png)  
+
+
+2.  Bookmark multi-color classification management
+
+![picture 1](images/454a86e976aac9448e305cc9942b13273a70e7cc89bec928f8e4234ed75411f2.png)  
+
+3. Bookmark selection
 
 ![toggle-bookmark-with-selections](images/toggle-bookmark-with-selections.gif)
 
+4. Quickly preview bookmarks and jump to their location
+
 ![quick-jump](./images/quick-jump.gif)
 
-## Extension Settings
+## Configuration
 
-This extension contributes the following settings:
+- `bookmark-manager.alwaysUseDefaultColor`: Always use the default color to decorate the bookmark icon
+- `bookmark-manager.showGutterInOverviewRuler`: Whether to display the `Gutter` icon on the overview ruler.
+- `bookmark-manager.showTextDecoration`: Set whether to display the bookmark's text decorator.
+- `bookmark-manager.showGutterIcon`: Whether to display the `gutter` icon.
+- `bookmark-manager.fontWeight`: Bookmark font style.
+- `bookmark-manager.colors`: built-in colors and user-defined bookmark colors.
+- `bookmark-manager.defaultBookmarkIconColor`: Set the default bookmark color.
+- `bookmark-manager.showBorder`: whether to display the border
+- `bookmark-manager.border`: Bookmark border style
+- `bookmark-manager.showOutline`: whether to display the outline of the bookmark
+- `bookmark-manager.outline`: bookmark outline style
+- `bookmark-manager.wholeLine`: Whether to select the entire line, by default the area with content is selected
+- `bookmark-manager.textDecorationLine`: Customize the decorator style of bookmarks
+- `bookmark-manager.textDecorationStyle`: Customize the decorator style of bookmarks
+- `bookmark-manager.outlitextDecorationThicknessne`: Customize the thickness of the decoration
+- `bookmark-manager.lineBlame`: Enable `lineBlame` for bookmarks
 
-- `bookmark-manager.alwaysUseDefaultColor`: 一直使用默认的颜色装饰书签图标
-- `bookmark-manager.showGutterInOverviewRuler`: 是否在概览尺上显示`Gutter`图标.
-- `bookmark-manager.showTextDecoration`: 设置是否显示书签的文本装饰器.
-- `bookmark-manager.showGutterIcon`: 是否显示`gutter`图标.
-- `bookmark-manager.fontWeight`: 书签字体样式.
-- `bookmark-manager.colors`: 内置的颜色以及用户自定义书签颜色.
-- `bookmark-manager.defaultBookmarkIconColor`: 设置默认的书签颜色.
-- `bookmark-manager.showBorder`: 是否显示边框
-- `bookmark-manager.border`: 书签的边框样式
-- `bookmark-manager.showOutline`: 是否显示书签的轮廓
-- `bookmark-manager.outline`: 书签的轮廓样式
-- `bookmark-manager.wholeLine`: 是否选择整行,默认时选择有内容区域
-- `bookmark-manager.textDecorationLine`: 自定义书签的装饰器样式
-- `bookmark-manager.textDecorationStyle`: 自定义书签的装饰器样式
-- `bookmark-manager.outlitextDecorationThicknessne`: 自定义装饰的粗细
-- `bookmark-manager.lineBlame`: 开启书签的 `lineBlame`
+## Other
 
-## 注意
-当在对行或者选择的区域添加书签后,如果开启了 `bookmark-manager.showGutterIcon`, 会出现无法直接设置断点的情况, 不过可以通过使用右键行号进行创建, 更多详情[VSCode issus#5923](https://github.com/Microsoft/vscode/issues/5923)
+## Attention
+After adding a bookmark to a line or selected area, if `bookmark-manager.showGutterIcon` is turned on, you will not be able to set a breakpoint directly. However, you can create one by right-clicking on the line number. For more details [VSCode issus# 5923](https://github.com/Microsoft/vscode/issues/5923)
 
 **Enjoy!**
