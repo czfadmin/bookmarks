@@ -1,10 +1,17 @@
 # Change Log
 
+## 0.0.12
+
+### Patch Changes
+
+- d52af95: 更新 README.md,以及增加插件别名
+- 040575e: 增加文件改动或删除监听事件处理已存在的书签数据
+
 ## 0.0.11
 
 ### Patch Changes
 
-- 93c28c5: 修复在TreeView中清除书签时,打开的编辑器书签清除失败问题, 同时增加prettier等开发依赖
+- 93c28c5: 修复在 TreeView 中清除书签时,打开的编辑器书签清除失败问题, 同时增加 prettier 等开发依赖
 
 ## 0.0.10
 
