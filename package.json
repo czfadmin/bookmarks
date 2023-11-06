@@ -1,8 +1,8 @@
 {
   "name": "bookmark-manager",
-  "displayName": "Bookmark Manager",
+  "displayName": "Bookmark Manager (BM)",
   "description": "Simple and easy to use bookmark manager",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "engines": {
     "vscode": "^1.82.0"
   },
@@ -36,43 +36,43 @@
         "command": "bookmark-manager.toggleLineBookmark",
         "title": "Toggle line bookmark",
         "icon": "$(bookmark)",
-        "category": "Bookmark Manager"
+        "category": "Bookmark Manager (BM)"
       },
       {
         "command": "bookmark-manager.toggleLineBookmarkWithLabel",
         "title": "Toggle bookmark with label",
         "icon": "$(bookmark)",
-        "category": "Bookmark Manager"
+        "category": "Bookmark Manager (BM)"
       },
       {
         "command": "bookmark-manager.toggleLineBookmarkWithColor",
         "title": "Toggle line bookmark with color",
         "icon": "$(bookmark)",
-        "category": "Bookmark Manager"
+        "category": "Bookmark Manager (BM)"
       },
       {
         "command": "bookmark-manager.toggleBookmarkWithSelection",
         "title": "Toggle bookmark with selections",
         "icon": "$(bookmark)",
-        "category": "Bookmark Manager"
+        "category": "Bookmark Manager (BM)"
       },
       {
         "command": "bookmark-manager.bookmarkEditDescription",
         "title": "Edit description",
         "icon": "$(bookmark)",
-        "category": "Bookmark Manager"
+        "category": "Bookmark Manager (BM)"
       },
       {
         "command": "bookmark-manager.clearAllBookmarksInCurrentFile",
         "title": "Clear all bookmarks in current file",
         "icon": "$(bookmark)",
-        "category": "Bookmark Manager"
+        "category": "Bookmark Manager (BM)"
       },
       {
         "command": "bookmark-manager.changeBookmarkColor",
         "title": "Change color",
         "icon": "$(bookmark)",
-        "category": "Bookmark Manager"
+        "category": "Bookmark Manager (BM)"
       },
       {
         "command": "bookmark-manager.clearAllBookmarks",
@@ -81,7 +81,7 @@
           "light": "resources/light/clearAll.svg",
           "dark": "resources/dark/clearAll.svg"
         },
-        "category": "Bookmark Manager"
+        "category": "Bookmark Manager (BM)"
       },
       {
         "command": "bookmark-manager.deleteBookmark",
@@ -90,7 +90,7 @@
           "light": "resources/light/close.svg",
           "dark": "resources/dark/close.svg"
         },
-        "category": "Bookmark Manager"
+        "category": "Bookmark Manager (BM)"
       },
       {
         "command": "bookmark-manager.editLabel",
@@ -99,7 +99,7 @@
           "light": "resources/light/edit.svg",
           "dark": "resources/dark/edit.svg"
         },
-        "category": "Bookmark Manager"
+        "category": "Bookmark Manager (BM)"
       },
       {
         "command": "bookmark-manager.gotoSourceLocation",
@@ -108,19 +108,13 @@
           "light": "resources/light/location.svg",
           "dark": "resources/dark/location.svg"
         },
-        "category": "Bookmark Manager"
+        "category": "Bookmark Manager (BM)"
       },
       {
         "command": "bookmark-manager.quickJumpTo",
         "title": "Quickly jump to bookmark",
         "icon": "$(bookmark)",
-        "category": "Bookmark Manager"
-      },
-      {
-        "command": "bookmark-manager.openInEditor",
-        "title": "Open in editor",
-        "icon": "$(open-preview)",
-        "category": "Bookmark Manager"
+        "category": "Bookmark Manager (BM)"
       }
     ],
     "views": {
@@ -156,7 +150,7 @@
       ]
     },
     "configuration": {
-      "title": "Bookmark Manager",
+      "title": "Bookmark Manager (BM)",
       "properties": {
         "bookmark-manager.showGutterInOverviewRuler": {
           "type": "boolean",
