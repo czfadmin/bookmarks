@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.0.13
+
+### Patch Changes
+
+- c4e2889: 增加国际化
+
 ## 0.0.12
 
 ### Patch Changes
