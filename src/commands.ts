@@ -1,4 +1,4 @@
-import {ExtensionContext, Uri, window, workspace} from 'vscode';
+import {ExtensionContext, window} from 'vscode';
 import {registerCommand} from './utils';
 import {
   CMD_TOGGLE_LINE_BOOKMARK,
@@ -11,7 +11,6 @@ import {
   CMD_BOOKMARK_ADD_MORE_MEMO,
   CMD_JUMP_TO_BOOKMARK,
   CMD_CHANGE_BOOKMARK_COLOR,
-  VIRTUAL_SCHEMA,
 } from './constants';
 
 import {updateActiveEditorAllDecorations} from './decorations';
@@ -54,6 +53,29 @@ function getBookmarkFromCtx(
  * @param context
  */
 export function registerCommands(context: ExtensionContext) {
+  toggleLineBookmark(context);
+  toggleLineBookmarkWithLabel(context);
+  toggleLineBookmarkWithColor(context);
+  clearAllBookmarks(context);
+  deleteBookmarkCMD(context);
+  editBookmark(context);
+  goToBookmark(context);
+  toggleSelectionBookmark(context);
+  quickPreviewOrJumpToBookmark(context);
+  changeBookmarkColor(context);
+  clearAllBookmarksInCurrentFile(context);
+  addMoreMemo(context);
+
+  // registerCommand(context, 'openInEditor', async args => {
+  //   const uri = Uri.parse(`${VIRTUAL_SCHEMA}:`);
+  //   const doc = await workspace.openTextDocument(uri);
+  //   await window.showTextDocument(doc, {
+  //     preview: true,
+  //   });
+  // });
+}
+
+function toggleLineBookmark(context: ExtensionContext) {
   // 开启行书签, 使用默认颜色且无标签等相关信息
   registerCommand(
     context,
@@ -62,7 +84,9 @@ export function registerCommands(context: ExtensionContext) {
       toggleBookmark(args, {type: 'line'});
     },
   );
-  // 开启带有标签的行书签
+}
+// 开启带有标签的行书签
+function toggleLineBookmarkWithLabel(context: ExtensionContext) {
   registerCommand(
     context,
     CMD_TOGGLE_BOOKMARK_WITH_LABEL,
@@ -81,7 +105,10 @@ export function registerCommands(context: ExtensionContext) {
       });
     },
   );
-  // 开启行书签,并可以指定书签颜色
+}
+
+// 开启行书签,并可以指定书签颜色
+function toggleLineBookmarkWithColor(context: ExtensionContext) {
   registerCommand(
     context,
     'toggleLineBookmarkWithColor',
@@ -92,7 +119,10 @@ export function registerCommands(context: ExtensionContext) {
       });
     },
   );
-  // 清除书签
+}
+
+// 清除书签
+function clearAllBookmarks(context: ExtensionContext) {
   registerCommand(context, CMD_CLEAR_ALL, args => {
     updateActiveEditorAllDecorations(true);
     let fileUri,
@@ -106,7 +136,9 @@ export function registerCommands(context: ExtensionContext) {
     }
     updateActiveEditorAllDecorations(clearAll);
   });
+}
 
+function deleteBookmarkCMD(context: ExtensionContext) {
   // 删除书签
   registerCommand(
     context,
@@ -129,6 +161,13 @@ export function registerCommands(context: ExtensionContext) {
       updateActiveEditorAllDecorations();
     },
   );
+}
+
+/**
+ * 编辑书签
+ * @param context
+ */
+function editBookmark(context: ExtensionContext) {
   // 编辑书签标签
   registerCommand(
     context,
@@ -155,13 +194,17 @@ export function registerCommands(context: ExtensionContext) {
         });
     },
   );
+}
 
-  // 定位书签位置,并跳转到书签位置
+// 定位书签位置,并跳转到书签位置
+function goToBookmark(context: ExtensionContext) {
   registerCommand(context, CMD_GO_TO_SOURCE_LOCATION, args => {
     gotoSourceLocation(args.meta);
   });
+}
 
-  // 为选中的区域增加书签
+// 为选中的区域增加书签
+function toggleSelectionBookmark(context: ExtensionContext) {
   registerCommand(context, CMD_TOGGLE_BOOKMARK_WITH_SECTIONS, ctx => {
     window
       .showInputBox({
@@ -177,8 +220,55 @@ export function registerCommands(context: ExtensionContext) {
         toggleBookmarksWithSelections(label);
       });
   });
+}
 
-  // 为书签增加备注信息
+// 快速跳转到书签位置,并预览书签
+function quickPreviewOrJumpToBookmark(context: ExtensionContext) {
+  registerCommand(context, CMD_JUMP_TO_BOOKMARK, args => {
+    quicklyJumpToBookmark();
+  });
+}
+
+function changeBookmarkColor(context: ExtensionContext) {
+  // 改变书签颜色
+  registerCommand(
+    context,
+    CMD_CHANGE_BOOKMARK_COLOR,
+    async (ctx: LineBookmarkContext | BookmarksTreeItem | undefined) => {
+      let bookmark: BookmarkMeta | undefined = getBookmarkFromCtx(ctx);
+      if (!bookmark) {
+        window.showInformationMessage('请选择书签后再进行操作.', {});
+        return;
+      }
+
+      const newColor = await chooseBookmarkColor();
+      if (!newColor) {
+        return;
+      }
+      BookmarksController.instance.update(bookmark, {
+        color: newColor,
+      });
+      updateActiveEditorAllDecorations();
+    },
+  );
+}
+
+function clearAllBookmarksInCurrentFile(context: ExtensionContext) {
+  // 删除当前打开的文档中的已存在的书签
+  registerCommand(context, 'clearAllBookmarksInCurrentFile', async args => {
+    const activedEditor = window.activeTextEditor;
+    if (!activedEditor) return;
+    if (checkIfBookmarksIsInCurrentEditor(activedEditor)) {
+      BookmarksController.instance.clearAllBookmarkInFile(
+        activedEditor.document.uri,
+      );
+      updateActiveEditorAllDecorations();
+    }
+  });
+}
+
+// 为书签增加备注信息
+function addMoreMemo(context: ExtensionContext) {
   registerCommand(
     context,
     CMD_BOOKMARK_ADD_MORE_MEMO,
@@ -203,51 +293,4 @@ export function registerCommands(context: ExtensionContext) {
         });
     },
   );
-
-  // 快速跳转到书签位置,并预览书签
-  registerCommand(context, CMD_JUMP_TO_BOOKMARK, args => {
-    quicklyJumpToBookmark();
-  });
-
-  // 改变书签颜色
-  registerCommand(
-    context,
-    CMD_CHANGE_BOOKMARK_COLOR,
-    async (ctx: LineBookmarkContext | BookmarksTreeItem | undefined) => {
-      let bookmark: BookmarkMeta | undefined = getBookmarkFromCtx(ctx);
-      if (!bookmark) {
-        window.showInformationMessage('请选择书签后再进行操作.', {});
-        return;
-      }
-
-      const newColor = await chooseBookmarkColor();
-      if (!newColor) {
-        return;
-      }
-      BookmarksController.instance.update(bookmark, {
-        color: newColor,
-      });
-      updateActiveEditorAllDecorations();
-    },
-  );
-
-  // 删除当前打开的文档中的已存在的书签
-  registerCommand(context, 'clearAllBookmarksInCurrentFile', async args => {
-    const activedEditor = window.activeTextEditor;
-    if (!activedEditor) return;
-    if (checkIfBookmarksIsInCurrentEditor(activedEditor)) {
-      BookmarksController.instance.clearAllBookmarkInFile(
-        activedEditor.document.uri,
-      );
-      updateActiveEditorAllDecorations();
-    }
-  });
-
-  registerCommand(context, 'openInEditor', async args => {
-    const uri = Uri.parse(`${VIRTUAL_SCHEMA}:`);
-    const doc = await workspace.openTextDocument(uri);
-    await window.showTextDocument(doc, {
-      preview: true,
-    });
-  });
 }
