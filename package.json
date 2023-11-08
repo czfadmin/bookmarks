@@ -29,54 +29,55 @@
     "onStartupFinished"
   ],
   "main": "./dist/extension.js",
+  "l10n": "./l10n",
   "icon": "./logo.png",
   "contributes": {
     "commands": [
       {
         "command": "bookmark-manager.toggleLineBookmark",
-        "title": "Toggle line bookmark",
+        "title": "%bookmark-manager.toggleLineBookmark%",
         "icon": "$(bookmark)",
         "category": "Bookmark Manager (BM)"
       },
       {
         "command": "bookmark-manager.toggleLineBookmarkWithLabel",
-        "title": "Toggle bookmark with label",
+        "title": "%bookmark-manager.toggleLineBookmarkWithLabel%",
         "icon": "$(bookmark)",
         "category": "Bookmark Manager (BM)"
       },
       {
         "command": "bookmark-manager.toggleLineBookmarkWithColor",
-        "title": "Toggle line bookmark with color",
+        "title": "%bookmark-manager.toggleLineBookmarkWithColor%",
         "icon": "$(bookmark)",
         "category": "Bookmark Manager (BM)"
       },
       {
         "command": "bookmark-manager.toggleBookmarkWithSelection",
-        "title": "Toggle bookmark with selections",
+        "title": "%bookmark-manager.toggleBookmarkWithSelection%",
         "icon": "$(bookmark)",
         "category": "Bookmark Manager (BM)"
       },
       {
         "command": "bookmark-manager.bookmarkEditDescription",
-        "title": "Edit description",
+        "title": "%bookmark-manager.bookmarkEditDescription%",
         "icon": "$(bookmark)",
         "category": "Bookmark Manager (BM)"
       },
       {
         "command": "bookmark-manager.clearAllBookmarksInCurrentFile",
-        "title": "Clear all bookmarks in current file",
+        "title": "%bookmark-manager.clearAllBookmarksInCurrentFile%",
         "icon": "$(bookmark)",
         "category": "Bookmark Manager (BM)"
       },
       {
         "command": "bookmark-manager.changeBookmarkColor",
-        "title": "Change color",
+        "title": "%bookmark-manager.changeBookmarkColor%",
         "icon": "$(bookmark)",
         "category": "Bookmark Manager (BM)"
       },
       {
         "command": "bookmark-manager.clearAllBookmarks",
-        "title": "Clear All bookmarks",
+        "title": "%bookmark-manager.clearAllBookmarks%",
         "icon": {
           "light": "resources/light/clearAll.svg",
           "dark": "resources/dark/clearAll.svg"
@@ -85,7 +86,7 @@
       },
       {
         "command": "bookmark-manager.deleteBookmark",
-        "title": "Delete",
+        "title": "%bookmark-manager.deleteBookmark%",
         "icon": {
           "light": "resources/light/close.svg",
           "dark": "resources/dark/close.svg"
@@ -94,7 +95,7 @@
       },
       {
         "command": "bookmark-manager.editLabel",
-        "title": "Edit label",
+        "title": "%bookmark-manager.editLabel%",
         "icon": {
           "light": "resources/light/edit.svg",
           "dark": "resources/dark/edit.svg"
@@ -103,7 +104,7 @@
       },
       {
         "command": "bookmark-manager.gotoSourceLocation",
-        "title": "Go to locations",
+        "title": "%bookmark-manager.gotoSourceLocation%",
         "icon": {
           "light": "resources/light/location.svg",
           "dark": "resources/dark/location.svg"
@@ -112,7 +113,7 @@
       },
       {
         "command": "bookmark-manager.quickJumpTo",
-        "title": "Quickly jump to bookmark",
+        "title": "%bookmark-manager.quickJumpTo%",
         "icon": "$(bookmark)",
         "category": "Bookmark Manager (BM)"
       }
@@ -154,83 +155,83 @@
       "properties": {
         "bookmark-manager.showGutterInOverviewRuler": {
           "type": "boolean",
-          "description": "Whether to display the corresponding position of the bookmark on the overview ruler",
+          "description": "%bookmark-manager.showGutterInOverviewRuler.description%",
           "default": false
         },
         "bookmark-manager.alwaysUseDefaultColor": {
           "type": "boolean",
-          "description": "一直使用默认的颜色装饰书签图标",
+          "description": "%bookmark-manager.alwaysUseDefaultColor.description%",
           "default": false
         },
         "bookmark-manager.relativePath": {
           "type": "boolean",
-          "description": "书签列表使用相对路径",
+          "description": "%bookmark-manager.relativePath.description%",
           "default": true
         },
         "bookmark-manager.showTextDecoration": {
           "type": "boolean",
-          "description": "Whether to display the text decoration of the bookmark's location",
+          "description": "%bookmark-manager.showTextDecoration.description%",
           "default": true
         },
         "bookmark-manager.showGutterIcon": {
           "type": "boolean",
-          "description": "Whether to display the gutter icon of the bookmark",
+          "description": "%bookmark-manager.showGutterIcon.description%",
           "default": true
         },
         "bookmark-manager.highlightBackground": {
           "type": "boolean",
-          "description": "使用书签颜色高亮书签所在区域或行的背景色",
+          "description": "%bookmark-manager.highlightBackground.description%",
           "default": false
         },
         "bookmark-manager.showBorder": {
           "type": "boolean",
-          "description": "显示书签边框(Border)",
+          "description": "%bookmark-manager.showBorder.description%",
           "default": false
         },
         "bookmark-manager.border": {
           "type": "string",
-          "description": "自定义边框样式. 注意: 边框颜色默认为书签颜色",
+          "description": "%bookmark-manager.border.description%",
           "default": ""
         },
         "bookmark-manager.showOutline": {
           "type": "boolean",
-          "description": "显示书签轮廓(Outline)",
+          "description": "%bookmark-manager.showOutline.description%",
           "default": false
         },
         "bookmark-manager.outline": {
           "type": "string",
-          "description": "自定义轮廓样式. 注意: 轮廓颜色默认为书签颜色",
+          "description": "%bookmark-manager.outline.description%",
           "default": ""
         },
         "bookmark-manager.wholeLine": {
           "type": "boolean",
-          "description": "是否选择整行",
+          "description": "%bookmark-manager.wholeLine.description%",
           "default": false
         },
         "bookmark-manager.textDecorationLine": {
           "type": "string",
-          "description": "设置使用的装饰类型，例如 `underline` 或者 `line-through`。",
+          "description": "%bookmark-manager.textDecorationLine.description%",
           "default": "underline"
         },
         "bookmark-manager.textDecorationStyle": {
           "type": "string",
-          "description": "设置装饰的线条的颜色，例如 `solid`、`wavy` 或者 `dashed`。",
+          "description": "%bookmark-manager.textDecorationStyle.description%",
           "default": "wavy"
         },
         "bookmark-manager.textDecorationThickness": {
           "type": "string",
-          "description": "设置用于装饰的线条粗细",
+          "description": "%bookmark-manager.textDecorationThickness.description%",
           "default": "auto"
         },
         "bookmark-manager.lineBlame": {
           "type": "boolean",
-          "description": "是否跟随鼠标位置显示书签信息",
+          "description": "%bookmark-manager.lineBlame.description%",
           "default": false
         },
         "bookmark-manager.fontWeight": {
           "type": "string",
           "default": "bold",
-          "description": "书签字体权重",
+          "description": "%bookmark-manager.fontWeight.description%",
           "enum": [
             "normal",
             "bold",
@@ -240,14 +241,14 @@
         },
         "bookmark-manager.colors": {
           "type": "object",
-          "description": "Custom bookmark color, object format: {\" name\": \"value\"}",
+          "description": "%bookmark-manager.colors.description%",
           "additionalProperties": {
             "type": "string"
           }
         },
         "bookmark-manager.defaultBookmarkIconColor": {
           "type": "string",
-          "description": "The default color of bookmark icon.",
+          "description": "%bookmark-manager.defaultBookmarkIconColor.description%",
           "default": "#0e69d8"
         }
       }
@@ -307,10 +308,6 @@
         {
           "command": "bookmark-manager.clearAllBookmarks",
           "when": "view == bookmark-manager",
-          "group": "navigation"
-        },
-        {
-          "command": "bookmark-manager.openInEditor",
           "group": "navigation"
         }
       ],
@@ -376,11 +373,12 @@
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
     "version": "changeset version",
-    "changeset": "changeset",
-    "changeset:publish": "changeset publish",
+    "change": "changeset",
+    "bump": "changeset publish",
     "prettier": "prettier --fix  -w  ./src/**/*.{js,ts} ",
     "prepare": "husky install",
-    "publish:beta": "vsce package --pre-release"
+    "publish:beta": "vsce package --pre-release",
+    "l10n": "npx @vscode/l10n-dev export -o ./l10n ./src"
   },
   "devDependencies": {
     "@changesets/cli": "^2.26.2",
@@ -392,6 +390,7 @@
     "@types/vscode": "^1.82.0",
     "@typescript-eslint/eslint-plugin": "^5.59.1",
     "@typescript-eslint/parser": "^5.59.1",
+    "@vscode/l10n-dev": "^0.0.30",
     "@vscode/test-electron": "^2.3.0",
     "eslint": "^8.39.0",
     "glob": "^8.1.0",
@@ -405,6 +404,7 @@
     "webpack-cli": "^5.0.2"
   },
   "dependencies": {
+    "@vscode/l10n": "^0.0.16",
     "lodash": "^4.17.21",
     "uuid": "^9.0.1"
   },
