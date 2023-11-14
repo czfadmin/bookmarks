@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.0.14
+
+### Patch Changes
+
+- 3b116b0: 调整书签展示信息-显示行信息
+- 149ed8c: 修复lineBlame显示错乱
+
 ## 0.0.13
 
 ### Patch Changes
