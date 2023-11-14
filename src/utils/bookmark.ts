@@ -15,7 +15,6 @@ import {
 } from 'vscode';
 import {BookmarksController} from '../controllers/BookmarksController';
 import {
-  tagDecorations,
   updateActiveEditorAllDecorations,
   updateDecorationsByEditor,
 } from '../decorations';
@@ -431,7 +430,7 @@ export async function quicklyJumpToBookmark() {
         return {
           filename: b.filename,
           label: it.label || it.description || it.selectionContent,
-          description: it.description || it.label,
+          description: getLineInfoStrFromBookmark(it),
           detail: b.filename,
           iconPath: iconPath,
           meta: {
@@ -548,7 +547,6 @@ export function updateBookmarksGroupByChangedLine(
   const isNewLine = /(\r\n)|(\n)(\s.*?)/g.test(changeText);
 
   const isDeleteLine = change.range.end.line > change.range.start.line;
-  console.log(isNewLine, isDeleteLine);
 
   const bookmarkInCurrentLine = getBookmarkFromLineNumber(store);
   // 1. 当发生改变的区域存在行书签
@@ -712,4 +710,33 @@ export function updateLineBookmarkRangeWhenDocumentChange(
       hoverMessage: createHoverMessage(bookmark, true, true),
     },
   });
+}
+
+/**
+ * 获取书签的选择区域信息
+ * @param bookmark
+ * @returns
+ */
+export function getLineInfoFromBookmark(bookmark: BookmarkMeta) {
+  const {start, end} = bookmark.selection;
+  if (bookmark.type === 'line') {
+    return {
+      line: start.line,
+    };
+  } else {
+    return {
+      start: {line: start.line, col: start.character},
+      end: {
+        line: end.line,
+        col: end.character,
+      },
+    };
+  }
+}
+
+export function getLineInfoStrFromBookmark(bookmark: BookmarkMeta) {
+  const lineInfo = getLineInfoFromBookmark(bookmark);
+  return bookmark.type === 'line'
+    ? `L: ${lineInfo.line}`
+    : `Start {L: ${lineInfo.start?.line}, Col: ${lineInfo.start?.col}}. End {L: ${lineInfo.end?.line}, Col: ${lineInfo.end?.col}}`;
 }

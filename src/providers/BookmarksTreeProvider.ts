@@ -6,6 +6,7 @@ import {BookmarkMeta, BookmarkStoreType} from '../types';
 import gutters, {getTagGutters} from '../gutter';
 import {getAllPrettierConfiguration} from '../configurations';
 import {getRelativePath} from '../utils';
+import {getLineInfoStrFromBookmark} from '../utils/bookmark';
 
 export class BookmarksTreeItem extends vscode.TreeItem {
   constructor(
@@ -38,7 +39,7 @@ export class BookmarksTreeItem extends vscode.TreeItem {
       this.tooltip = Array.isArray(hoverMessage)
         ? hoverMessage.join('\n')
         : hoverMessage;
-      this.description = this.meta.selectionContent?.trim();
+      this.description = getLineInfoStrFromBookmark(this.meta);
     }
   }
 }
