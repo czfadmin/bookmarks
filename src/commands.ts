@@ -65,14 +65,6 @@ export function registerCommands(context: ExtensionContext) {
   changeBookmarkColor(context);
   clearAllBookmarksInCurrentFile(context);
   addMoreMemo(context);
-
-  // registerCommand(context, 'openInEditor', async args => {
-  //   const uri = Uri.parse(`${VIRTUAL_SCHEMA}:`);
-  //   const doc = await workspace.openTextDocument(uri);
-  //   await window.showTextDocument(doc, {
-  //     preview: true,
-  //   });
-  // });
 }
 
 function toggleLineBookmark(context: ExtensionContext) {

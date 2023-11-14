@@ -1,5 +1,6 @@
 import {
   Disposable,
+  TextEditor,
   TextEditorDecorationType,
   debug,
   window,
@@ -8,7 +9,7 @@ import {
 
 import {
   updateActiveEditorAllDecorations,
-  updateDecorationsByEditor,  
+  updateDecorationsByEditor,
 } from './decorations';
 
 import {BookmarksController} from './controllers/BookmarksController';
@@ -61,6 +62,7 @@ export function updateChangeVisibleTextEidtorsListener() {
 
 let lastPositionLine = -1;
 let decoration: TextEditorDecorationType | undefined;
+
 /**
  * 跟随鼠标移动,显示鼠标所在行的鼠标的信息
  */
@@ -68,50 +70,69 @@ export function updateCursorChangeListener() {
   onDidCursorChangeDisposable?.dispose();
   decoration?.dispose();
   lastPositionLine = -1;
-  const enableLineBlame = getAllPrettierConfiguration().lineBlame;
+  const enableLineBlame =
+    (getAllPrettierConfiguration().lineBlame as boolean) || false;
+  const activedEditor = window.activeTextEditor;
+  if (activedEditor) {
+    updateLineBlame(activedEditor, enableLineBlame);
+  }
   onDidCursorChangeDisposable = window.onDidChangeTextEditorSelection(ev => {
     const editor = ev.textEditor;
-    if (!enableLineBlame) {
-      decoration && editor.setDecorations(decoration, []);
+    updateLineBlame(editor, enableLineBlame);
+  });
+}
+
+/**
+ * 更新LineBlame
+ * @param editor {TextEditor}
+ * @param enableLineBlame {boolean}
+ * @returns
+ */
+function updateLineBlame(editor: TextEditor, enableLineBlame: boolean) {
+  if (!enableLineBlame) {
+    decoration && editor.setDecorations(decoration, []);
+    decoration?.dispose();
+    lastPositionLine = -1;
+    return;
+  }
+  const section = editor.selections[0];
+  const store = BookmarksController.instance.getBookmarkStoreByFileUri(
+    editor.document.uri,
+  );
+  if (!store) {
+    decoration?.dispose();
+  }
+  if (
+    editor.selections.length === 1 &&
+    section.isEmpty &&
+    section.isSingleLine
+  ) {
+    const bookmark = getBookmarkFromLineNumber(store, section.active.line);
+    if (!bookmark || !bookmark.label) {
       decoration?.dispose();
-      lastPositionLine = -1;
       return;
     }
-    const section = ev.selections[0];
-    const store = BookmarksController.instance.getBookmarkStoreByFileUri(
-      editor.document.uri,
-    );
-    if (!store) {
-      decoration?.dispose();
+    if (section.active.line !== lastPositionLine) {
+      lastPositionLine = section.active.line;
     }
-    if (ev.selections.length === 1 && section.isEmpty && section.isSingleLine) {
-      const bookmark = getBookmarkFromLineNumber(store, section.active.line);
-      if (!bookmark || !bookmark.label) {
-        decoration?.dispose();
-        return;
-      }
-      if (section.active.line !== lastPositionLine) {
-        lastPositionLine = section.active.line;
-        decoration?.dispose();
-      }
-      decoration = window.createTextEditorDecorationType({
-        isWholeLine: false,
-      });
+    decoration?.dispose();
+    decoration = window.createTextEditorDecorationType({
+      isWholeLine: true,
+    });
 
-      editor.setDecorations(decoration, [
-        {
-          range: section,
-          renderOptions: {
-            after: {
-              color: '#ffffff40',
-              margin: '0 6px 0 6px',
-              contentText: buildLineBlameInfo(bookmark),
-            },
+    editor.setDecorations(decoration, [
+      {
+        range: section,
+        renderOptions: {
+          after: {
+            color: '#ffffff40',
+            margin: '0 12px 0 12px',
+            contentText: buildLineBlameInfo(bookmark),
           },
         },
-      ]);
-    }
-  });
+      },
+    ]);
+  }
 }
 
 function buildLineBlameInfo(bookmark: BookmarkMeta) {
@@ -136,7 +157,6 @@ export function updateBookmarkInfoWhenTextChangeListener() {
       const bookmarkStore =
         BookmarksController.instance.getBookmarkStoreByFileUri(document.uri);
       if (!bookmarkStore) return;
-      console.log(contentChanges.length, contentChanges);
       for (let change of contentChanges) {
         updateBookmarksGroupByChangedLine(bookmarkStore, e, change);
       }
