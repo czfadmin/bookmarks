@@ -429,7 +429,8 @@ export async function quicklyJumpToBookmark() {
           : gutters[it.color] || tagGutters['default'];
         return {
           filename: b.filename,
-          label: it.label || it.description || it.selectionContent,
+          label:
+            it.label || it.description || it.selectionContent?.slice(0, 120),
           description: getLineInfoStrFromBookmark(it),
           detail: b.filename,
           iconPath: iconPath,
@@ -522,9 +523,9 @@ function appendMarkdown(
   }
   if (bookmark.selectionContent) {
     markdownString.appendMarkdown(
-      `\n\`\`\`${bookmark.languageId || 'javascript'} \n${
-        bookmark.selectionContent
-      }\n\`\`\``,
+      `\n\`\`\`${
+        bookmark.languageId || 'javascript'
+      } \n${bookmark.selectionContent.trim()}\n\`\`\``,
     );
   }
 }
@@ -721,14 +722,14 @@ export function getLineInfoFromBookmark(bookmark: BookmarkMeta) {
   const {start, end} = bookmark.selection;
   if (bookmark.type === 'line') {
     return {
-      line: start.line,
+      line: start.line + 1,
     };
   } else {
     return {
-      start: {line: start.line, col: start.character},
+      start: {line: start.line + 1, col: start.character + 1},
       end: {
-        line: end.line,
-        col: end.character,
+        line: end.line + 1,
+        col: end.character + 1,
       },
     };
   }
@@ -738,5 +739,5 @@ export function getLineInfoStrFromBookmark(bookmark: BookmarkMeta) {
   const lineInfo = getLineInfoFromBookmark(bookmark);
   return bookmark.type === 'line'
     ? `L: ${lineInfo.line}`
-    : `Start {L: ${lineInfo.start?.line}, Col: ${lineInfo.start?.col}}. End {L: ${lineInfo.end?.line}, Col: ${lineInfo.end?.col}}`;
+    : `Start {Ln: ${lineInfo.start?.line}, Col: ${lineInfo.start?.col}}. End {Ln: ${lineInfo.end?.line}, Col: ${lineInfo.end?.col}}`;
 }

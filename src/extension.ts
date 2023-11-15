@@ -51,27 +51,6 @@ export async function activate(context: vscode.ExtensionContext) {
       updateEverything(context);
     }),
   );
-
-  // const provider = new (class implements vscode.TextDocumentContentProvider {
-  //   onDidChangeEmitter: vscode.EventEmitter<vscode.Uri> =
-  //     new vscode.EventEmitter<vscode.Uri>();
-  //   onDidChange?: vscode.Event<vscode.Uri> = this.onDidChangeEmitter.event;
-  //   provideTextDocumentContent(
-  //     uri: vscode.Uri,
-  //     token: vscode.CancellationToken,
-  //   ): vscode.ProviderResult<string> {
-  //     // TODO
-  //     return 'Hello';
-  //   }
-  // })();
-
-  // context.subscriptions.push(
-  //   vscode.workspace.registerTextDocumentContentProvider(
-  //     VIRTUAL_SCHEMA,
-  //     provider,
-  //   ),
-  // );
-
   initDecorations(context);
 
   updateCursorChangeListener();
