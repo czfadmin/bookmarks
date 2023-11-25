@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.0.15
+
+### Patch Changes
+
+- 3134833: 增加statusbar
+
 ## 0.0.14
 
 ### Patch Changes
