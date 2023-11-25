@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import {registerCommands} from './commands';
-import {EXTENSION_ID, VIRTUAL_SCHEMA} from './constants';
+import {EXTENSION_ID} from './constants';
 import {BookmarksController} from './controllers/BookmarksController';
 import {
   disposeAllDiscorations,
@@ -18,7 +18,7 @@ import {
 } from './events';
 import logger from './utils/logger';
 import {BookmarksTreeView} from './views/BookmarksTreeView';
-import {ensureEmojis} from './emojis';
+import {createStatusBarItem} from './statusbar';
 
 /**
  * 插件上下文
@@ -37,8 +37,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
   registerCommands(context);
 
-  await ensureEmojis();
-
   context.subscriptions.push(
     new BookmarksTreeView(context, BookmarksController.getInstance(context)),
   );
@@ -52,6 +50,7 @@ export async function activate(context: vscode.ExtensionContext) {
     }),
   );
   initDecorations(context);
+  createStatusBarItem();
 
   updateCursorChangeListener();
   updateChangeActiveTextEditorListener();
