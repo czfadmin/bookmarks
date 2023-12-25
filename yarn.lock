@@ -582,10 +582,10 @@
     "@typescript-eslint/types" "5.62.0"
     eslint-visitor-keys "^3.3.0"
 
-"@vscode/l10n-dev@^0.0.30":
-  version "0.0.30"
-  resolved "https://registry.npmmirror.com/@vscode/l10n-dev/-/l10n-dev-0.0.30.tgz#0d49ed3411cb145047167a2b4b6767ed6478a42f"
-  integrity sha512-m/5voX3NtGCVQ/UjKajvwW9PPvjjvcuvEKiKRkf7dS8Q/JT+Sa5XJK70JrVuuwbfGwZktrBBhF25Eu9SXv4Q6A==
+"@vscode/l10n-dev@^0.0.31":
+  version "0.0.31"
+  resolved "https://registry.yarnpkg.com/@vscode/l10n-dev/-/l10n-dev-0.0.31.tgz#46d9eacbf9419cc6d3974f3bf1b18d47523eb40b"
+  integrity sha512-F7C3SbRDhfLz4Q3QOqlrKoGkTZpu/W5HLMFfew61uXDrkBcCJeRw5oBNOyr3VDln+V5+S9su/tai2w8o1a3+NQ==
   dependencies:
     debug "^4.3.4"
     deepmerge-json "^1.5.0"

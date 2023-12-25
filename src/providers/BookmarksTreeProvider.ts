@@ -1,12 +1,13 @@
 import * as vscode from 'vscode';
-import {MarkdownString} from 'vscode';
+import {MarkdownString, l10n} from 'vscode';
 
 import {BookmarksController} from '../controllers/BookmarksController';
 import {BookmarkMeta, BookmarkStoreType} from '../types';
 import gutters, {getTagGutters} from '../gutter';
-import {getAllPrettierConfiguration} from '../configurations';
+import {getAllPrettierConfiguration, getConfiguration} from '../configurations';
 import {getRelativePath} from '../utils';
 import {getLineInfoStrFromBookmark} from '../utils/bookmark';
+import {CMD_GO_TO_SOURCE_LOCATION} from '../constants';
 
 export class BookmarksTreeItem extends vscode.TreeItem {
   constructor(
@@ -28,6 +29,14 @@ export class BookmarksTreeItem extends vscode.TreeItem {
       this.iconPath = vscode.ThemeIcon.File;
     }
     this._createTooltip();
+    if (getAllPrettierConfiguration().enableDoubleClick) {
+      // TODO:优化
+      this.command = {
+        title: l10n.t('Jump to bookmark position'),
+        command: `bookmark-manager.${CMD_GO_TO_SOURCE_LOCATION}`,
+        arguments: [this.meta],
+      };
+    }
   }
 
   private _createTooltip() {

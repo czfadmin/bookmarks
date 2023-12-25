@@ -28,5 +28,6 @@
   "bookmark-manager.lineBlame.description": "是否跟随鼠标位置显示书签信息",
   "bookmark-manager.fontWeight.description": "书签字体权重",
   "bookmark-manager.colors.description": "设置书签的颜色",
-  "bookmark-manager.defaultBookmarkIconColor.description": "默认书签图标的颜色"
+  "bookmark-manager.defaultBookmarkIconColor.description": "默认书签图标的颜色",
+  "bookmark-manager.enableDoubleClick": "启用双击跳转到书签位置"
 }

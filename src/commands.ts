@@ -191,7 +191,7 @@ function editBookmark(context: ExtensionContext) {
 // 定位书签位置,并跳转到书签位置
 function goToBookmark(context: ExtensionContext) {
   registerCommand(context, CMD_GO_TO_SOURCE_LOCATION, args => {
-    gotoSourceLocation(args.meta);
+    gotoSourceLocation(args.meta || args);
   });
 }
 
