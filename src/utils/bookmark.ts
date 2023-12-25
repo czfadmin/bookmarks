@@ -168,6 +168,9 @@ export function gotoSourceLocation(bookmark: BookmarkMeta) {
   const {fileUri, rangesOrOptions, selection} = bookmark;
 
   const range = selection || rangesOrOptions.range;
+
+  if (!range) return;
+
   if (activeEditor) {
     if (activeEditor.document.uri.fsPath === fileUri.fsPath) {
       activeEditor.revealRange(range);

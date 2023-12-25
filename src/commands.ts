@@ -16,6 +16,7 @@ import {
 import {updateActiveEditorAllDecorations} from './decorations';
 import {BookmarkMeta, LineBookmarkContext} from './types';
 import {BookmarksController} from './controllers/BookmarksController';
+
 import {
   checkIfBookmarksIsInCurrentEditor,
   chooseBookmarkColor,
@@ -77,6 +78,7 @@ function toggleLineBookmark(context: ExtensionContext) {
     },
   );
 }
+
 // 开启带有标签的行书签
 function toggleLineBookmarkWithLabel(context: ExtensionContext) {
   registerCommand(
