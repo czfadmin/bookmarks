@@ -62,7 +62,7 @@ export function getCreateDecorationOptions(): CreateDecorationOptions {
   } as CreateDecorationOptions;
 }
 
-export function getAllPrettierConfiguration(): BookmarkManagerConfigure {
+export function getExtensionConfiguration(): BookmarkManagerConfigure {
   const configuration = getConfiguration();
   const createDecoration = getCreateDecorationOptions();
   const colors = getAllColors();

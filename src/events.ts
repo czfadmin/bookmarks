@@ -18,7 +18,7 @@ import {
   getBookmarkFromLineNumber,
   updateBookmarksGroupByChangedLine,
 } from './utils/bookmark';
-import {getAllPrettierConfiguration} from './configurations';
+import {getExtensionConfiguration} from './configurations';
 import {BookmarkMeta} from './types';
 
 let onDidChangeActiveTextEditor: Disposable | undefined;
@@ -71,7 +71,7 @@ export function updateCursorChangeListener() {
   decoration?.dispose();
   lastPositionLine = -1;
   const enableLineBlame =
-    (getAllPrettierConfiguration().lineBlame as boolean) || false;
+    (getExtensionConfiguration().lineBlame as boolean) || false;
   const activedEditor = window.activeTextEditor;
   if (activedEditor) {
     updateLineBlame(activedEditor, enableLineBlame);

@@ -31,12 +31,22 @@ import {
 } from './utils/bookmark';
 import {BookmarksTreeItem} from './providers/BookmarksTreeProvider';
 
+/**
+ * 从`context`获取书签数据
+ * @param context
+ * @param cb
+ * @returns
+ */
 function getBookmarkFromCtx(
   context: LineBookmarkContext | BookmarksTreeItem | undefined,
   cb?: () => void,
 ) {
   let bookmark: BookmarkMeta | undefined;
-  if (context && 'contextValue' in context && context.contextValue === 'item') {
+  if (
+    context &&
+    'contextValue' in context &&
+    context.contextValue === 'bookmark'
+  ) {
     bookmark = context.meta as BookmarkMeta;
   } else {
     bookmark = getBookmarkFromLineNumber(undefined);
@@ -68,8 +78,11 @@ export function registerCommands(context: ExtensionContext) {
   addMoreMemo(context);
 }
 
+/**
+ * 开启行书签, 使用默认颜色且无标签等相关信息
+ * @param context
+ */
 function toggleLineBookmark(context: ExtensionContext) {
-  // 开启行书签, 使用默认颜色且无标签等相关信息
   registerCommand(
     context,
     CMD_TOGGLE_LINE_BOOKMARK,
@@ -79,7 +92,10 @@ function toggleLineBookmark(context: ExtensionContext) {
   );
 }
 
-// 开启带有标签的行书签
+/**
+ * 开启带有标签的行书签
+ * @param context
+ */
 function toggleLineBookmarkWithLabel(context: ExtensionContext) {
   registerCommand(
     context,
@@ -101,7 +117,10 @@ function toggleLineBookmarkWithLabel(context: ExtensionContext) {
   );
 }
 
-// 开启行书签,并可以指定书签颜色
+/**
+ * 开启行书签,并可以指定书签颜色
+ * @param context
+ */
 function toggleLineBookmarkWithColor(context: ExtensionContext) {
   registerCommand(
     context,
@@ -115,7 +134,10 @@ function toggleLineBookmarkWithColor(context: ExtensionContext) {
   );
 }
 
-// 清除书签
+/**
+ * 清除书签
+ * @param context
+ */
 function clearAllBookmarks(context: ExtensionContext) {
   registerCommand(context, CMD_CLEAR_ALL, args => {
     updateActiveEditorAllDecorations(true);
@@ -190,14 +212,20 @@ function editBookmark(context: ExtensionContext) {
   );
 }
 
-// 定位书签位置,并跳转到书签位置
+/**
+ * 定位书签位置,并跳转到书签位置
+ * @param context
+ */
 function goToBookmark(context: ExtensionContext) {
   registerCommand(context, CMD_GO_TO_SOURCE_LOCATION, args => {
     gotoSourceLocation(args.meta || args);
   });
 }
 
-// 为选中的区域增加书签
+/**
+ * 为选中的区域增加书签
+ * @param context
+ */
 function toggleSelectionBookmark(context: ExtensionContext) {
   registerCommand(context, CMD_TOGGLE_BOOKMARK_WITH_SECTIONS, ctx => {
     window
@@ -216,7 +244,10 @@ function toggleSelectionBookmark(context: ExtensionContext) {
   });
 }
 
-// 快速跳转到书签位置,并预览书签
+/**
+ * 快速跳转到书签位置,并预览书签
+ * @param context
+ */
 function quickPreviewOrJumpToBookmark(context: ExtensionContext) {
   registerCommand(context, CMD_JUMP_TO_BOOKMARK, args => {
     quicklyJumpToBookmark();
@@ -247,8 +278,11 @@ function changeBookmarkColor(context: ExtensionContext) {
   );
 }
 
+/**
+ * 删除当前打开的文档中的已存在的书签
+ * @param context
+ */
 function clearAllBookmarksInCurrentFile(context: ExtensionContext) {
-  // 删除当前打开的文档中的已存在的书签
   registerCommand(context, 'clearAllBookmarksInCurrentFile', async args => {
     const activedEditor = window.activeTextEditor;
     if (!activedEditor) return;
@@ -261,7 +295,10 @@ function clearAllBookmarksInCurrentFile(context: ExtensionContext) {
   });
 }
 
-// 为书签增加备注信息
+/**
+ * 为书签增加备注信息
+ * @param context
+ */
 function addMoreMemo(context: ExtensionContext) {
   registerCommand(
     context,

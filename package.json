@@ -289,8 +289,12 @@
           "group": "bookmarksActionsGroup@1"
         },
         {
-          "command": "bookmark-manager.toggleBookmarkWithSelection",
+          "command": "bookmark-manager.toggleLineBookmarkWithLabel",
           "group": "bookmarksActionsGroup@2"
+        },
+        {
+          "command": "bookmark-manager.toggleBookmarkWithSelection",
+          "group": "bookmarksActionsGroup@3"
         },
         {
           "command": "bookmark-manager.editLabel",
@@ -319,17 +323,17 @@
       "view/item/context": [
         {
           "command": "bookmark-manager.gotoSourceLocation",
-          "when": "view == bookmark-manager && viewItem === item && !bookmark-manager.context.enableClick",
+          "when": "view == bookmark-manager && viewItem === bookmark && !bookmark-manager.enableClick",
           "group": "inline@1"
         },
         {
           "command": "bookmark-manager.editLabel",
-          "when": "view==bookmark-manager && viewItem === item",
+          "when": "view==bookmark-manager && viewItem === bookmark",
           "group": "inline@2"
         },
         {
           "command": "bookmark-manager.deleteBookmark",
-          "when": "view==bookmark-manager && viewItem === item",
+          "when": "view==bookmark-manager && viewItem === bookmark",
           "group": "inline@3"
         },
         {
@@ -339,12 +343,12 @@
         },
         {
           "command": "bookmark-manager.bookmarkEditDescription",
-          "when": "view==bookmark-manager && viewItem === item",
+          "when": "view==bookmark-manager && viewItem === bookmark",
           "group": "itemContextGroup@1"
         },
         {
           "command": "bookmark-manager.changeBookmarkColor",
-          "when": "view==bookmark-manager && viewItem === item",
+          "when": "view==bookmark-manager && viewItem === bookmark",
           "group": "itemContextGroup@2"
         }
       ],

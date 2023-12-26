@@ -8,7 +8,7 @@ import {
   BookmarkStoreType,
 } from '../types';
 import gutters, {getTagGutters} from '../gutter';
-import {getAllPrettierConfiguration, getConfiguration} from '../configurations';
+import {getExtensionConfiguration, getConfiguration} from '../configurations';
 import {getRelativePath} from '../utils';
 import {getLineInfoStrFromBookmark} from '../utils/bookmark';
 import {CMD_GO_TO_SOURCE_LOCATION} from '../constants';
@@ -33,7 +33,7 @@ export class BookmarksTreeItem extends vscode.TreeItem {
       this.iconPath = vscode.ThemeIcon.File;
     }
     this._createTooltip();
-    if (getAllPrettierConfiguration().enableClick) {
+    if (getExtensionConfiguration().enableClick) {
       // TODO:优化
       this.command = {
         title: l10n.t('Jump to bookmark position'),
@@ -46,7 +46,7 @@ export class BookmarksTreeItem extends vscode.TreeItem {
 
   private _createTooltip() {
     // 当节点为书签情况下
-    if (this.contextValue === 'item' && 'color' in this.meta) {
+    if (this.contextValue === 'bookmark' && 'color' in this.meta) {
       const hoverMessage = this.meta.rangesOrOptions.hoverMessage as
         | MarkdownString
         | MarkdownString[]
@@ -91,7 +91,7 @@ export class BookmarksTreeProvider
 
   get extensionConfiguration() {
     if (!this._extensionConfiguration) {
-      this._extensionConfiguration = getAllPrettierConfiguration();
+      this._extensionConfiguration = getExtensionConfiguration();
     }
     return this._extensionConfiguration;
   }
@@ -146,7 +146,7 @@ export class BookmarksTreeProvider
         return new BookmarksTreeItem(
           it.label || it.selectionContent || it.id,
           vscode.TreeItemCollapsibleState.None,
-          'item',
+          'bookmark',
           {
             ...it,
             selection,

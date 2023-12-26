@@ -167,7 +167,7 @@ export function gotoSourceLocation(bookmark: BookmarkMeta) {
   const activeEditor = window.activeTextEditor;
   const {fileUri, rangesOrOptions, selection} = bookmark;
 
-  const range = selection || rangesOrOptions.range;
+  const range = selection || rangesOrOptions?.range;
 
   if (!range) return;
 
