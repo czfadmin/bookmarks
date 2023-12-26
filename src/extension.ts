@@ -19,6 +19,7 @@ import {
 import logger from './utils/logger';
 import {BookmarksTreeView} from './views/BookmarksTreeView';
 import {createStatusBarItem} from './statusbar';
+import {getAllPrettierConfiguration} from './configurations';
 
 /**
  * 插件上下文
@@ -36,6 +37,13 @@ export async function activate(context: vscode.ExtensionContext) {
   logger.log(`${EXTENSION_ID} is now active!`);
 
   registerCommands(context);
+
+  const configuration = getAllPrettierConfiguration();
+  vscode.commands.executeCommand(
+    'setContext',
+    'bookmark-manager.context',
+    configuration,
+  );
 
   context.subscriptions.push(
     new BookmarksTreeView(context, BookmarksController.getInstance(context)),

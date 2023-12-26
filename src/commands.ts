@@ -16,6 +16,7 @@ import {
 import {updateActiveEditorAllDecorations} from './decorations';
 import {BookmarkMeta, LineBookmarkContext} from './types';
 import {BookmarksController} from './controllers/BookmarksController';
+
 import {
   checkIfBookmarksIsInCurrentEditor,
   chooseBookmarkColor,
@@ -77,6 +78,7 @@ function toggleLineBookmark(context: ExtensionContext) {
     },
   );
 }
+
 // 开启带有标签的行书签
 function toggleLineBookmarkWithLabel(context: ExtensionContext) {
   registerCommand(
@@ -191,7 +193,7 @@ function editBookmark(context: ExtensionContext) {
 // 定位书签位置,并跳转到书签位置
 function goToBookmark(context: ExtensionContext) {
   registerCommand(context, CMD_GO_TO_SOURCE_LOCATION, args => {
-    gotoSourceLocation(args.meta);
+    gotoSourceLocation(args.meta || args);
   });
 }
 

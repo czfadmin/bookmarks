@@ -1,12 +1,17 @@
 import * as vscode from 'vscode';
-import {MarkdownString} from 'vscode';
+import {MarkdownString, l10n} from 'vscode';
 
 import {BookmarksController} from '../controllers/BookmarksController';
-import {BookmarkMeta, BookmarkStoreType} from '../types';
+import {
+  BookmarkManagerConfigure,
+  BookmarkMeta,
+  BookmarkStoreType,
+} from '../types';
 import gutters, {getTagGutters} from '../gutter';
-import {getAllPrettierConfiguration} from '../configurations';
+import {getAllPrettierConfiguration, getConfiguration} from '../configurations';
 import {getRelativePath} from '../utils';
 import {getLineInfoStrFromBookmark} from '../utils/bookmark';
+import {CMD_GO_TO_SOURCE_LOCATION} from '../constants';
 
 export class BookmarksTreeItem extends vscode.TreeItem {
   constructor(
@@ -28,9 +33,19 @@ export class BookmarksTreeItem extends vscode.TreeItem {
       this.iconPath = vscode.ThemeIcon.File;
     }
     this._createTooltip();
+    if (getAllPrettierConfiguration().enableClick) {
+      // TODO:优化
+      this.command = {
+        title: l10n.t('Jump to bookmark position'),
+        command: `bookmark-manager.${CMD_GO_TO_SOURCE_LOCATION}`,
+        arguments: [this.meta],
+      };
+    }
+    this.contextValue === 'file' && this._resolveFileOverview();
   }
 
   private _createTooltip() {
+    // 当节点为书签情况下
     if (this.contextValue === 'item' && 'color' in this.meta) {
       const hoverMessage = this.meta.rangesOrOptions.hoverMessage as
         | MarkdownString
@@ -42,6 +57,25 @@ export class BookmarksTreeItem extends vscode.TreeItem {
       this.description = getLineInfoStrFromBookmark(this.meta);
     }
   }
+
+  /**
+   * 对书签所在的文件进行书签预览大纲
+   */
+  private _resolveFileOverview() {
+    const hoverMessage = new MarkdownString(`### ${this.label}`, true);
+    hoverMessage.supportHtml = true;
+    hoverMessage.supportThemeIcons = true;
+    const {bookmarks} = this.meta as BookmarkStoreType;
+    let item, markdownStr;
+    for (item of bookmarks) {
+      markdownStr = `\n1. ${
+        item.label || item.selectionContent
+      } *${getLineInfoStrFromBookmark(item)}*`;
+      hoverMessage.appendMarkdown(markdownStr);
+    }
+
+    this.tooltip = hoverMessage;
+  }
 }
 
 export class BookmarksTreeProvider
@@ -49,9 +83,21 @@ export class BookmarksTreeProvider
 {
   private _onDidChangeEvent = new vscode.EventEmitter<BookmarksTreeItem>();
   private _controller: BookmarksController;
+  private _extensionConfiguration: BookmarkManagerConfigure | undefined;
 
   get datasource() {
     return this._controller.datasource;
+  }
+
+  get extensionConfiguration() {
+    if (!this._extensionConfiguration) {
+      this._extensionConfiguration = getAllPrettierConfiguration();
+    }
+    return this._extensionConfiguration;
+  }
+
+  get isRelativePath() {
+    return this.extensionConfiguration.relativePath;
   }
 
   onDidChangeTreeData?:
@@ -74,11 +120,10 @@ export class BookmarksTreeProvider
   ): vscode.ProviderResult<BookmarksTreeItem[]> {
     if (!element) {
       const bookmarkRootStoreArr = this.datasource?.data || [];
-      const configuration = getAllPrettierConfiguration();
-      const isRelativePath = configuration.relativePath;
+
       const children = bookmarkRootStoreArr.map(it => {
         let label = it.filename;
-        if (isRelativePath) {
+        if (this.isRelativePath) {
           label = getRelativePath(it.filename);
         }
         return new BookmarksTreeItem(

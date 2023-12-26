@@ -250,6 +250,11 @@
           "type": "string",
           "description": "%bookmark-manager.defaultBookmarkIconColor.description%",
           "default": "#0e69d8"
+        },
+        "bookmark-manager.enableClick": {
+          "type": "boolean",
+          "description": "%bookmark-manager.enableClick.description%",
+          "default": false
         }
       }
     },
@@ -314,7 +319,7 @@
       "view/item/context": [
         {
           "command": "bookmark-manager.gotoSourceLocation",
-          "when": "view == bookmark-manager && viewItem === item",
+          "when": "view == bookmark-manager && viewItem === item && !bookmark-manager.context.enableClick",
           "group": "inline@1"
         },
         {
@@ -378,7 +383,7 @@
     "prettier": "prettier --fix  -w  ./src/**/*.{js,ts} ",
     "prepare": "husky install",
     "publish:beta": "vsce package --pre-release",
-    "l10n": "npx @vscode/l10n-dev export -o ./l10n ./src"
+    "l10n": "node ./node_modules/@vscode/l10n-dev/dist/cli.js export -o ./l10n ./src"
   },
   "devDependencies": {
     "@changesets/cli": "^2.26.2",
@@ -390,7 +395,7 @@
     "@types/vscode": "^1.82.0",
     "@typescript-eslint/eslint-plugin": "^5.59.1",
     "@typescript-eslint/parser": "^5.59.1",
-    "@vscode/l10n-dev": "^0.0.30",
+    "@vscode/l10n-dev": "^0.0.31",
     "@vscode/test-electron": "^2.3.0",
     "eslint": "^8.39.0",
     "glob": "^8.1.0",

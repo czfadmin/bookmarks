@@ -1,6 +1,10 @@
 import {workspace} from 'vscode';
 import {DEFAULT_BOOKMARK_COLOR, EXTENSION_ID} from './constants';
-import {CreateDecorationOptions, StringIndexType} from './types';
+import {
+  BookmarkManagerConfigure,
+  CreateDecorationOptions,
+  StringIndexType,
+} from './types';
 
 let $colors = {} as StringIndexType<string>;
 
@@ -58,7 +62,7 @@ export function getCreateDecorationOptions(): CreateDecorationOptions {
   } as CreateDecorationOptions;
 }
 
-export function getAllPrettierConfiguration() {
+export function getAllPrettierConfiguration(): BookmarkManagerConfigure {
   const configuration = getConfiguration();
   const createDecoration = getCreateDecorationOptions();
   const colors = getAllColors();
@@ -68,5 +72,6 @@ export function getAllPrettierConfiguration() {
     lineBlame: configuration.get('lineBlame') || false,
     relativePath: configuration.get('relativePath') || false,
     defaultBookmarkIconColor: configuration.get('defaultBookmarkIconColor'),
+    enableClick: configuration.get('enableClick') || false,
   };
 }

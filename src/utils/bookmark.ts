@@ -168,6 +168,9 @@ export function gotoSourceLocation(bookmark: BookmarkMeta) {
   const {fileUri, rangesOrOptions, selection} = bookmark;
 
   const range = selection || rangesOrOptions.range;
+
+  if (!range) return;
+
   if (activeEditor) {
     if (activeEditor.document.uri.fsPath === fileUri.fsPath) {
       activeEditor.revealRange(range);
@@ -249,7 +252,6 @@ export async function toggleBookmarksWithSelections(label: string) {
 
 /**
  * 开启行书签
- * @param level
  * @param extra 额外信息
  * @returns
  */
@@ -511,23 +513,37 @@ function appendMarkdown(
   markdownString: MarkdownString,
   showExtIcon: boolean = false,
 ) {
-  if (bookmark.label) {
-    markdownString.appendMarkdown(
-      `### ${showExtIcon ? `$(bookmark~sync) Bookmarks\n#### ` : ''}${
-        bookmark.label
-      }`,
-    );
-  }
+  markdownString.appendMarkdown(
+    `### ${showExtIcon ? `$(bookmark~sync) Bookmarks\n#### ` : ''}${
+      bookmark.label || ''
+    }`,
+  );
   if (bookmark.description) {
     markdownString.appendMarkdown(`\n${bookmark.description} `);
   }
   if (bookmark.selectionContent) {
-    markdownString.appendMarkdown(
-      `\n\`\`\`${
-        bookmark.languageId || 'javascript'
-      } \n${bookmark.selectionContent.trim()}\n\`\`\``,
+    const code = resolveMarkdownLineNumber(
+      bookmark.selection,
+      bookmark.selectionContent,
     );
+    markdownString.appendCodeblock(code, bookmark.languageId || 'javascript');
   }
+}
+
+function resolveMarkdownLineNumber(range: Range, code: string) {
+  const startLine = range.start.line + 1;
+  const endLine = range.end.line + 1;
+  let newCodeStr =
+    startLine === endLine ? `${startLine} ${code}` : `${startLine}${code}`;
+  const arr = newCodeStr.split('\r\n');
+  newCodeStr = arr[0];
+  let currentLineNumber = startLine,
+    idx;
+  for (idx = 1; idx < arr.length; idx++) {
+    currentLineNumber += 1;
+    newCodeStr = `${newCodeStr}\r\n${currentLineNumber}${arr[idx]}`;
+  }
+  return newCodeStr;
 }
 
 /**

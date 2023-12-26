@@ -28,5 +28,6 @@
   "bookmark-manager.lineBlame.description": "Enable Line Blame",
   "bookmark-manager.fontWeight.description": "Font Weight",
   "bookmark-manager.colors.description": "Custom bookmark color, object format: {\" name\": \"value\"}",
-  "bookmark-manager.defaultBookmarkIconColor.description": "The default color of bookmark icon."
+  "bookmark-manager.defaultBookmarkIconColor.description": "The default color of bookmark icon.",
+  "bookmark-manager.enableClick.description": "Enable double-click to jump to bookmark location"
 }
