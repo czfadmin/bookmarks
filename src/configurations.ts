@@ -72,6 +72,6 @@ export function getAllPrettierConfiguration(): BookmarkManagerConfigure {
     lineBlame: configuration.get('lineBlame') || false,
     relativePath: configuration.get('relativePath') || false,
     defaultBookmarkIconColor: configuration.get('defaultBookmarkIconColor'),
-    enableDoubleClick: configuration.get('enableDoubleClick') || false,
+    enableClick: configuration.get('enableClick') || false,
   };
 }

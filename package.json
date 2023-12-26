@@ -251,9 +251,9 @@
           "description": "%bookmark-manager.defaultBookmarkIconColor.description%",
           "default": "#0e69d8"
         },
-        "bookmark-manager.enableDoubleClick": {
+        "bookmark-manager.enableClick": {
           "type": "boolean",
-          "description": "%bookmark-manager.enableDoubleClick.description%",
+          "description": "%bookmark-manager.enableClick.description%",
           "default": false
         }
       }
@@ -319,7 +319,7 @@
       "view/item/context": [
         {
           "command": "bookmark-manager.gotoSourceLocation",
-          "when": "view == bookmark-manager && viewItem === item && !bookmark-manager.context.enableDoubleClick",
+          "when": "view == bookmark-manager && viewItem === item && !bookmark-manager.context.enableClick",
           "group": "inline@1"
         },
         {

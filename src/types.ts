@@ -79,7 +79,7 @@ export type BookmarkManagerConfigure = CreateDecorationOptions & {
   colors: StringIndexType<string>;
   lineBlame: boolean;
   relativePath: boolean;
-  enableDoubleClick: boolean;
+  enableClick: boolean;
   defaultBookmarkIconColor?: string;
 };
 
