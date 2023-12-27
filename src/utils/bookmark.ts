@@ -530,18 +530,22 @@ function appendMarkdown(
   }
 }
 
+/**
+ * 为 markdown 增加行信息
+ * @param range
+ * @param code
+ * @returns
+ */
 function resolveMarkdownLineNumber(range: Range, code: string) {
   const startLine = range.start.line + 1;
-  const endLine = range.end.line + 1;
-  let newCodeStr =
-    startLine === endLine ? `${startLine} ${code}` : `${startLine}${code}`;
+  let newCodeStr = `${startLine} ${code.trim()}`;
   const arr = newCodeStr.split('\r\n');
   newCodeStr = arr[0];
   let currentLineNumber = startLine,
     idx;
   for (idx = 1; idx < arr.length; idx++) {
     currentLineNumber += 1;
-    newCodeStr = `${newCodeStr}\r\n${currentLineNumber}${arr[idx]}`;
+    newCodeStr = `${newCodeStr}\r\n${currentLineNumber} ${arr[idx]}`;
   }
   return newCodeStr;
 }
@@ -754,6 +758,6 @@ export function getLineInfoFromBookmark(bookmark: BookmarkMeta) {
 export function getLineInfoStrFromBookmark(bookmark: BookmarkMeta) {
   const lineInfo = getLineInfoFromBookmark(bookmark);
   return bookmark.type === 'line'
-    ? `L: ${lineInfo.line}`
-    : `Start {Ln: ${lineInfo.start?.line}, Col: ${lineInfo.start?.col}}. End {Ln: ${lineInfo.end?.line}, Col: ${lineInfo.end?.col}}`;
+    ? `Ln: ${lineInfo.line}`
+    : `Start { Ln: ${lineInfo.start?.line}, Col: ${lineInfo.start?.col} }. End { Ln: ${lineInfo.end?.line}, Col: ${lineInfo.end?.col} }`;
 }

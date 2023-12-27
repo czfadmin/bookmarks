@@ -11,6 +11,7 @@ import {
   CMD_BOOKMARK_ADD_MORE_MEMO,
   CMD_JUMP_TO_BOOKMARK,
   CMD_CHANGE_BOOKMARK_COLOR,
+  CMD_OPEN_IN_EDITOR,
 } from './constants';
 
 import {updateActiveEditorAllDecorations} from './decorations';
@@ -76,6 +77,7 @@ export function registerCommands(context: ExtensionContext) {
   changeBookmarkColor(context);
   clearAllBookmarksInCurrentFile(context);
   addMoreMemo(context);
+  openInEditor(context);
 }
 
 /**
@@ -324,4 +326,14 @@ function addMoreMemo(context: ExtensionContext) {
         });
     },
   );
+}
+
+/**
+ * @TODO 注册命令在 `editor` 中打开书签管理器中的数据
+ * @param context
+ */
+export function openInEditor(context: ExtensionContext) {
+  registerCommand(context, CMD_OPEN_IN_EDITOR, args => {
+    window.showInformationMessage('此功能暂时未开发完成,谢谢');
+  });
 }

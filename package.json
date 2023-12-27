@@ -116,6 +116,12 @@
         "title": "%bookmark-manager.quickJumpTo%",
         "icon": "$(bookmark)",
         "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.openInEditor",
+        "title": "Open in editor",
+        "icon": "$(search-new-editor)",
+        "category": "Bookmark Manager (BM)"
       }
     ],
     "views": {
@@ -131,7 +137,7 @@
     "viewsWelcome": [
       {
         "view": "bookmark-manager",
-        "contents": "Add some bookmarks"
+        "contents": "%bookmark-manager.viewsWelcome.content%"
       }
     ],
     "viewsContainers": {
@@ -318,6 +324,11 @@
           "command": "bookmark-manager.clearAllBookmarks",
           "when": "view == bookmark-manager",
           "group": "navigation"
+        },
+        {
+          "command": "bookmark-manager.openInEditor",
+          "when": "view == bookmark-manager",
+          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -342,20 +353,29 @@
           "group": "inline@2"
         },
         {
-          "command": "bookmark-manager.bookmarkEditDescription",
+          "command": "bookmark-manager.editLabel",
           "when": "view==bookmark-manager && viewItem === bookmark",
           "group": "itemContextGroup@1"
         },
         {
-          "command": "bookmark-manager.changeBookmarkColor",
+          "command": "bookmark-manager.bookmarkEditDescription",
           "when": "view==bookmark-manager && viewItem === bookmark",
           "group": "itemContextGroup@2"
+        },
+        {
+          "command": "bookmark-manager.changeBookmarkColor",
+          "when": "view==bookmark-manager && viewItem === bookmark",
+          "group": "itemContextGroup@3"
         }
       ],
       "commandPalette": [
         {
           "command": "bookmark-manager.toggleBookmarkWithSelection",
-          "when": "editorHasSelection"
+          "when": "bookmark-manager.editorHasSelection"
+        },
+        {
+          "command": "bookmark-manager.openInEditor",
+          "when": "false"
         }
       ]
     },

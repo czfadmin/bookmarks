@@ -21,6 +21,7 @@ export const CMD_JUMP_TO_BOOKMARK = 'quickJumpTo';
 
 export const CMD_CHANGE_BOOKMARK_COLOR = 'changeBookmarkColor';
 
+export const CMD_OPEN_IN_EDITOR = 'openInEditor';
 // ENV
 export const APP_ROOT = vscode.env.appRoot;
 export const APP_NAME = vscode.env.appName;
