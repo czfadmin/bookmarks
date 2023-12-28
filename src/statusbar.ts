@@ -12,6 +12,7 @@ function resolveStatusBarItem() {
   );
   const totalNum = BookmarksController.instance.totalBookmarksNum;
   statusbarItem.name = EXTENSION_NAME;
+  // TODO: 对书签进行分类, 比如带有标签和未带有标签
   statusbarItem.text = `$(bookmark) ${totalNum}`;
   statusbarItem.command = {
     title: 'Focus',

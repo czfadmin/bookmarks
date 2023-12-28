@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import {EXTENSION_ID} from '../constants';
 import {BookmarkMeta, BookmarkStoreRootType, BookmarkStoreType} from '../types';
-import {createID} from '../utils';
+import {generateUUID} from '../utils';
 import {createHoverMessage} from '../utils/bookmark';
 
 export class BookmarksController {
@@ -82,7 +82,7 @@ export class BookmarksController {
     // @ts-ignore
     bookmarkStore.bookmarks.push({
       ...bookmark,
-      id: createID(),
+      id: generateUUID(),
       fileUri: fileUri,
     });
     this.save();

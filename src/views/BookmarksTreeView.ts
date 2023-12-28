@@ -1,10 +1,8 @@
 import * as vscode from 'vscode';
 import {EXTENSION_VIEW_ID} from '../constants';
 import {BookmarksController} from '../controllers/BookmarksController';
-import {
-  BookmarksTreeItem,
-  BookmarksTreeProvider,
-} from '../providers/BookmarksTreeProvider';
+import {BookmarksTreeProvider} from '../providers/BookmarksTreeProvider';
+import {BookmarksTreeItem} from '../providers/BookmarksTreeItem';
 import {dispose} from '../utils';
 
 export class BookmarksTreeView implements vscode.Disposable {

@@ -114,6 +114,7 @@ export function createDecoration(
       ? tagGutterIconPath
       : gutterIconPath
     : undefined;
+
   const decoration = window.createTextEditorDecorationType({
     isWholeLine: wholeLine,
     borderRadius: '2px',
@@ -124,6 +125,7 @@ export function createDecoration(
     overviewRulerColor,
     rangeBehavior: DecorationRangeBehavior.ClosedClosed,
     gutterIconPath: decorationGutterIconPath,
+    gutterIconSize: 'auto',
     border: showBorder ? border : '',
     outline: showOutline ? outline : '',
     backgroundColor: highlightBackground ? color : '',

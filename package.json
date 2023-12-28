@@ -389,6 +389,15 @@
       "command": "bookmark-manager.focus",
       "key": "ctrl+m ctrl+b",
       "mac": "cmd+m cmd+b"
+    },
+    "icons": {
+      "bm-bi": {
+        "description": "Use bootstrap icons",
+        "default": {
+          "fontPath": "./resources/bootstrap-icons.woff",
+          "fontCharacter": "\\f101"
+        }
+      }
     }
   },
   "scripts": {
@@ -434,6 +443,7 @@
   },
   "dependencies": {
     "@vscode/l10n": "^0.0.16",
+    "bootstrap-icons": "^1.11.2",
     "lodash": "^4.17.21",
     "uuid": "^9.0.1"
   },

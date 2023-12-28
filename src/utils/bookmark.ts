@@ -163,13 +163,22 @@ export function highlightSelection(
  * 调转到对应的书签所在地,并进行高亮选区
  * @param bookmark
  */
-export function gotoSourceLocation(bookmark: BookmarkMeta) {
+export async function gotoSourceLocation(bookmark: BookmarkMeta) {
   const activeEditor = window.activeTextEditor;
   const {fileUri, rangesOrOptions, selection} = bookmark;
 
   const range = selection || rangesOrOptions?.range;
+  // TODO: 当没有的表示的是要打开并跳转到文件,后续对其优化
+  if (!range) {
+    const doc = await workspace.openTextDocument(Uri.parse(fileUri.path));
 
-  if (!range) return;
+    if (!doc) {
+      return;
+    }
+    await window.showTextDocument(doc);
+    // TODO: 对所有的标签进行高亮
+    return;
+  }
 
   if (activeEditor) {
     if (activeEditor.document.uri.fsPath === fileUri.fsPath) {

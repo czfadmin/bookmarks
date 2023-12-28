@@ -1,13 +1,3 @@
-import * as vscode from 'vscode';
-export const EXTENSION_ID = 'bookmark-manager';
-export const EXTENSION_NAME = 'Bookmark Manager (BM)';
-
-export const VIRTUAL_SCHEMA = 'bookmarkmanager';
-export const EXTENSION_VIEW_ID = 'bookmark-manager';
-
-export const DEFAULT_BOOKMARK_COLOR = '#0e69d8';
-
-/** Commands */
 export const CMD_TOGGLE_BOOKMARK_WITH_LABEL = 'toggleLineBookmarkWithLabel';
 export const CMD_TOGGLE_LINE_BOOKMARK = 'toggleLineBookmark';
 export const CMD_CLEAR_ALL = 'clearAllBookmarks';
@@ -22,6 +12,3 @@ export const CMD_JUMP_TO_BOOKMARK = 'quickJumpTo';
 export const CMD_CHANGE_BOOKMARK_COLOR = 'changeBookmarkColor';
 
 export const CMD_OPEN_IN_EDITOR = 'openInEditor';
-// ENV
-export const APP_ROOT = vscode.env.appRoot;
-export const APP_NAME = vscode.env.appName;

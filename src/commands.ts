@@ -30,7 +30,7 @@ import {
   editBookmarkLabel,
   getBookmarkFromLineNumber,
 } from './utils/bookmark';
-import {BookmarksTreeItem} from './providers/BookmarksTreeProvider';
+import {BookmarksTreeItem} from './providers/BookmarksTreeItem';
 
 /**
  * 从`context`获取书签数据
