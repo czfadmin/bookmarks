@@ -6,6 +6,7 @@ export * from './logger';
 export * from './resources';
 export * from './bookmark';
 export * from './icon';
+export * from './translate';
 
 export interface IDisposable {
   dispose(): void;

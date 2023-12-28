@@ -1,4 +1,4 @@
-import {ExtensionContext, window} from 'vscode';
+import {ExtensionContext, l10n, window} from 'vscode';
 import {registerCommand} from './utils';
 import {
   CMD_TOGGLE_LINE_BOOKMARK,
@@ -104,9 +104,10 @@ function toggleLineBookmarkWithLabel(context: ExtensionContext) {
     CMD_TOGGLE_BOOKMARK_WITH_LABEL,
     async (context: LineBookmarkContext) => {
       const label = await window.showInputBox({
-        placeHolder: 'Type a label for your bookmarks',
-        title:
+        placeHolder: l10n.t('Type a label for your bookmarks'),
+        title: l10n.t(
           'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
+        ),
       });
       if (!label) {
         return;
@@ -194,15 +195,19 @@ function editBookmark(context: ExtensionContext) {
       let bookmark: BookmarkMeta | undefined = getBookmarkFromCtx(context);
 
       if (!bookmark) {
-        window.showInformationMessage('请选择书签后再进行操作.', {});
+        window.showInformationMessage(
+          l10n.t('Please select the bookmark before proceeding.'),
+          {},
+        );
         return;
       }
 
       window
         .showInputBox({
-          placeHolder: 'Type a label for your bookmarks',
-          title:
+          placeHolder: l10n.t('Type a label for your bookmarks'),
+          title: l10n.t(
             'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
+          ),
         })
         .then(label => {
           if (!label || !bookmark) {
@@ -232,9 +237,10 @@ function toggleSelectionBookmark(context: ExtensionContext) {
   registerCommand(context, CMD_TOGGLE_BOOKMARK_WITH_SECTIONS, ctx => {
     window
       .showInputBox({
-        placeHolder: 'Type a label for your bookmarks',
-        title:
+        placeHolder: l10n.t('Type a label for your bookmarks'),
+        title: l10n.t(
           'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
+        ),
       })
       .then(label => {
         if (!label) {
@@ -264,7 +270,10 @@ function changeBookmarkColor(context: ExtensionContext) {
     async (ctx: LineBookmarkContext | BookmarksTreeItem | undefined) => {
       let bookmark: BookmarkMeta | undefined = getBookmarkFromCtx(ctx);
       if (!bookmark) {
-        window.showInformationMessage('请选择书签后再进行操作.', {});
+        window.showInformationMessage(
+          l10n.t('Please select bookmark color'),
+          {},
+        );
         return;
       }
 
@@ -308,14 +317,18 @@ function addMoreMemo(context: ExtensionContext) {
     (ctx: LineBookmarkContext | BookmarksTreeItem | undefined) => {
       let bookmark: BookmarkMeta | undefined = getBookmarkFromCtx(ctx);
       if (!bookmark) {
-        window.showInformationMessage('请选择书签后再进行操作.', {});
+        window.showInformationMessage(
+          l10n.t('Please select the bookmark before proceeding.'),
+          {},
+        );
         return;
       }
       window
         .showInputBox({
-          placeHolder: 'Type more info for your bookmarks',
-          title:
+          placeHolder: l10n.t('Type more info for your bookmarks'),
+          title: l10n.t(
             'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
+          ),
         })
         .then(description => {
           if (!description) {
@@ -334,6 +347,8 @@ function addMoreMemo(context: ExtensionContext) {
  */
 export function openInEditor(context: ExtensionContext) {
   registerCommand(context, CMD_OPEN_IN_EDITOR, args => {
-    window.showInformationMessage('此功能暂时未开发完成,谢谢');
+    window.showInformationMessage(
+      l10n.t('This feature has not been developed yet, thanks!'),
+    );
   });
 }

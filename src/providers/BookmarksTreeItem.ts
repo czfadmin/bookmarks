@@ -62,12 +62,19 @@ export class BookmarksTreeItem extends vscode.TreeItem {
     hoverMessage.supportThemeIcons = true;
     const {bookmarks} = this.meta as BookmarkStoreType;
     let item, markdownStr;
+    let idx = 0;
+    // let commandUri: vscode.Uri;
     for (item of bookmarks) {
-      markdownStr = `\n1. ${
-        item.label || item.selectionContent
-      } *${getLineInfoStrFromBookmark(item)}*`;
+      idx += 1;
+      // commandUri = vscode.Uri.parse(
+      //   `command:bookmark-manager.gotoSourceLocation?id=${encodeURIComponent(
+      //     JSON.stringify(item),
+      //   )}`,
+      // );
+      markdownStr = `\n ${idx}. ${item.label || item.selectionContent}\n`;
       hoverMessage.appendMarkdown(markdownStr);
     }
+    hoverMessage.isTrusted = true;
 
     this.tooltip = hoverMessage;
   }

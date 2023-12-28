@@ -327,7 +327,7 @@
         },
         {
           "command": "bookmark-manager.openInEditor",
-          "when": "view == bookmark-manager",
+          "when": "view == bookmark-manager && false",
           "group": "navigation"
         }
       ],
@@ -391,7 +391,7 @@
       "mac": "cmd+m cmd+b"
     },
     "icons": {
-      "bm-bi": {
+      "bm-bookmark": {
         "description": "Use bootstrap icons",
         "default": {
           "fontPath": "./resources/bootstrap-icons.woff",

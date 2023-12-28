@@ -62,6 +62,10 @@ export function getCreateDecorationOptions(): CreateDecorationOptions {
   } as CreateDecorationOptions;
 }
 
+/**
+ * 获取插件的配置
+ * @returns {BookmarkManagerConfigure}
+ */
 export function getExtensionConfiguration(): BookmarkManagerConfigure {
   const configuration = getConfiguration();
   const createDecoration = getCreateDecorationOptions();
@@ -75,3 +79,8 @@ export function getExtensionConfiguration(): BookmarkManagerConfigure {
     enableClick: configuration.get('enableClick') || false,
   };
 }
+
+/**
+ * 获取插件的内部配置
+ */
+export function getExtensionInternalConfiguration() {}
