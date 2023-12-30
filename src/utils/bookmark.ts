@@ -779,3 +779,7 @@ export function getLineInfoStrFromBookmark(bookmark: BookmarkMeta) {
 export function sortBookmarksByLineNumber(bookmarks: BookmarkMeta[]) {
   bookmarks.sort((a, b) => a.selection.start.line - b.selection.start.line);
 }
+
+export function getBookmarksFromFileUri(uri: Uri) {
+  return BookmarksController.instance.getBookmarkStoreByFileUri(uri);
+}

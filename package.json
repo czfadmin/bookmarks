@@ -119,8 +119,14 @@
       },
       {
         "command": "bookmark-manager.openInEditor",
-        "title": "Open in editor",
+        "title": "%bookmark-manager.openInEditor%",
         "icon": "$(search-new-editor)",
+        "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.listBookmarksInCurrentFile",
+        "title": "%bookmark-manager.listBookmarksInCurrentFile%",
+        "icon": "$(bookmark)",
         "category": "Bookmark Manager (BM)"
       }
     ],

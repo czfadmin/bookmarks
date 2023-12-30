@@ -1,4 +1,13 @@
-import {ExtensionContext, l10n, window} from 'vscode';
+import {
+  ExtensionContext,
+  QuickPickItem,
+  Selection,
+  TextEditorRevealType,
+  Uri,
+  l10n,
+  window,
+  workspace,
+} from 'vscode';
 import {registerCommand} from './utils';
 import {
   CMD_TOGGLE_LINE_BOOKMARK,
@@ -29,8 +38,11 @@ import {
   toggleBookmark,
   editBookmarkLabel,
   getBookmarkFromLineNumber,
+  getBookmarksFromFileUri,
+  getLineInfoStrFromBookmark,
 } from './utils/bookmark';
 import {BookmarksTreeItem} from './providers/BookmarksTreeItem';
+import gutters, {getTagGutters} from './gutter';
 
 /**
  * 从`context`获取书签数据
@@ -78,6 +90,7 @@ export function registerCommands(context: ExtensionContext) {
   clearAllBookmarksInCurrentFile(context);
   addMoreMemo(context);
   openInEditor(context);
+  listBookmarksInCurrentFile(context);
 }
 
 /**
@@ -337,6 +350,77 @@ function addMoreMemo(context: ExtensionContext) {
 
           editBookmarkDescription(bookmark!, description);
         });
+    },
+  );
+}
+
+/**
+ * 列出当前文件中的所有信息
+ * @param context
+ */
+export function listBookmarksInCurrentFile(context: ExtensionContext) {
+  registerCommand(
+    context,
+    'listBookmarksInCurrentFile',
+    async (ctx: LineBookmarkContext | BookmarksTreeItem | undefined) => {
+      const editor = window.activeTextEditor;
+      const bookmarkDS = BookmarksController.instance.datasource;
+      if (!editor || !bookmarkDS) return;
+      const store = getBookmarksFromFileUri(editor.document.uri);
+      if (!store) return;
+      const tagGutters = getTagGutters();
+      const pickItems = store.bookmarks.map(it => {
+        const iconPath = it.label
+          ? tagGutters[it.color] || tagGutters['default']
+          : gutters[it.color] || tagGutters['default'];
+        return {
+          label:
+            it.label ||
+            it.description ||
+            it.selectionContent?.slice(0, 120) ||
+            '',
+          description: getLineInfoStrFromBookmark(it),
+          detail: it.fileUri.fsPath,
+          iconPath: iconPath as Uri,
+          meta: {
+            ...it,
+            selection: new Selection(it.selection.anchor, it.selection.active),
+          },
+        };
+      });
+
+      const choosedBookmarks = await window.showQuickPick(pickItems, {
+        title: l10n.t(
+          'Select a bookmark to jump to the corresponding location.',
+        ),
+        placeHolder: l10n.t('Please select the bookmark you want to open'),
+        canPickMany: false,
+        ignoreFocusOut: false,
+        async onDidSelectItem(item: QuickPickItem & {meta: BookmarkMeta}) {
+          // @ts-ignore
+          let bookmark = typeof item === 'object' ? item.meta : undefined;
+          if (bookmark) {
+            const doc = await workspace.openTextDocument(
+              Uri.parse(bookmark.fileUri.path),
+            );
+            const editor = await window.showTextDocument(doc, {
+              preview: true,
+              preserveFocus: true,
+            });
+            editor.selection = new Selection(
+              bookmark.selection.start,
+              bookmark.selection.end,
+            );
+            editor.revealRange(
+              bookmark.selection,
+              TextEditorRevealType.InCenterIfOutsideViewport,
+            );
+          }
+        },
+      });
+      if (!choosedBookmarks) {
+        return;
+      }
     },
   );
 }
