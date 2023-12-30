@@ -12,6 +12,7 @@ import {
   MarkdownString,
   TextDocumentContentChangeEvent,
   TextDocumentChangeEvent,
+  l10n,
 } from 'vscode';
 import {BookmarksController} from '../controllers/BookmarksController';
 import {
@@ -163,13 +164,21 @@ export function highlightSelection(
  * 调转到对应的书签所在地,并进行高亮选区
  * @param bookmark
  */
-export function gotoSourceLocation(bookmark: BookmarkMeta) {
+export async function gotoSourceLocation(bookmark?: BookmarkMeta) {
+  if (!bookmark) return;
   const activeEditor = window.activeTextEditor;
   const {fileUri, rangesOrOptions, selection} = bookmark;
 
-  const range = selection || rangesOrOptions.range;
+  const range = selection || rangesOrOptions?.range;
+  if (!range) {
+    const doc = await workspace.openTextDocument(Uri.parse(fileUri.path));
 
-  if (!range) return;
+    if (!doc) {
+      return;
+    }
+    await window.showTextDocument(doc);
+    return;
+  }
 
   if (activeEditor) {
     if (activeEditor.document.uri.fsPath === fileUri.fsPath) {
@@ -406,8 +415,10 @@ export async function chooseBookmarkColor() {
     } as QuickPickItem;
   });
   const choosedColor = await window.showQuickPick(pickItems, {
-    title: "选择书签颜色.按下'ENTER'键确认,按下'EAPSE'键取消",
-    placeHolder: '请选择书签颜色',
+    title: l10n.t(
+      "Select bookmark color. Press 'ENTER' to confirm, 'EAPSE' to cancel",
+    ),
+    placeHolder: l10n.t('Please select bookmark color'),
     canPickMany: false,
   });
   return choosedColor?.label;
@@ -446,8 +457,8 @@ export async function quicklyJumpToBookmark() {
     return arr;
   }, [] as any[]);
   const choosedBookmarks = await window.showQuickPick(pickItems, {
-    title: '选择书签以跳转到对应所在位置',
-    placeHolder: '请选择想要打开的书签',
+    title: l10n.t('Select a bookmark to jump to the corresponding location.'),
+    placeHolder: l10n.t('Please select the bookmark you want to open'),
     canPickMany: false,
     ignoreFocusOut: false,
     async onDidSelectItem(item: QuickPickItem & {meta: BookmarkMeta}) {
@@ -530,18 +541,22 @@ function appendMarkdown(
   }
 }
 
+/**
+ * 为 markdown 增加行信息
+ * @param range
+ * @param code
+ * @returns
+ */
 function resolveMarkdownLineNumber(range: Range, code: string) {
   const startLine = range.start.line + 1;
-  const endLine = range.end.line + 1;
-  let newCodeStr =
-    startLine === endLine ? `${startLine} ${code}` : `${startLine}${code}`;
+  let newCodeStr = `${startLine} ${code.trim()}`;
   const arr = newCodeStr.split('\r\n');
   newCodeStr = arr[0];
   let currentLineNumber = startLine,
     idx;
   for (idx = 1; idx < arr.length; idx++) {
     currentLineNumber += 1;
-    newCodeStr = `${newCodeStr}\r\n${currentLineNumber}${arr[idx]}`;
+    newCodeStr = `${newCodeStr}\r\n${currentLineNumber} ${arr[idx]}`;
   }
   return newCodeStr;
 }
@@ -754,6 +769,17 @@ export function getLineInfoFromBookmark(bookmark: BookmarkMeta) {
 export function getLineInfoStrFromBookmark(bookmark: BookmarkMeta) {
   const lineInfo = getLineInfoFromBookmark(bookmark);
   return bookmark.type === 'line'
-    ? `L: ${lineInfo.line}`
-    : `Start {Ln: ${lineInfo.start?.line}, Col: ${lineInfo.start?.col}}. End {Ln: ${lineInfo.end?.line}, Col: ${lineInfo.end?.col}}`;
+    ? `Ln: ${lineInfo.line}`
+    : `Start { Ln: ${lineInfo.start?.line}, Col: ${lineInfo.start?.col} }. End { Ln: ${lineInfo.end?.line}, Col: ${lineInfo.end?.col} }`;
+}
+/**
+ * 对书签进行按照行号排序
+ * @param bookmarks
+ */
+export function sortBookmarksByLineNumber(bookmarks: BookmarkMeta[]) {
+  bookmarks.sort((a, b) => a.selection.start.line - b.selection.start.line);
+}
+
+export function getBookmarksFromFileUri(uri: Uri) {
+  return BookmarksController.instance.getBookmarkStoreByFileUri(uri);
 }

@@ -62,7 +62,11 @@ export function getCreateDecorationOptions(): CreateDecorationOptions {
   } as CreateDecorationOptions;
 }
 
-export function getAllPrettierConfiguration(): BookmarkManagerConfigure {
+/**
+ * 获取插件的配置
+ * @returns {BookmarkManagerConfigure}
+ */
+export function getExtensionConfiguration(): BookmarkManagerConfigure {
   const configuration = getConfiguration();
   const createDecoration = getCreateDecorationOptions();
   const colors = getAllColors();
@@ -75,3 +79,8 @@ export function getAllPrettierConfiguration(): BookmarkManagerConfigure {
     enableClick: configuration.get('enableClick') || false,
   };
 }
+
+/**
+ * 获取插件的内部配置
+ */
+export function getExtensionInternalConfiguration() {}

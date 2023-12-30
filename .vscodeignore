@@ -12,3 +12,6 @@ vsc-extension-quickstart.md
 **/*.map
 **/*.ts
 .changeset/**
+resources/bootstrap-icons.json
+resources/bootstrap-icons.svg
+resources/bootstrap-icons.woff

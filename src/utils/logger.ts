@@ -1,6 +1,6 @@
 import {EXTENSION_ID} from '../constants';
 
-function info(...msg: any[]) {
+export function info(...msg: any[]) {
   console.log(
     `%c[${EXTENSION_ID}]%c(info)%c: `,
     `background:#35495e ; padding: 1px; border-radius: 3px 0 0 3px;  color: #fff`,
@@ -10,7 +10,7 @@ function info(...msg: any[]) {
   );
 }
 
-function warn(...msg: any[]) {
+export function warn(...msg: any[]) {
   console.warn(
     `%c[${EXTENSION_ID}]%c(warn)%c: `,
     `background:#35495e ; padding: 1px; border-radius: 3px 0 0 3px;  color: #fff`,
@@ -20,7 +20,7 @@ function warn(...msg: any[]) {
   );
 }
 
-function error(...msg: any[]) {
+export function error(...msg: any[]) {
   console.warn(
     `%c[${EXTENSION_ID}]%c(error)%c: `,
     `background:#35495e ; padding: 1px; border-radius: 3px 0 0 3px;  color: #fff`,
@@ -30,7 +30,7 @@ function error(...msg: any[]) {
   );
 }
 
-function log(...msg: any[]) {
+export function log(...msg: any[]) {
   console.log(
     `%c[${EXTENSION_ID}]%c(log)%c: `,
     `background:#35495e ; padding: 1px; border-radius: 3px 0 0 3px;  color: #fff`,

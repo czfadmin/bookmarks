@@ -18,8 +18,9 @@ import {
   getBookmarkFromLineNumber,
   updateBookmarksGroupByChangedLine,
 } from './utils/bookmark';
-import {getAllPrettierConfiguration} from './configurations';
+import {getExtensionConfiguration} from './configurations';
 import {BookmarkMeta} from './types';
+import {registerExtensionCustomContextByKey} from './context';
 
 let onDidChangeActiveTextEditor: Disposable | undefined;
 let onDidChangeVisibleTextEditors: Disposable | undefined;
@@ -29,6 +30,7 @@ let onDidChangeBreakpoints: Disposable | undefined;
 let onDidChangeTextDocumentDisposable: Disposable | undefined;
 let onDidRenameFilesDisposable: Disposable | undefined;
 let onDidDeleteFilesDisposable: Disposable | undefined;
+let onDidTextSelectionDisposable: Disposable | undefined;
 export function updateChangeActiveTextEditorListener() {
   onDidChangeActiveTextEditor?.dispose();
   // 当打开多个editor group时,更新每个editor的中的decorations
@@ -71,7 +73,7 @@ export function updateCursorChangeListener() {
   decoration?.dispose();
   lastPositionLine = -1;
   const enableLineBlame =
-    (getAllPrettierConfiguration().lineBlame as boolean) || false;
+    (getExtensionConfiguration().lineBlame as boolean) || false;
   const activedEditor = window.activeTextEditor;
   if (activedEditor) {
     updateLineBlame(activedEditor, enableLineBlame);
@@ -222,6 +224,23 @@ export function updateChangeBreakpointsListener() {
   onDidChangeBreakpoints = debug.onDidChangeBreakpoints(ev => {});
 }
 
+/**
+ * 监听文档的选择变化, 借此判断用户是否选择一些内容, 用以支持`bookmark-manager.toggleBookmarkWithSelection`命令是否可以在`命令面板`中展示
+ * 主要通过`bookmark-manager.editorHasSelection`自定义上下文控制
+ */
+export function updateTextEditorSelectionListener() {
+  onDidTextSelectionDisposable?.dispose();
+  onDidTextSelectionDisposable = window.onDidChangeTextEditorSelection(ev => {
+    const editor = ev.textEditor;
+    if (!editor) return;
+    const selection = editor.selection;
+    registerExtensionCustomContextByKey(
+      'editorHasSelection',
+      !selection.isEmpty,
+    );
+  });
+}
+
 export function disablAllEvents() {
   onDidChangeActiveTextEditor?.dispose();
   onDidChangeBreakpoints?.dispose();
@@ -231,5 +250,6 @@ export function disablAllEvents() {
   onDidChangeTextDocumentDisposable?.dispose();
   onDidDeleteFilesDisposable?.dispose();
   onDidRenameFilesDisposable?.dispose();
+  onDidTextSelectionDisposable?.dispose();
   decoration?.dispose();
 }

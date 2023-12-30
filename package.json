@@ -2,7 +2,7 @@
   "name": "bookmark-manager",
   "displayName": "Bookmark Manager (BM)",
   "description": "Simple and easy to use bookmark manager",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "engines": {
     "vscode": "^1.82.0"
   },
@@ -58,8 +58,8 @@
         "category": "Bookmark Manager (BM)"
       },
       {
-        "command": "bookmark-manager.bookmarkEditDescription",
-        "title": "%bookmark-manager.bookmarkEditDescription%",
+        "command": "bookmark-manager.editDescription",
+        "title": "%bookmark-manager.editDescription%",
         "icon": "$(bookmark)",
         "category": "Bookmark Manager (BM)"
       },
@@ -116,6 +116,18 @@
         "title": "%bookmark-manager.quickJumpTo%",
         "icon": "$(bookmark)",
         "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.openInEditor",
+        "title": "%bookmark-manager.openInEditor%",
+        "icon": "$(search-new-editor)",
+        "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.listBookmarksInCurrentFile",
+        "title": "%bookmark-manager.listBookmarksInCurrentFile%",
+        "icon": "$(bookmark)",
+        "category": "Bookmark Manager (BM)"
       }
     ],
     "views": {
@@ -131,7 +143,7 @@
     "viewsWelcome": [
       {
         "view": "bookmark-manager",
-        "contents": "Add some bookmarks"
+        "contents": "%bookmark-manager.viewsWelcome.content%"
       }
     ],
     "viewsContainers": {
@@ -289,8 +301,12 @@
           "group": "bookmarksActionsGroup@1"
         },
         {
-          "command": "bookmark-manager.toggleBookmarkWithSelection",
+          "command": "bookmark-manager.toggleLineBookmarkWithLabel",
           "group": "bookmarksActionsGroup@2"
+        },
+        {
+          "command": "bookmark-manager.toggleBookmarkWithSelection",
+          "group": "bookmarksActionsGroup@3"
         },
         {
           "command": "bookmark-manager.editLabel",
@@ -301,7 +317,7 @@
           "group": "bookmarksEditActionGroup@2"
         },
         {
-          "command": "bookmark-manager.bookmarkEditDescription",
+          "command": "bookmark-manager.editDescription",
           "group": "bookmarksEditActionGroup@3"
         },
         {
@@ -314,22 +330,27 @@
           "command": "bookmark-manager.clearAllBookmarks",
           "when": "view == bookmark-manager",
           "group": "navigation"
+        },
+        {
+          "command": "bookmark-manager.openInEditor",
+          "when": "view == bookmark-manager && false",
+          "group": "navigation"
         }
       ],
       "view/item/context": [
         {
           "command": "bookmark-manager.gotoSourceLocation",
-          "when": "view == bookmark-manager && viewItem === item && !bookmark-manager.context.enableClick",
+          "when": "view == bookmark-manager && viewItem === bookmark && !bookmark-manager.enableClick",
           "group": "inline@1"
         },
         {
           "command": "bookmark-manager.editLabel",
-          "when": "view==bookmark-manager && viewItem === item",
+          "when": "view==bookmark-manager && viewItem === bookmark",
           "group": "inline@2"
         },
         {
           "command": "bookmark-manager.deleteBookmark",
-          "when": "view==bookmark-manager && viewItem === item",
+          "when": "view==bookmark-manager && viewItem === bookmark",
           "group": "inline@3"
         },
         {
@@ -338,20 +359,29 @@
           "group": "inline@2"
         },
         {
-          "command": "bookmark-manager.bookmarkEditDescription",
-          "when": "view==bookmark-manager && viewItem === item",
+          "command": "bookmark-manager.editLabel",
+          "when": "view==bookmark-manager && viewItem === bookmark",
           "group": "itemContextGroup@1"
         },
         {
-          "command": "bookmark-manager.changeBookmarkColor",
-          "when": "view==bookmark-manager && viewItem === item",
+          "command": "bookmark-manager.editDescription",
+          "when": "view==bookmark-manager && viewItem === bookmark",
           "group": "itemContextGroup@2"
+        },
+        {
+          "command": "bookmark-manager.changeBookmarkColor",
+          "when": "view==bookmark-manager && viewItem === bookmark",
+          "group": "itemContextGroup@3"
         }
       ],
       "commandPalette": [
         {
           "command": "bookmark-manager.toggleBookmarkWithSelection",
-          "when": "editorHasSelection"
+          "when": "bookmark-manager.editorHasSelection"
+        },
+        {
+          "command": "bookmark-manager.openInEditor",
+          "when": "false"
         }
       ]
     },
@@ -365,6 +395,15 @@
       "command": "bookmark-manager.focus",
       "key": "ctrl+m ctrl+b",
       "mac": "cmd+m cmd+b"
+    },
+    "icons": {
+      "bm-bookmark": {
+        "description": "Use bootstrap icons",
+        "default": {
+          "fontPath": "./resources/bootstrap-icons.woff",
+          "fontCharacter": "\\f101"
+        }
+      }
     }
   },
   "scripts": {
@@ -410,6 +449,7 @@
   },
   "dependencies": {
     "@vscode/l10n": "^0.0.16",
+    "bootstrap-icons": "^1.11.2",
     "lodash": "^4.17.21",
     "uuid": "^9.0.1"
   },

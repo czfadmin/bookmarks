@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import {registerCommands} from './commands';
-import {EXTENSION_ID} from './constants';
+import {EXTENSION_ID, VIRTUAL_SCHEMA} from './constants';
 import {BookmarksController} from './controllers/BookmarksController';
 import {
   disposeAllDiscorations,
@@ -15,11 +15,13 @@ import {
   updateChangeBreakpointsListener,
   updateChangeVisibleTextEidtorsListener,
   updateCursorChangeListener,
+  updateTextEditorSelectionListener,
 } from './events';
 import logger from './utils/logger';
 import {BookmarksTreeView} from './views/BookmarksTreeView';
-import {createStatusBarItem} from './statusbar';
-import {getAllPrettierConfiguration} from './configurations';
+import {updateStatusBarItem} from './statusbar';
+import {getExtensionConfiguration} from './configurations';
+import {registerExtensionCustomContext} from './context';
 
 /**
  * 插件上下文
@@ -36,18 +38,36 @@ export async function activate(context: vscode.ExtensionContext) {
   _context = context;
   logger.log(`${EXTENSION_ID} is now active!`);
 
-  registerCommands(context);
+  const configuration = getExtensionConfiguration();
 
-  const configuration = getAllPrettierConfiguration();
-  vscode.commands.executeCommand(
-    'setContext',
-    'bookmark-manager.context',
-    configuration,
-  );
+  // TODO: 虚拟文档
+  // const virtualContentProvider = new (class
+  //   implements vscode.TextDocumentContentProvider
+  // {
+  //   onDidChange?: vscode.Event<vscode.Uri> | undefined;
+  //   onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
+  //   provideTextDocumentContent(
+  //     uri: vscode.Uri,
+  //     token: vscode.CancellationToken,
+  //   ): vscode.ProviderResult<string> {
+  //     return undefined;
+  //   }
+  // })();
 
+  // context.subscriptions.push(
+  //   vscode.workspace.registerTextDocumentContentProvider(
+  //     VIRTUAL_SCHEMA,
+  //     virtualContentProvider,
+  //   ),
+  // );
+
+  registerExtensionCustomContext(configuration);
+
+  // 注册书签管理器视图
   context.subscriptions.push(
     new BookmarksTreeView(context, BookmarksController.getInstance(context)),
   );
+
   // 监听插件配置的变化
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(ev => {
@@ -57,19 +77,25 @@ export async function activate(context: vscode.ExtensionContext) {
       updateEverything(context);
     }),
   );
-  initDecorations(context);
-  createStatusBarItem();
 
-  updateCursorChangeListener();
-  updateChangeActiveTextEditorListener();
-  updateChangeBreakpointsListener();
-  updateChangeVisibleTextEidtorsListener();
-  updateBookmarkInfoWhenTextChangeListener();
-  updateFilesRenameAndDeleteListeners();
+  // 注册命令
+  registerCommands(context);
+
+  // 首次激活时更新全局的一些监听器和装饰器填充步骤
+  updateEverything(context, false);
 }
 
-function updateEverything(context: vscode.ExtensionContext) {
+/**
+ * 更新全局的监听器以及填充装饰器
+ * @param context
+ * @param needRefresh 是否需要刷新书签的树视图
+ */
+function updateEverything(
+  context: vscode.ExtensionContext,
+  needRefresh: boolean = true,
+) {
   initDecorations(context);
+  updateStatusBarItem();
   updateCursorChangeListener();
   updateChangeActiveTextEditorListener();
   updateChangeBreakpointsListener();
@@ -77,9 +103,13 @@ function updateEverything(context: vscode.ExtensionContext) {
   updateActiveEditorAllDecorations();
   updateBookmarkInfoWhenTextChangeListener();
   updateFilesRenameAndDeleteListeners();
-  BookmarksController.instance.refresh();
+  updateTextEditorSelectionListener();
+  needRefresh && BookmarksController.instance.refresh();
 }
 
+/**
+ * 销毁所以的事件监听以及文本装饰器
+ */
 function disposeAll() {
   disablAllEvents();
   disposeAllDiscorations();

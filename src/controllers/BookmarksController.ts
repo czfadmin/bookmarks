@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import {EXTENSION_ID} from '../constants';
 import {BookmarkMeta, BookmarkStoreRootType, BookmarkStoreType} from '../types';
-import {createID} from '../utils';
-import {createHoverMessage} from '../utils/bookmark';
+import {generateUUID} from '../utils';
+import {createHoverMessage, sortBookmarksByLineNumber} from '../utils/bookmark';
 
 export class BookmarksController {
   private static _instance: BookmarksController;
@@ -29,6 +29,17 @@ export class BookmarksController {
     if (!this.datasource) return 0;
     count = this.datasource.data.reduce((a, b) => a + b.bookmarks.length, 0);
     return count;
+  }
+
+  /**
+   * 获取带有标签的书签
+   */
+  public get labeledBookmarkCount(): number {
+    if (!this.datasource) return 0;
+    return this.datasource.data.reduce(
+      (a, b) => a + b.bookmarks.filter(it => it.label).length,
+      0,
+    );
   }
 
   private constructor(context: vscode.ExtensionContext) {
@@ -82,9 +93,10 @@ export class BookmarksController {
     // @ts-ignore
     bookmarkStore.bookmarks.push({
       ...bookmark,
-      id: createID(),
+      id: generateUUID(),
       fileUri: fileUri,
     });
+    sortBookmarksByLineNumber(bookmarkStore.bookmarks);
     this.save();
   }
   remove(bookmark: BookmarkMeta) {

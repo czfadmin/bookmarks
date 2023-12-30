@@ -21,6 +21,7 @@ import logger from './utils/logger';
 import {DEFAULT_BOOKMARK_COLOR} from './constants';
 import {getAllColors, getCreateDecorationOptions} from './configurations';
 import gutters, {getTagGutters} from './gutter';
+import {translate} from './utils';
 
 export let decorations = {} as Record<
   BookmarkDecorationKey,
@@ -100,7 +101,9 @@ export function createDecoration(
 
   if (!(showGutterIcon || showGutterInOverviewRuler || showTextDecoration)) {
     window.showInformationMessage(
-      `'showGutterIcon', 'showGutterInOverviewRuler','showTextDecoration'不可以同时这只为'false'`,
+      translate(
+        `'showGutterIcon', 'showGutterInOverviewRuler', 'showTextDecoration' not available at the same time this is only 'false'`,
+      ),
     );
     _showGutterIcon = true;
   }
@@ -114,6 +117,7 @@ export function createDecoration(
       ? tagGutterIconPath
       : gutterIconPath
     : undefined;
+
   const decoration = window.createTextEditorDecorationType({
     isWholeLine: wholeLine,
     borderRadius: '2px',
@@ -124,6 +128,7 @@ export function createDecoration(
     overviewRulerColor,
     rangeBehavior: DecorationRangeBehavior.ClosedClosed,
     gutterIconPath: decorationGutterIconPath,
+    gutterIconSize: 'auto',
     border: showBorder ? border : '',
     outline: showOutline ? outline : '',
     backgroundColor: highlightBackground ? color : '',
