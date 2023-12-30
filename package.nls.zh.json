@@ -3,7 +3,7 @@
   "bookmark-manager.toggleLineBookmarkWithLabel": "切换带有标签的书签",
   "bookmark-manager.toggleLineBookmarkWithColor": "切换带颜色的切换行书签",
   "bookmark-manager.toggleBookmarkWithSelection": "切换带有选择的书签",
-  "bookmark-manager.bookmarkEditDescription": "编辑备注",
+  "bookmark-manager.editDescription": "编辑备注",
   "bookmark-manager.clearAllBookmarksInCurrentFile": "清除当前文件中的所有书签",
   "bookmark-manager.changeBookmarkColor": "更换书签颜色",
   "bookmark-manager.clearAllBookmarks": "清除所有书签",

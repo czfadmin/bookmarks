@@ -2,7 +2,7 @@
   "name": "bookmark-manager",
   "displayName": "Bookmark Manager (BM)",
   "description": "Simple and easy to use bookmark manager",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "engines": {
     "vscode": "^1.82.0"
   },
@@ -58,8 +58,8 @@
         "category": "Bookmark Manager (BM)"
       },
       {
-        "command": "bookmark-manager.bookmarkEditDescription",
-        "title": "%bookmark-manager.bookmarkEditDescription%",
+        "command": "bookmark-manager.editDescription",
+        "title": "%bookmark-manager.editDescription%",
         "icon": "$(bookmark)",
         "category": "Bookmark Manager (BM)"
       },
@@ -317,7 +317,7 @@
           "group": "bookmarksEditActionGroup@2"
         },
         {
-          "command": "bookmark-manager.bookmarkEditDescription",
+          "command": "bookmark-manager.editDescription",
           "group": "bookmarksEditActionGroup@3"
         },
         {
@@ -364,7 +364,7 @@
           "group": "itemContextGroup@1"
         },
         {
-          "command": "bookmark-manager.bookmarkEditDescription",
+          "command": "bookmark-manager.editDescription",
           "when": "view==bookmark-manager && viewItem === bookmark",
           "group": "itemContextGroup@2"
         },
