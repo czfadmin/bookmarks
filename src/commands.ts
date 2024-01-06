@@ -221,6 +221,7 @@ function editBookmark(context: ExtensionContext) {
           title: l10n.t(
             'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
           ),
+          value: bookmark.label,
         })
         .then(label => {
           if (!label || !bookmark) {
