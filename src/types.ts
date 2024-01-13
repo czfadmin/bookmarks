@@ -8,8 +8,15 @@ export type LineBookmarkContext =
   | {uri: Uri; lineNumber: number}
   | undefined;
 
-export interface BookmarkMeta {
+export interface BaseMeta {
   id: string;
+  label?: string;
+  color: BookmarkColor;
+}
+export interface BookmarkMeta extends BaseMeta {
+  id: string;
+  fileId: string;
+  fileName: string;
   fileUri: Uri;
   type: 'line' | 'selection';
   color: BookmarkColor;
@@ -21,12 +28,19 @@ export interface BookmarkMeta {
   rangesOrOptions: DecorationOptions;
 }
 
+export enum UniversalBookmarkType {
+  URI = 0,
+  FILE,
+  TEXT,
+}
+
 /**
  * 根据文件名来分组
  * ```json
  * {
- *   id
- *   file,
+ *   fileId
+ *   fileUri,
+ *   fileName,
  *   bookmarks: []
  * }
  * ```
@@ -35,9 +49,9 @@ export type BookmarkStoreType = {
   /**
    * fileUri.fsPath
    */
-  id: string;
+  fileId: string;
   fileUri: Uri;
-  filename: string;
+  fileName: string;
   bookmarks: BookmarkMeta[];
 };
 
@@ -46,7 +60,7 @@ export type BookmarkStoreType = {
  * ```json
  * {
  *   workspace,
- *   data: []
+ *   bookmarks: []
  * }
  * ```
  */
@@ -55,7 +69,7 @@ export type BookmarkStoreRootType = {
    * 根据当前的工作区目录信息
    */
   workspace: string;
-  data: BookmarkStoreType[];
+  bookmarks: BookmarkMeta[];
 };
 
 export interface CreateDecorationOptions {

@@ -5,6 +5,7 @@ import {
   CreateDecorationOptions,
   StringIndexType,
 } from './types';
+import {resolveExtensionCtx} from './extension';
 
 let $colors = {} as StringIndexType<string>;
 
@@ -84,3 +85,22 @@ export function getExtensionConfiguration(): BookmarkManagerConfigure {
  * 获取插件的内部配置
  */
 export function getExtensionInternalConfiguration() {}
+
+export const configUtils = {
+  getValue<T>(key: string, defaultValue: T) {
+    const context = resolveExtensionCtx();
+    return (
+      context.globalState.get<T>(
+        `bookmark-manager.globale.configuration.${key}`,
+      ) || defaultValue
+    );
+  },
+
+  updateValue(key: string, value: any) {
+    const context = resolveExtensionCtx();
+    context.globalState.update(
+      `bookmark-manager.globale.configuration.${key}`,
+      value,
+    );
+  },
+};

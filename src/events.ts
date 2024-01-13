@@ -2,6 +2,7 @@ import {
   Disposable,
   TextEditor,
   TextEditorDecorationType,
+  Uri,
   debug,
   window,
   workspace,
@@ -12,7 +13,7 @@ import {
   updateDecorationsByEditor,
 } from './decorations';
 
-import {BookmarksController} from './controllers/BookmarksController';
+import BookmarksController from './controllers/BookmarksController';
 
 import {
   getBookmarkFromLineNumber,
@@ -21,6 +22,7 @@ import {
 import {getExtensionConfiguration} from './configurations';
 import {BookmarkMeta} from './types';
 import {registerExtensionCustomContextByKey} from './context';
+import {resolveBookmarkController} from './bootstrap';
 
 let onDidChangeActiveTextEditor: Disposable | undefined;
 let onDidChangeVisibleTextEditors: Disposable | undefined;
@@ -97,11 +99,10 @@ function updateLineBlame(editor: TextEditor, enableLineBlame: boolean) {
     lastPositionLine = -1;
     return;
   }
+  const controller = resolveBookmarkController();
   const section = editor.selections[0];
-  const store = BookmarksController.instance.getBookmarkStoreByFileUri(
-    editor.document.uri,
-  );
-  if (!store) {
+  const bookmarks = controller.getBookmarkStoreByFileUri(editor.document.uri);
+  if (!bookmarks.length) {
     decoration?.dispose();
   }
   if (
@@ -109,7 +110,7 @@ function updateLineBlame(editor: TextEditor, enableLineBlame: boolean) {
     section.isEmpty &&
     section.isSingleLine
   ) {
-    const bookmark = getBookmarkFromLineNumber(store, section.active.line);
+    const bookmark = getBookmarkFromLineNumber(section.active.line);
     if (!bookmark || !bookmark.label) {
       decoration?.dispose();
       return;
@@ -152,16 +153,17 @@ function buildLineBlameInfo(bookmark: BookmarkMeta) {
 
 export function updateBookmarkInfoWhenTextChangeListener() {
   onDidChangeTextDocumentDisposable?.dispose();
+  const controller = resolveBookmarkController();
   onDidChangeTextDocumentDisposable = workspace.onDidChangeTextDocument(e => {
     const {contentChanges, document} = e;
     // 代表存在文档发生变化
     if (contentChanges.length) {
-      const bookmarkStore =
-        BookmarksController.instance.getBookmarkStoreByFileUri(document.uri);
+      const bookmarkStore = controller.getBookmarkStoreByFileUri(document.uri);
       if (!bookmarkStore) return;
-      for (let change of contentChanges) {
-        updateBookmarksGroupByChangedLine(bookmarkStore, e, change);
-      }
+      // TODO
+      // for (let change of contentChanges) {
+      //   updateBookmarksGroupByChangedLine(bookmarkStore, e, change);
+      // }
       updateActiveEditorAllDecorations();
     }
   });
@@ -173,30 +175,30 @@ export function updateBookmarkInfoWhenTextChangeListener() {
 export function updateFilesRenameAndDeleteListeners() {
   onDidRenameFilesDisposable?.dispose();
   onDidDeleteFilesDisposable?.dispose();
+  const controller = resolveBookmarkController();
   // 监听文件重命名
   onDidRenameFilesDisposable = workspace.onDidRenameFiles(e => {
     const {files} = e;
     if (!files) {
       return;
     }
-    let file;
+    let file: {readonly oldUri: Uri; readonly newUri: Uri};
     for (file of files) {
-      const store = BookmarksController.instance.getBookmarkStoreByFileUri(
-        file.oldUri,
-      );
-      if (!store) {
+      const bookmarks = controller.getBookmarkStoreByFileUri(file.oldUri);
+      if (!bookmarks.length) {
         continue;
       }
       const filePathArr = file.newUri.path.split('/');
-      store.id = file.newUri.fsPath;
-      store.fileUri = file.newUri;
-      store.filename = filePathArr[filePathArr.length - 1];
-      let bookmark: BookmarkMeta;
-      for (bookmark of store.bookmarks) {
-        bookmark.fileUri = file.newUri;
-      }
+      bookmarks.map(it => {
+        return {
+          ...it,
+          fileId: file.newUri.fsPath,
+          fileUri: file.newUri,
+          fileName: filePathArr[filePathArr.length - 1],
+        };
+      });
     }
-    BookmarksController.instance.save();
+    controller.save();
     updateActiveEditorAllDecorations();
   });
 
@@ -208,12 +210,7 @@ export function updateFilesRenameAndDeleteListeners() {
     }
     let file;
     for (file of files) {
-      const store =
-        BookmarksController.instance.getBookmarkStoreByFileUri(file);
-      if (!store) {
-        continue;
-      }
-      BookmarksController.instance.clearAllBookmarkInFile(file);
+      controller.clearAllBookmarkInFile(file);
     }
     updateActiveEditorAllDecorations();
   });

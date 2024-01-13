@@ -128,13 +128,37 @@
         "title": "%bookmark-manager.listBookmarksInCurrentFile%",
         "icon": "$(bookmark)",
         "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.addBookmark",
+        "title": "%bookmark-manager.addBookmark%",
+        "icon": "$(diff-insert)",
+        "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.viewAsTree",
+        "title": "%bookmark-manager.viewAsTree%",
+        "icon": "$(list-tree)",
+        "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.viewAsList",
+        "title": "%bookmark-manager.viewAsList%",
+        "icon": "$(list-flat)",
+        "category": "Bookmark Manager (BM)"
       }
     ],
     "views": {
       "bookmark-manager": [
         {
           "id": "bookmark-manager",
-          "name": "Bookmark Manager",
+          "name": "%bookmark-manager%",
+          "icon": "resources/logo.svg",
+          "contextualTitle": "Bookmarks"
+        },
+        {
+          "id": "bookmark-manager.universal",
+          "name": "%bookmark-manager.universal%",
           "icon": "resources/logo.svg",
           "contextualTitle": "Bookmarks"
         }
@@ -150,14 +174,14 @@
       "activitybar": [
         {
           "id": "bookmark-manager",
-          "title": "Bookmark Manager",
+          "title": "%bookmark-manager%",
           "icon": "resources/logo.svg"
         }
       ],
       "panel": [
         {
           "id": "bookmark-manager",
-          "title": "Bookmark Manager",
+          "title": "%bookmark-manager%",
           "icon": "resources/logo.svg"
         }
       ]
@@ -266,7 +290,7 @@
         "bookmark-manager.enableClick": {
           "type": "boolean",
           "description": "%bookmark-manager.enableClick.description%",
-          "default": false
+          "default": true
         }
       }
     },
@@ -325,15 +349,36 @@
           "group": "bookmarksEditActionGroup@4"
         }
       ],
+      "bookmark-manager.universal": [
+        {
+          "command": "bookmark-manager.addBookmark",
+          "group": "bookmarksActionsGroup2@1"
+        }
+      ],
       "view/title": [
+        {
+          "command": "bookmark-manager.viewAsTree",
+          "when": "view == bookmark-manager && !bookmark-manager.code.viewAsTree",
+          "group": "navigation@1"
+        },
+        {
+          "command": "bookmark-manager.viewAsList",
+          "when": "view == bookmark-manager && bookmark-manager.code.viewAsTree",
+          "group": "navigation@1"
+        },
         {
           "command": "bookmark-manager.clearAllBookmarks",
           "when": "view == bookmark-manager",
-          "group": "navigation"
+          "group": "navigation@2"
         },
         {
           "command": "bookmark-manager.openInEditor",
           "when": "view == bookmark-manager && false",
+          "group": "navigation"
+        },
+        {
+          "command": "bookmark-manager.addBookmark",
+          "when": "view == bookmark-manager.universal",
           "group": "navigation"
         }
       ],

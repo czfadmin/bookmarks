@@ -5,18 +5,19 @@ import {
   window,
 } from 'vscode';
 import {EXTENSION_ID, EXTENSION_NAME} from './constants';
-import {BookmarksController} from './controllers/BookmarksController';
+import BookmarksController from './controllers/BookmarksController';
+import {resolveBookmarkController} from './bootstrap';
 
 let statusbarItem: StatusBarItem | undefined;
 
-function resolveStatusBarItem() {
+function resolveStatusBarItem(controller: BookmarksController) {
   statusbarItem?.dispose();
   statusbarItem = window.createStatusBarItem(
     `${EXTENSION_ID}`,
     StatusBarAlignment.Left,
   );
-  const total = BookmarksController.instance.totalBookmarksNum;
-  const labeled = BookmarksController.instance.labeledBookmarkCount;
+  const total = controller.totalCount;
+  const labeled = controller.labeledCount;
   statusbarItem.name = EXTENSION_NAME;
   statusbarItem.text = `$(bookmark) ${total} $(tag-add) ${labeled}`;
   statusbarItem.command = {
@@ -49,8 +50,9 @@ export function resolveBookmarkTooltip({total, labeled}: any): MarkdownString {
  * 创建statusbar
  */
 export async function updateStatusBarItem() {
-  resolveStatusBarItem();
-  BookmarksController.instance.onDidChangeEvent(() => {
-    resolveStatusBarItem();
+  const controller = resolveBookmarkController();
+  resolveStatusBarItem(controller);
+  controller.onDidChangeEvent(() => {
+    resolveStatusBarItem(controller);
   });
 }

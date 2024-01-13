@@ -1,146 +1,159 @@
-import * as vscode from 'vscode';
 import {EXTENSION_ID} from '../constants';
 import {BookmarkMeta, BookmarkStoreRootType, BookmarkStoreType} from '../types';
 import {generateUUID} from '../utils';
 import {createHoverMessage, sortBookmarksByLineNumber} from '../utils/bookmark';
+import {
+  Event,
+  EventEmitter,
+  ExtensionContext,
+  Memento,
+  Selection,
+  Uri,
+} from 'vscode';
+import IController, {SortType, ViewType} from './IController';
+import {configUtils} from '../configurations';
+import {registerExtensionCustomContextByKey} from '../context';
 
-export class BookmarksController {
-  private static _instance: BookmarksController;
+export type GroupedByFileType = BookmarkStoreType;
+
+export default class BookmarksController implements IController {
+  private _context: ExtensionContext;
+
+  private _onDidChangeEvent = new EventEmitter<void>();
+
+  public onDidChangeEvent: Event<void> = this._onDidChangeEvent.event;
+
   private _datasource: BookmarkStoreRootType;
-  private _context: vscode.ExtensionContext;
 
-  private _onDidChangeEvent = new vscode.EventEmitter<void>();
+  private _groupedByFile: GroupedByFileType[] = [];
 
-  public onDidChangeEvent: vscode.Event<void> = this._onDidChangeEvent.event;
+  public viewType: ViewType = 'tree';
 
-  public get datasource(): BookmarkStoreRootType {
-    return this._datasource;
+  public get groupedByFileBookmarks(): GroupedByFileType[] {
+    return this._groupedByFile;
+  }
+  public get workspaceState(): Memento {
+    return this._context.workspaceState;
   }
 
-  public get workspaceState(): vscode.Memento {
-    return this._context.workspaceState;
+  public get datasource(): BookmarkStoreRootType | undefined {
+    return this._datasource;
   }
 
   /**
    * 返回书签的总个数
    */
-  public get totalBookmarksNum(): number {
-    let count = 0;
-    if (!this.datasource) return 0;
-    count = this.datasource.data.reduce((a, b) => a + b.bookmarks.length, 0);
-    return count;
+  public get totalCount(): number {
+    if (!this._datasource) return 0;
+    return this._datasource.bookmarks.length;
   }
 
   /**
    * 获取带有标签的书签
    */
-  public get labeledBookmarkCount(): number {
-    if (!this.datasource) return 0;
-    return this.datasource.data.reduce(
-      (a, b) => a + b.bookmarks.filter(it => it.label).length,
-      0,
-    );
+  public get labeledCount(): number {
+    if (!this._datasource) return 0;
+    return this._datasource.bookmarks.filter(it => it.label).length;
   }
 
-  private constructor(context: vscode.ExtensionContext) {
+  constructor(context: ExtensionContext) {
     this._context = context;
-    const _datasource =
-      this.workspaceState.get<BookmarkStoreRootType>(EXTENSION_ID);
+    this._initial();
+
+    const _datasource = this.workspaceState.get<any>(EXTENSION_ID);
+
     if (!_datasource) {
       this._datasource = {
         workspace: context.storageUri?.toString() || '',
-        data: [],
+        bookmarks: [],
       };
       this.save(this._datasource);
     } else {
-      const temp = _datasource.data.map(store => {
-        const bookmarks = store.bookmarks.map(bookmark => ({
-          ...bookmark,
-          selection: new vscode.Selection(
-            bookmark.selection.anchor,
-            bookmark.selection.active,
-          ),
-          rangesOrOptions: {
-            ...bookmark.rangesOrOptions,
-            hoverMessage: createHoverMessage(bookmark, true),
-          },
-        }));
-        return {
-          ...store,
-          bookmarks,
-        };
-      });
-      _datasource.data = temp;
-      this._datasource = _datasource;
+      // 针对以前存在的书签, 进行扁平化成列表
+      let _newDatasouce: BookmarkStoreRootType = {
+        workspace: context.storageUri?.toString() || '',
+        bookmarks: [],
+      };
+      if (_datasource.data && _datasource.data.length) {
+        _newDatasouce.bookmarks = this._flatToList(_datasource.data);
+        this._datasource = _newDatasouce;
+        this.save();
+      } else {
+        this._datasource = _datasource as BookmarkStoreRootType;
+        if (this.viewType === 'tree') {
+          this._groupedByFile = (this._getBookmarksGroupedByFile() || []).map(
+            it => {
+              sortBookmarksByLineNumber(it.bookmarks);
+              return it;
+            },
+          );
+        }
+      }
     }
   }
+  changeSortType(sortType: SortType): void {}
 
-  add(editor: vscode.TextEditor, bookmark: Partial<Omit<BookmarkMeta, 'id'>>) {
-    const fileUri = editor.document.uri;
-    const idx = this.datasource.data.findIndex(it => it.id === fileUri.fsPath);
-    let bookmarkStore;
-    if (idx === -1) {
-      bookmarkStore = {
-        id: fileUri.fsPath,
-        fileUri,
-        filename: editor.document.fileName,
-        bookmarks: [] as BookmarkMeta[],
-      };
-      this.datasource.data.push(bookmarkStore);
-    } else {
-      bookmarkStore = this.datasource.data[idx];
-    }
+  private _initial() {
+    this.viewType = configUtils.getValue('code.viewType', 'tree');
+    registerExtensionCustomContextByKey(
+      'code.viewAsTree',
+      this.viewType === 'tree',
+    );
+  }
+  /**
+   * 将之前旧的数据转换成list
+   * @param arr
+   * @returns
+   */
+  private _flatToList(arr: any[]) {
+    const newArr: any[] = [];
+    arr.forEach(store => {
+      const bookmarks = store.bookmarks.map((bookmark: any) => ({
+        ...bookmark,
+        filename: store.filename,
+        fileId: store.id,
+        selection: new Selection(
+          bookmark.selection.anchor,
+          bookmark.selection.active,
+        ),
+        rangesOrOptions: {
+          ...bookmark.rangesOrOptions,
+          hoverMessage: createHoverMessage(bookmark, true),
+        },
+      }));
+      newArr.push(...bookmarks);
+    });
+    return newArr;
+  }
+
+  add(bookmark: Partial<Omit<BookmarkMeta, 'id'>>) {
     // @ts-ignore
-    bookmarkStore.bookmarks.push({
+    this._datasource.bookmarks.push({
       ...bookmark,
       id: generateUUID(),
-      fileUri: fileUri,
     });
-    sortBookmarksByLineNumber(bookmarkStore.bookmarks);
     this.save();
   }
-  remove(bookmark: BookmarkMeta) {
-    const idx = this.datasource.data.findIndex(
-      it => it.id === bookmark.fileUri.fsPath,
-    );
-    if (idx === -1) {
-      return;
-    }
-    const bookmarkIdx = this.datasource.data[idx].bookmarks.findIndex(
-      it => it.id === bookmark.id,
-    );
-    if (bookmarkIdx === -1) {
-      return;
-    }
-    this.datasource.data[idx].bookmarks.splice(bookmarkIdx, 1);
-    if (!this.datasource.data[idx].bookmarks.length) {
-      this.datasource.data.splice(idx, 1);
-    }
-    this.save();
-  }
-  update(
-    bookmark: BookmarkMeta,
-    bookmarkDto: Partial<Omit<BookmarkMeta, 'id'>>,
-  ) {
-    if (!bookmark.fileUri.fsPath) {
-      return;
-    }
 
-    let idx = this.datasource.data.findIndex(
-      it => it.id === bookmark.fileUri.fsPath,
-    );
-    if (idx === -1) {
-      return;
-    }
-    const bookmarkIdx = this.datasource.data[idx].bookmarks.findIndex(
-      it => it.id === bookmark.id,
+  remove(id: string) {
+    const bookmarkIdx = this._datasource.bookmarks.findIndex(
+      it => it.id === id,
     );
     if (bookmarkIdx === -1) {
       return;
     }
-    const existed = this.datasource.data[idx].bookmarks[bookmarkIdx];
+    this._datasource.bookmarks.splice(bookmarkIdx, 1);
+    this.save();
+  }
+
+  update(id: string, bookmarkDto: Partial<Omit<BookmarkMeta, 'id'>>) {
+    let idx = this._datasource.bookmarks.findIndex(it => it.id === id);
+    if (idx === -1) {
+      return;
+    }
+    const existed = this._datasource.bookmarks[idx];
     const {rangesOrOptions, ...rest} = bookmarkDto;
-    this.datasource.data[idx].bookmarks[bookmarkIdx] = {
+    this._datasource.bookmarks[idx] = {
       ...existed,
       ...rest,
       rangesOrOptions: {
@@ -150,30 +163,54 @@ export class BookmarksController {
     } as BookmarkMeta;
     this.save();
   }
-  detail(bookmark: BookmarkMeta) {
-    const {id, fileUri} = bookmark;
-    let idx = this.datasource.data.findIndex(it => it.id === fileUri.fsPath);
-    if (idx === -1) {
-      return;
-    }
-    return this.datasource.data[idx].bookmarks.find(it => it.id === id);
+
+  getBookmarkStoreByFileUri(fileUri: Uri): BookmarkMeta[] {
+    return this._datasource.bookmarks.filter(
+      it => it.fileId === fileUri.fsPath,
+    );
   }
 
-  getBookmarkStoreByFileUri(
-    fileUri: vscode.Uri,
-  ): BookmarkStoreType | undefined {
-    const idx = this.datasource.data.findIndex(it => it.id === fileUri.fsPath);
-    if (idx === -1) {
-      return;
-    }
-
-    return this.datasource.data[idx];
+  /**
+   *
+   * 根据文件名对书签进行分组
+   * [
+   *  { fileId: xxx ,
+   *    bookmarks: [
+   *
+   *    ]
+   *  },
+   *   { fileId: xxx ,
+   *      bookmarks: [
+   *
+   *     ]
+   *  }
+   * ]
+   */
+  private _getBookmarksGroupedByFile() {
+    if (!this._datasource.bookmarks.length) return;
+    const groupedList: GroupedByFileType[] = [];
+    this._datasource.bookmarks.forEach(it => {
+      const existed = groupedList.find(item => item.fileId === it.fileId);
+      if (existed) {
+        existed.bookmarks.push(it);
+        sortBookmarksByLineNumber(existed.bookmarks);
+      } else {
+        groupedList.push({
+          fileId: it.fileId,
+          // @ts-ignore
+          fileName: it.fileName || it['filename'],
+          fileUri: it.fileUri,
+          bookmarks: [it],
+        });
+      }
+    });
+    return groupedList;
   }
 
   restore() {
     this.save({
       workspace: this._context.storageUri?.toString() || '',
-      data: [],
+      bookmarks: [],
     });
   }
 
@@ -182,7 +219,7 @@ export class BookmarksController {
    * 清除所有标签
    */
   clearAll() {
-    if (!this.datasource.data.length) {
+    if (!this._datasource.bookmarks.length) {
       return;
     }
     this.restore();
@@ -193,22 +230,23 @@ export class BookmarksController {
    * @param fileUri
    * @returns
    */
-  clearAllBookmarkInFile(fileUri: vscode.Uri) {
-    if (!this.datasource.data.length) {
+  clearAllBookmarkInFile(fileUri: Uri) {
+    if (!this._datasource.bookmarks.length) {
       return;
     }
-    const idx = this.datasource.data.findIndex(it => it.id === fileUri.fsPath);
-    if (idx === -1) {
-      return;
-    }
-    this.datasource.data.splice(idx, 1);
+    this._datasource.bookmarks = this._datasource.bookmarks.filter(
+      it => it.fileId !== fileUri.fsPath,
+    );
     this.save();
     this.refresh();
   }
 
   save(store?: BookmarkStoreRootType) {
-    this._datasource = store || this.datasource;
-    this.workspaceState.update(EXTENSION_ID, this._datasource).then();
+    this._groupedByFile = (this._getBookmarksGroupedByFile() || []).map(it => {
+      sortBookmarksByLineNumber(it.bookmarks);
+      return it;
+    });
+    this.workspaceState.update(EXTENSION_ID, store || this._datasource).then();
     this._fire();
   }
   /**
@@ -219,7 +257,7 @@ export class BookmarksController {
   editLabel(bookmark: BookmarkMeta, label: string) {
     bookmark.label = label;
 
-    this.update(bookmark, {
+    this.update(bookmark.id, {
       label,
       rangesOrOptions: {
         ...bookmark.rangesOrOptions,
@@ -232,18 +270,18 @@ export class BookmarksController {
     this._fire();
   }
 
+  changeViewType(viewType: ViewType) {
+    this.viewType = viewType;
+    configUtils.updateValue('code.viewType', viewType);
+
+    registerExtensionCustomContextByKey(
+      'code.viewAsTree',
+      this.viewType === 'tree',
+    );
+    this.refresh();
+  }
+
   private _fire() {
     this._onDidChangeEvent.fire();
-  }
-
-  static getInstance(context: vscode.ExtensionContext): BookmarksController {
-    if (!BookmarksController._instance) {
-      BookmarksController._instance = new BookmarksController(context);
-    }
-    return BookmarksController._instance;
-  }
-
-  static get instance(): BookmarksController {
-    return BookmarksController._instance;
   }
 }
