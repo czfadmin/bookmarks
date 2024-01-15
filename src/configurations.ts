@@ -60,6 +60,7 @@ export function getCreateDecorationOptions(): CreateDecorationOptions {
     border: configuration.get('border') || '1px solid',
     showOutline: configuration.get('showOutline') || false,
     outline: configuration.get('outline') || '1px solid',
+    createJsonFile: configuration.get('createJsonFile') || false,
   } as CreateDecorationOptions;
 }
 

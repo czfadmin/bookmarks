@@ -65,12 +65,17 @@ function updateEverything(
   }
 }
 
-export default function bootstrap(context: ExtensionContext) {
+function initialController(context: ExtensionContext) {
+  // controllerManager['bookmarks'] && controllerManager['bookmarks'].dispose();
+  // controllerManager['universal'] && controllerManager['universal'].dispose();
   const bookmarksController = new BookmarksController(context);
   const universalControlelr = new UniversalBookmarkController(context);
   controllerManager['bookmarks'] = bookmarksController;
   controllerManager['universal'] = universalControlelr;
+}
 
+export default function bootstrap(context: ExtensionContext) {
+  initialController(context);
   const configuration = getExtensionConfiguration();
 
   registerExtensionCustomContext(configuration);
@@ -81,6 +86,7 @@ export default function bootstrap(context: ExtensionContext) {
       if (!ev.affectsConfiguration(EXTENSION_ID)) {
         return;
       }
+      // initialController(context);
       updateEverything(context);
     }),
   );

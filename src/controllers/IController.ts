@@ -1,4 +1,4 @@
-import {Event} from 'vscode';
+import {Event, Disposable} from 'vscode';
 import {BaseMeta, BookmarkStoreRootType} from '../types';
 import {UniversalStoreType} from './UniversalBookmarkController';
 
@@ -12,7 +12,7 @@ export type ViewType = 'tree' | 'list';
  */
 export type SortType = 'name' | 'time';
 
-export default interface IController {
+export default interface IController extends Disposable {
   get datasource(): BookmarkStoreRootType | UniversalStoreType | undefined;
 
   get totalCount(): number;

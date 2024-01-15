@@ -1,4 +1,4 @@
-import {Uri, DecorationOptions, Selection} from 'vscode';
+import {Uri, DecorationOptions, Selection, WorkspaceFolder} from 'vscode';
 
 export type StringIndexType<T> = {[key: string]: T};
 export type BookmarkColor = string | 'none';
@@ -25,6 +25,7 @@ export interface BookmarkMeta extends BaseMeta {
   selectionContent?: string;
   description?: string;
   languageId?: string;
+  workspaceFolder?: WorkspaceFolder;
   rangesOrOptions: DecorationOptions;
 }
 
@@ -65,10 +66,6 @@ export type BookmarkStoreType = {
  * ```
  */
 export type BookmarkStoreRootType = {
-  /**
-   * 根据当前的工作区目录信息
-   */
-  workspace: string;
   bookmarks: BookmarkMeta[];
 };
 
@@ -87,6 +84,7 @@ export interface CreateDecorationOptions {
   border: string;
   showOutline: boolean;
   outline: string;
+  createJsonFile: boolean;
 }
 
 export type BookmarkManagerConfigure = CreateDecorationOptions & {

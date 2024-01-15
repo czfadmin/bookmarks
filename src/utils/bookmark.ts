@@ -20,9 +20,10 @@ import {
 } from '../decorations';
 import {getAllColors} from '../configurations';
 import gutters, {getTagGutters} from '../gutter';
-import {BookmarkMeta, BookmarkStoreType, LineBookmarkContext} from '../types';
+import {BookmarkMeta, LineBookmarkContext} from '../types';
 import {resolveBookmarkController} from '../bootstrap';
 
+const REGEXP_NEWLINE = /(\r\n)|(\n)/g;
 /**
  * 检查当前行是否存在标签, 并移除对应标签
  */
@@ -545,14 +546,13 @@ function resolveMarkdownLineNumber(range: Range, code: string) {
  * @returns
  */
 export function updateBookmarksGroupByChangedLine(
-  store: BookmarkStoreType,
   event: TextDocumentChangeEvent,
   change: TextDocumentContentChangeEvent,
 ) {
   const {document} = event;
 
   const changeText = change.text;
-  const isNewLine = /(\r\n)|(\n)(\s.*?)/g.test(changeText);
+  const isNewLine = REGEXP_NEWLINE.test(changeText);
 
   const isDeleteLine = change.range.end.line > change.range.start.line;
 
@@ -615,7 +615,7 @@ export function updateBookmarksGroupByChangedLine(
     } else if (isNewLine) {
       // 进行换行操作, 转换为区域标签
       let newLines = 1;
-      const matches = change.text.match(/\r\n/g);
+      const matches = change.text.match(REGEXP_NEWLINE);
       if (matches) {
         newLines = matches.length;
       }
@@ -657,7 +657,7 @@ export function updateBookmarksGroupByChangedLine(
       startPos,
       matchedNewLines,
       newLines = 1;
-    matchedNewLines = change.text.match(/\r\n/g);
+    matchedNewLines = change.text.match(REGEXP_NEWLINE);
     if (matchedNewLines) {
       newLines = matchedNewLines.length;
     }
@@ -709,7 +709,7 @@ export function updateLineBookmarkRangeWhenDocumentChange(
     bookmark.selectionContent = selectionContent;
   }
   // 更新当前行的书签信息
-  controller.update(bookmark, {
+  controller.update(bookmark.id, {
     selection,
     selectionContent,
     ...(rest || {}),

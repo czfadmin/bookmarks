@@ -1,17 +1,31 @@
-import {EXTENSION_ID} from '../constants';
-import {BookmarkMeta, BookmarkStoreRootType, BookmarkStoreType} from '../types';
-import {generateUUID} from '../utils';
-import {createHoverMessage, sortBookmarksByLineNumber} from '../utils/bookmark';
 import {
   Event,
   EventEmitter,
   ExtensionContext,
+  FileSystemWatcher,
   Memento,
   Selection,
   Uri,
+  WorkspaceFolder,
+  env,
+  workspace,
 } from 'vscode';
+import path from 'node:path';
+import fs from 'node:fs';
+import {fileURLToPath} from 'node:url';
+
+import {IDisposable, generateUUID} from '../utils';
+import {createHoverMessage, sortBookmarksByLineNumber} from '../utils/bookmark';
+import {
+  BookmarkManagerConfigure,
+  BookmarkMeta,
+  BookmarkStoreRootType,
+  BookmarkStoreType,
+} from '../types';
+import {EXTENSION_ID} from '../constants';
+
 import IController, {SortType, ViewType} from './IController';
-import {configUtils} from '../configurations';
+import {configUtils, getExtensionConfiguration} from '../configurations';
 import {registerExtensionCustomContextByKey} from '../context';
 
 export type GroupedByFileType = BookmarkStoreType;
@@ -23,15 +37,22 @@ export default class BookmarksController implements IController {
 
   public onDidChangeEvent: Event<void> = this._onDidChangeEvent.event;
 
-  private _datasource: BookmarkStoreRootType;
+  private _datasource!: BookmarkStoreRootType;
 
   private _groupedByFile: GroupedByFileType[] = [];
 
   public viewType: ViewType = 'tree';
 
+  private _disposables: IDisposable[] = [];
+
+  private _watcher: FileSystemWatcher | undefined;
+
+  private _configuration: BookmarkManagerConfigure;
+
   public get groupedByFileBookmarks(): GroupedByFileType[] {
     return this._groupedByFile;
   }
+
   public get workspaceState(): Memento {
     return this._context.workspaceState;
   }
@@ -58,48 +79,120 @@ export default class BookmarksController implements IController {
 
   constructor(context: ExtensionContext) {
     this._context = context;
+    this._configuration = getExtensionConfiguration();
     this._initial();
-
-    const _datasource = this.workspaceState.get<any>(EXTENSION_ID);
-
-    if (!_datasource) {
-      this._datasource = {
-        workspace: context.storageUri?.toString() || '',
-        bookmarks: [],
-      };
-      this.save(this._datasource);
-    } else {
-      // 针对以前存在的书签, 进行扁平化成列表
-      let _newDatasouce: BookmarkStoreRootType = {
-        workspace: context.storageUri?.toString() || '',
-        bookmarks: [],
-      };
-      if (_datasource.data && _datasource.data.length) {
-        _newDatasouce.bookmarks = this._flatToList(_datasource.data);
-        this._datasource = _newDatasouce;
-        this.save();
-      } else {
-        this._datasource = _datasource as BookmarkStoreRootType;
-        if (this.viewType === 'tree') {
-          this._groupedByFile = (this._getBookmarksGroupedByFile() || []).map(
-            it => {
-              sortBookmarksByLineNumber(it.bookmarks);
-              return it;
-            },
-          );
-        }
-      }
-    }
   }
-  changeSortType(sortType: SortType): void {}
 
-  private _initial() {
+  private async _initial() {
     this.viewType = configUtils.getValue('code.viewType', 'tree');
+
     registerExtensionCustomContextByKey(
       'code.viewAsTree',
       this.viewType === 'tree',
     );
+    this._initialDatasource();
+    this._initialWatcher();
+
+    this._disposables.push(
+      workspace.onDidChangeConfiguration(ev => {
+        if (!ev.affectsConfiguration(`${EXTENSION_ID}.createJsonFile`)) {
+          return;
+        }
+        this._configuration = getExtensionConfiguration();
+        this._initialDatasource();
+        if (!this._configuration.createJsonFile) {
+          this._watcher?.dispose();
+        }
+      }),
+    );
   }
+
+  private async _initialDatasource() {
+    let _datasource, _datasourceFromFile;
+    _datasourceFromFile = this._resolveDatasourceFromStoreFile() || {
+      bookmarks: [],
+    };
+    if (this._configuration.createJsonFile) {
+      _datasource = _datasourceFromFile;
+      this._changeView();
+    } else {
+      _datasource = this.workspaceState.get<any>(EXTENSION_ID);
+      if (!_datasource) {
+        this._datasource = _datasourceFromFile;
+        this.save(this._datasource);
+      } else {
+        // 针对以前存在的书签, 进行扁平化成列表
+        let _newDatasouce: BookmarkStoreRootType = {
+          bookmarks: [],
+        };
+        if (_datasource.data && _datasource.data.length) {
+          _newDatasouce.bookmarks = this._flatToList(_datasource.data);
+          this._datasource = _newDatasouce;
+          this.save();
+        } else {
+          this._datasource = _datasource as BookmarkStoreRootType;
+          this._changeView();
+        }
+      }
+    }
+  }
+
+  private async _initialWatcher() {
+    const existedStoreFile = await workspace.findFiles(
+      '**/bookmarks.json',
+      '**​/node_modules/**',
+      10,
+    );
+    if (existedStoreFile.length && this._configuration.createJsonFile) {
+      if (this._watcher) this._watcher.dispose();
+      this._watcher = workspace.createFileSystemWatcher(
+        '**/.vscode/bookmarks.json',
+      );
+      this._watcher.onDidDelete(uri => {
+        this._datasource = {
+          bookmarks: [],
+        };
+        this.save();
+      });
+      this._disposables.push(this._watcher);
+    }
+  }
+
+  private _resolveDatasourceFromStoreFile() {
+    let ws;
+    const wsFolders = workspace.workspaceFolders || [];
+    this._datasource = {
+      bookmarks: [],
+    };
+    for (ws of wsFolders) {
+      const storeFilePath = path.join(
+        ws.uri.fsPath,
+        './.vscode/bookmarks.json',
+      );
+      if (fs.existsSync(storeFilePath)) {
+        const _bookmarks = JSON.parse(
+          fs.readFileSync(storeFilePath).toString(),
+        ).content;
+        this._datasource.bookmarks.push(..._bookmarks);
+      }
+    }
+    this.refresh();
+    return this._datasource;
+  }
+
+  private _changeView() {
+    if (this.viewType === 'tree') {
+      this._groupedByFile = (this._getBookmarksGroupedByFile() || []).map(
+        it => {
+          sortBookmarksByLineNumber(it.bookmarks);
+          return it;
+        },
+      );
+    }
+  }
+
+  changeSortType(sortType: SortType): void {}
+
   /**
    * 将之前旧的数据转换成list
    * @param arr
@@ -120,6 +213,7 @@ export default class BookmarksController implements IController {
           ...bookmark.rangesOrOptions,
           hoverMessage: createHoverMessage(bookmark, true),
         },
+        workspaceFolder: workspace.getWorkspaceFolder(store.fileUri),
       }));
       newArr.push(...bookmarks);
     });
@@ -130,6 +224,7 @@ export default class BookmarksController implements IController {
     // @ts-ignore
     this._datasource.bookmarks.push({
       ...bookmark,
+      workspaceFolder: workspace.getWorkspaceFolder(bookmark.fileUri!),
       id: generateUUID(),
     });
     this.save();
@@ -209,7 +304,6 @@ export default class BookmarksController implements IController {
 
   restore() {
     this.save({
-      workspace: this._context.storageUri?.toString() || '',
       bookmarks: [],
     });
   }
@@ -242,13 +336,24 @@ export default class BookmarksController implements IController {
   }
 
   save(store?: BookmarkStoreRootType) {
+    if (store) {
+      this._datasource = store;
+    }
     this._groupedByFile = (this._getBookmarksGroupedByFile() || []).map(it => {
       sortBookmarksByLineNumber(it.bookmarks);
       return it;
     });
-    this.workspaceState.update(EXTENSION_ID, store || this._datasource).then();
+
+    if (this._configuration.createJsonFile) {
+      this._saveToDisk();
+    } else {
+      this.workspaceState
+        .update(EXTENSION_ID, store || this._datasource)
+        .then();
+    }
     this._fire();
   }
+
   /**
    *
    * @param bookmark
@@ -279,6 +384,55 @@ export default class BookmarksController implements IController {
       this.viewType === 'tree',
     );
     this.refresh();
+  }
+
+  /**
+   * 将数据写入到`.vscode/bookmark.json`中
+   * @returns {undefined}
+   */
+  private async _saveToDisk() {
+    if (env.appHost == 'desktop') {
+      const workspaceFolders = workspace.workspaceFolders || [];
+      if (!workspaceFolders.length) {
+        return;
+      }
+      let ws;
+      for (ws of workspaceFolders) {
+        const workspacePath = ws.uri.fsPath.startsWith('file://')
+          ? fileURLToPath(ws.uri.fsPath)
+          : ws.uri.fsPath;
+        const dotVscodeDir = path.join(workspacePath, '.vscode');
+        if (!fs.existsSync(dotVscodeDir)) {
+          fs.mkdirSync(dotVscodeDir);
+        }
+        const bookmarkFile = path.join(
+          workspacePath,
+          './.vscode/bookmarks.json',
+        );
+        if (!fs.existsSync(bookmarkFile)) {
+          fs.writeFileSync(bookmarkFile, '');
+        }
+        fs.writeFileSync(bookmarkFile, this._buildBookmarksContent(ws));
+        if (!this._watcher) {
+          this._initialWatcher();
+        }
+      }
+    }
+  }
+
+  private _buildBookmarksContent(workspace: WorkspaceFolder) {
+    const content = {
+      version: process.env.version,
+      workspace: workspace.name,
+      updatedDate: new Date().toLocaleDateString(),
+      content: this._datasource.bookmarks.filter(
+        it => it.workspaceFolder?.uri.fsPath === workspace.uri.fsPath,
+      ),
+    };
+    return JSON.stringify(content);
+  }
+  dispose(): void {
+    this._disposables.filter(it => it).forEach(it => it.dispose());
   }
 
   private _fire() {

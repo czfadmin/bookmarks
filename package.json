@@ -291,6 +291,11 @@
           "type": "boolean",
           "description": "%bookmark-manager.enableClick.description%",
           "default": true
+        },
+        "bookmark-manager.createJsonFile": {
+          "type": "boolean",
+          "description": "%bookmark-manager.createJsonFile.description%",
+          "default": false
         }
       }
     },

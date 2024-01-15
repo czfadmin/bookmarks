@@ -6,7 +6,9 @@ import {configUtils} from '../configurations';
 export const UNIVERSAL_STORE_KEY = 'bookmark-manager.universal';
 export type UniversalBookmarkType = 'file' | 'link' | 'command' | 'code';
 
-export type UniversalBase = BaseMeta;
+export type UniversalBase = BaseMeta & {
+  color?: BookmarkColor;
+};
 
 export interface UniversalFile extends UniversalBase {
   type: 'file';
@@ -85,6 +87,7 @@ export default class UniversalBookmarkController implements IController {
     }
     this._initial();
   }
+  dispose() {}
 
   /**
    * 初始化内部配置
@@ -92,6 +95,7 @@ export default class UniversalBookmarkController implements IController {
   _initial() {
     this.sortType = configUtils.getValue('universal.sorttype', 'time');
   }
+
   add(bookmark: Omit<UniversalBookmarkMeta, 'id'>) {
     const id = generateUUID();
     this.datasource!.bookmarks.push({

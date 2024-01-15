@@ -32,6 +32,7 @@ let onDidChangeBreakpoints: Disposable | undefined;
 let onDidChangeTextDocumentDisposable: Disposable | undefined;
 let onDidRenameFilesDisposable: Disposable | undefined;
 let onDidDeleteFilesDisposable: Disposable | undefined;
+let onDidCreatedFilesDisposable: Disposable | undefined;
 let onDidTextSelectionDisposable: Disposable | undefined;
 export function updateChangeActiveTextEditorListener() {
   onDidChangeActiveTextEditor?.dispose();
@@ -158,12 +159,11 @@ export function updateBookmarkInfoWhenTextChangeListener() {
     const {contentChanges, document} = e;
     // 代表存在文档发生变化
     if (contentChanges.length) {
-      const bookmarkStore = controller.getBookmarkStoreByFileUri(document.uri);
-      if (!bookmarkStore) return;
-      // TODO
-      // for (let change of contentChanges) {
-      //   updateBookmarksGroupByChangedLine(bookmarkStore, e, change);
-      // }
+      const bookmarks = controller.getBookmarkStoreByFileUri(document.uri);
+      if (!bookmarks.length) return;
+      for (let change of contentChanges) {
+        updateBookmarksGroupByChangedLine(e, change);
+      }
       updateActiveEditorAllDecorations();
     }
   });
@@ -176,7 +176,7 @@ export function updateFilesRenameAndDeleteListeners() {
   onDidRenameFilesDisposable?.dispose();
   onDidDeleteFilesDisposable?.dispose();
   const controller = resolveBookmarkController();
-  // 监听文件重命名
+  // 监听文件重命名, 同步修改书签的对应的文件信息
   onDidRenameFilesDisposable = workspace.onDidRenameFiles(e => {
     const {files} = e;
     if (!files) {
