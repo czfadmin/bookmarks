@@ -39,10 +39,9 @@ import {
   getBookmarksFromFileUri,
   getLineInfoStrFromBookmark,
 } from '../utils/bookmark';
-import {BookmarksTreeItem} from '../providers/BookmarksTreeItem';
+import BookmarksTreeItem from '../providers/BookmarksTreeItem';
 import gutters, {getTagGutters} from '../gutter';
 import {resolveBookmarkController} from '../bootstrap';
-import {registerExtensionCustomContextByKey} from '../context';
 
 /**
  * 从`context`获取书签数据

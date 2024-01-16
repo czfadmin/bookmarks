@@ -8,6 +8,7 @@ export type UniversalBookmarkType = 'file' | 'link' | 'command' | 'code';
 
 export type UniversalBase = BaseMeta & {
   color?: BookmarkColor;
+  icon?: string;
 };
 
 export interface UniversalFile extends UniversalBase {
@@ -35,7 +36,6 @@ export interface UniversalCommand extends UniversalBase {
 export type UniversalBookmarkMeta =
   | UniversalLink
   | UniversalCode
-  | UniversalFile
   | UniversalCommand;
 
 export interface UniversalStoreType {
@@ -92,7 +92,7 @@ export default class UniversalBookmarkController implements IController {
   /**
    * 初始化内部配置
    */
-  _initial() {
+  private _initial() {
     this.sortType = configUtils.getValue('universal.sorttype', 'time');
   }
 

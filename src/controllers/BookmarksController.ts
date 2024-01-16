@@ -35,8 +35,6 @@ export default class BookmarksController implements IController {
 
   private _onDidChangeEvent = new EventEmitter<void>();
 
-  public onDidChangeEvent: Event<void> = this._onDidChangeEvent.event;
-
   private _datasource!: BookmarkStoreRootType;
 
   private _groupedByFile: GroupedByFileType[] = [];
@@ -48,6 +46,8 @@ export default class BookmarksController implements IController {
   private _watcher: FileSystemWatcher | undefined;
 
   private _configuration: BookmarkManagerConfigure;
+
+  public onDidChangeEvent: Event<void> = this._onDidChangeEvent.event;
 
   public get groupedByFileBookmarks(): GroupedByFileType[] {
     return this._groupedByFile;

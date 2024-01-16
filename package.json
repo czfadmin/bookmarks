@@ -54,7 +54,7 @@
       {
         "command": "bookmark-manager.toggleBookmarkWithSelection",
         "title": "%bookmark-manager.toggleBookmarkWithSelection%",
-        "icon": "$(bookmark)",
+        "icon": "$(clear-all)",
         "category": "Bookmark Manager (BM)"
       },
       {
@@ -78,37 +78,25 @@
       {
         "command": "bookmark-manager.clearAllBookmarks",
         "title": "%bookmark-manager.clearAllBookmarks%",
-        "icon": {
-          "light": "resources/light/clearAll.svg",
-          "dark": "resources/dark/clearAll.svg"
-        },
+        "icon": "$(clear-all)",
         "category": "Bookmark Manager (BM)"
       },
       {
         "command": "bookmark-manager.deleteBookmark",
         "title": "%bookmark-manager.deleteBookmark%",
-        "icon": {
-          "light": "resources/light/close.svg",
-          "dark": "resources/dark/close.svg"
-        },
+        "icon": "$(close)",
         "category": "Bookmark Manager (BM)"
       },
       {
         "command": "bookmark-manager.editLabel",
         "title": "%bookmark-manager.editLabel%",
-        "icon": {
-          "light": "resources/light/edit.svg",
-          "dark": "resources/dark/edit.svg"
-        },
+        "icon": "$(edit)",
         "category": "Bookmark Manager (BM)"
       },
       {
         "command": "bookmark-manager.gotoSourceLocation",
         "title": "%bookmark-manager.gotoSourceLocation%",
-        "icon": {
-          "light": "resources/light/location.svg",
-          "dark": "resources/dark/location.svg"
-        },
+        "icon": "$(location)",
         "category": "Bookmark Manager (BM)"
       },
       {
@@ -145,6 +133,30 @@
         "command": "bookmark-manager.viewAsList",
         "title": "%bookmark-manager.viewAsList%",
         "icon": "$(list-flat)",
+        "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.addUniversalBookmark",
+        "title": "%bookmark-manager.addUniversalBookmark%",
+        "icon": "$(add)",
+        "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.deleteUniversalBookmark",
+        "title": "%bookmark-manager.deleteUniversalBookmark%",
+        "icon": "$(close)",
+        "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.editUniversalBookmarkLabel",
+        "title": "%bookmark-manager.editUniversalBookmarkLabel%",
+        "icon": "$(edit)",
+        "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.clearAllUniversalBookmarks",
+        "title": "%bookmark-manager.clearAllUniversalBookmarks%",
+        "icon": "$(clear-all)",
         "category": "Bookmark Manager (BM)"
       }
     ],
@@ -382,9 +394,14 @@
           "group": "navigation"
         },
         {
-          "command": "bookmark-manager.addBookmark",
+          "command": "bookmark-manager.addUniversalBookmark",
           "when": "view == bookmark-manager.universal",
-          "group": "navigation"
+          "group": "navigation@1"
+        },
+        {
+          "command": "bookmark-manager.clearAllUniversalBookmarks",
+          "when": "view == bookmark-manager.universal",
+          "group": "navigation@2"
         }
       ],
       "view/item/context": [
@@ -422,6 +439,16 @@
           "command": "bookmark-manager.changeBookmarkColor",
           "when": "view==bookmark-manager && viewItem === bookmark",
           "group": "itemContextGroup@3"
+        },
+        {
+          "command": "bookmark-manager.editUniversalBookmarkLabel",
+          "when": "view == bookmark-manager.universal",
+          "group": "inline@1"
+        },
+        {
+          "command": "bookmark-manager.deleteUniversalBookmark",
+          "when": "view == bookmark-manager.universal",
+          "group": "inline@2"
         }
       ],
       "commandPalette": [
@@ -431,6 +458,10 @@
         },
         {
           "command": "bookmark-manager.openInEditor",
+          "when": "false"
+        },
+        {
+          "command": "bookmark-manager.editUniversalBookmarkLabel",
           "when": "false"
         }
       ]

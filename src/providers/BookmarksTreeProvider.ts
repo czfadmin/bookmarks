@@ -1,4 +1,4 @@
-import {BookmarksTreeItem} from './BookmarksTreeItem';
+import BookmarksTreeItem from './BookmarksTreeItem';
 import BaseTreeProvider from './BaseTreeProvider';
 import {ProviderResult, Selection, TreeItemCollapsibleState} from 'vscode';
 import {BookmarkMeta, BookmarkStoreRootType, BookmarkStoreType} from '../types';

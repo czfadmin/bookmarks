@@ -37,5 +37,10 @@
   "bookmark-manager.universal": "书签管理器 - 全局通用",
   "bookmark-manager.viewAsList": "列表展示",
   "bookmark-manager.viewAsTree": "树形展示",
-  "bookmark-manager.createJsonFile.description": "开启此配置后, 将会再`.vscode`文件夹中创建一个`bookmarks.json`文件用于存储书签数据"
+  "bookmark-manager.createJsonFile.description": "开启此配置后, 将会再`.vscode`文件夹中创建一个`bookmarks.json`文件用于存储书签数据",
+  "bookmark-manager.addUniversalBookmark.description": "增加通用书签",
+  "bookmark-manager.deleteUniversalBookmark.description": "删除通用书签",
+  "bookmark-manager.changeUniversalBookmarkColor.description": "改变通用书签颜色",
+  "bookmark-manager.editUniversalBookmarkLabel.description": "编辑通用书签标签",
+  "bookmark-manager.clearAllUniversalBookmarks.description": "清除所有通用书签"
 }

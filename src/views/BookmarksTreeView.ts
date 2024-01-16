@@ -1,5 +1,5 @@
 import {EXTENSION_VIEW_ID} from '../constants';
-import {BookmarksTreeItem} from '../providers/BookmarksTreeItem';
+import BookmarksTreeItem from '../providers/BookmarksTreeItem';
 import BaseTreeView, {TreeViewEnum} from './BaseTreeView';
 import {BookmarksTreeProvider} from '../providers/BookmarksTreeProvider';
 import BookmarksController from '@/controllers/BookmarksController';

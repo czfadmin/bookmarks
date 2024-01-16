@@ -1,4 +1,4 @@
-import {QuickPickItem, ThemeIcon, commands, window} from 'vscode';
+import {QuickPickItem, ThemeIcon, l10n, window} from 'vscode';
 import {registerCommand} from '../utils';
 import {resolveUniversalController} from '../bootstrap';
 import {
@@ -6,6 +6,10 @@ import {
   UniversalBookmarkType,
 } from '@/controllers/UniversalBookmarkController';
 import {getAllColors} from '../configurations';
+import gutters from '../gutter';
+import {UniversalTreeItem} from '@/providers/UniversalTreeItem';
+
+export type UniversalContext = UniversalTreeItem;
 
 /**
  * 注册通用的书签命令
@@ -38,8 +42,27 @@ const universalTypePickItems: QuickPickItem[] = [
   },
 ];
 
+function resolveIcon(type: string) {
+  let icon = 'globe';
+  switch (type) {
+    case 'link':
+      icon = 'globe';
+      break;
+    case 'code':
+      icon = 'file-code';
+      break;
+    case 'command':
+      icon = 'terminal-cmd';
+      break;
+    case 'file':
+      icon = 'file';
+      break;
+  }
+  return icon;
+}
+
 export function addUniversalBookmark() {
-  registerCommand('addUniversalBookmark', async ctx => {
+  registerCommand('addUniversalBookmark', async (ctx: any) => {
     const selectedType = await window.showQuickPick(universalTypePickItems, {
       title: '请选择类型',
       canPickMany: false,
@@ -55,7 +78,10 @@ export function addUniversalBookmark() {
       type: selectedType.label as UniversalBookmarkType,
       color: getAllColors()['default'],
     } as UniversalBookmarkMeta;
-    if (selectedType.label == 'file') {
+
+    newBookmark.icon = resolveIcon(newBookmark.type as string);
+
+    if (selectedType.label !== 'file') {
       input = await window.showInputBox({
         title: '创建书签',
         placeHolder: '请输入内容',
@@ -72,10 +98,6 @@ export function addUniversalBookmark() {
           newBookmark.link = input;
           break;
       }
-    } else {
-      if (!input) {
-        return;
-      }
     }
 
     const controller = resolveUniversalController();
@@ -85,17 +107,75 @@ export function addUniversalBookmark() {
 }
 
 function deleteUniversalBookmark() {
-  registerCommand('deleteUniversalBookmark', ctx => {});
+  registerCommand('deleteUniversalBookmark', async (ctx: UniversalContext) => {
+    const {meta} = ctx;
+    if (!meta) return;
+
+    const controller = resolveUniversalController();
+    controller.remove(meta.id);
+  });
 }
 
 function clearAllUniversalBookmarks() {
-  registerCommand('clearAllUniversalBookmarks', ctx => {});
+  registerCommand('clearAllUniversalBookmarks', ctx => {
+    const controller = resolveUniversalController();
+    controller.clearAll();
+  });
 }
 
 function changeUniversalBookmarkColor() {
-  registerCommand('changeUniversalBookmarkColor', ctx => {});
+  registerCommand(
+    'changeUniversalBookmarkColor',
+    async (ctx: UniversalContext) => {
+      const {meta} = ctx;
+      if (!meta) {
+        return;
+      }
+      const colors = getAllColors();
+      const pickItems = Object.keys(colors).map(color => {
+        return {
+          label: color,
+          iconPath: gutters[color] || gutters['default'],
+        } as QuickPickItem;
+      });
+      const choosedColor = await window.showQuickPick(pickItems, {
+        title: l10n.t(
+          "Select bookmark color. Press 'ENTER' to confirm, 'EAPSE' to cancel",
+        ),
+        placeHolder: l10n.t('Please select bookmark color'),
+        canPickMany: false,
+      });
+      if (!choosedColor) return;
+      const controller = resolveUniversalController();
+      controller.update(meta.id, {
+        color: choosedColor.label,
+      });
+    },
+  );
 }
 
 function editUniversalBookmarkLabel() {
-  registerCommand('editUniversalBookmarkLabel', ctx => {});
+  registerCommand(
+    'editUniversalBookmarkLabel',
+    async (ctx: UniversalContext) => {
+      const {meta} = ctx;
+      if (!meta) return;
+
+      const input = await window.showInputBox({
+        placeHolder: l10n.t('Type a label for your bookmarks'),
+        title: l10n.t(
+          'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
+        ),
+        // @ts-ignore
+        value: meta[meta.type] || meta.label,
+      });
+      if (!input) {
+        return;
+      }
+      const controller = resolveUniversalController();
+      controller.update(meta.id, {
+        label: input,
+      });
+    },
+  );
 }
