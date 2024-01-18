@@ -158,6 +158,12 @@
         "title": "%bookmark-manager.clearAllUniversalBookmarks%",
         "icon": "$(clear-all)",
         "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.copyUniversalBookmarkContent",
+        "title": "%bookmark-manager.copyUniversalBookmarkContent%",
+        "icon": "$(clippy)",
+        "category": "Bookmark Manager (BM)"
       }
     ],
     "views": {
@@ -441,14 +447,19 @@
           "group": "itemContextGroup@3"
         },
         {
+          "command": "bookmark-manager.copyUniversalBookmarkContent",
+          "when": "view == bookmark-manager.universal && (viewItem ===code || viewItem === link || viewItem === command)",
+          "group": "inline@1"
+        },
+        {
           "command": "bookmark-manager.editUniversalBookmarkLabel",
           "when": "view == bookmark-manager.universal",
-          "group": "inline@1"
+          "group": "inline@2"
         },
         {
           "command": "bookmark-manager.deleteUniversalBookmark",
           "when": "view == bookmark-manager.universal",
-          "group": "inline@2"
+          "group": "inline@3"
         }
       ],
       "commandPalette": [
@@ -462,6 +473,10 @@
         },
         {
           "command": "bookmark-manager.editUniversalBookmarkLabel",
+          "when": "false"
+        },
+        {
+          "command": "bookmark-manager.copyUniversalBookmarkContent",
           "when": "false"
         }
       ]

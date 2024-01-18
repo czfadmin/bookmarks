@@ -9,6 +9,7 @@ export type UniversalBookmarkType = 'file' | 'link' | 'command' | 'code';
 export type UniversalBase = BaseMeta & {
   color?: BookmarkColor;
   icon?: string;
+  [index: string]: any;
 };
 
 export interface UniversalFile extends UniversalBase {

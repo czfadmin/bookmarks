@@ -38,9 +38,10 @@
   "bookmark-manager.viewAsList": "View as list",
   "bookmark-manager.viewAsTree": "View as tree",
   "bookmark-manager.createJsonFile.description": "After turning on this configuration, a `bookmarks.json` file will be created in the `.vscode` folder to store bookmark data.",
-  "bookmark-manager.addUniversalBookmark.description": "Add universal bookmark",
-  "bookmark-manager.deleteUniversalBookmark.description": "Delete universal bookmark",
-  "bookmark-manager.changeUniversalBookmarkColor.description": "change the color of the universal bookmark",
-  "bookmark-manager.editUniversalBookmarkLabel.description": "Edit the label of the universal bookmark.",
-  "bookmark-manager.clearAllUniversalBookmarks.description": "Clear all universal bookmarks"
+  "bookmark-manager.addUniversalBookmark": "Add universal bookmark",
+  "bookmark-manager.deleteUniversalBookmark": "Delete universal bookmark",
+  "bookmark-manager.changeUniversalBookmarkColor": "change the color of the universal bookmark",
+  "bookmark-manager.editUniversalBookmarkLabel": "Edit the label of the universal bookmark.",
+  "bookmark-manager.clearAllUniversalBookmarks": "Clear all universal bookmarks",
+  "bookmark-manager.copyUniversalBookmarkContent": "Copy content"
 }

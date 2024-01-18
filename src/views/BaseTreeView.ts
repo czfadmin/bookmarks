@@ -26,6 +26,18 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
     return this._disposables;
   }
 
+  get controller() {
+    return this._controller;
+  }
+
+  get provider() {
+    return this._provider;
+  }
+
+  get bookmarkTreeView() {
+    return this._bookmarkTreeView;
+  }
+
   constructor(viewName: string, provider: BaseTreeProvider<T, C>) {
     this._controller = provider.controller;
     this._provider = provider;
@@ -34,28 +46,6 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
       showCollapseAll: true,
       canSelectMany: false,
     });
-    this._buildViewBadge();
-    // 当书签发生改变时, 刷新treeProvider
-    this._disposables.push(
-      this._controller.onDidChangeEvent(() => {
-        this._provider.refresh();
-        this._buildViewBadge();
-      }),
-    );
-  }
-
-  /**
-   * 构建treeView中的 Badge
-   */
-  private _buildViewBadge() {
-    const totalBookmarksNum = this._controller.totalCount;
-    this._bookmarkTreeView.badge =
-      totalBookmarksNum === 0
-        ? undefined
-        : {
-            tooltip: '', // TODO: 增加为更多的信息
-            value: totalBookmarksNum,
-          };
   }
 
   dispose() {

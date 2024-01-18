@@ -1,4 +1,4 @@
-import {QuickPickItem, ThemeIcon, l10n, window} from 'vscode';
+import {QuickPickItem, ThemeIcon, commands, env, l10n, window} from 'vscode';
 import {registerCommand} from '../utils';
 import {resolveUniversalController} from '../bootstrap';
 import {
@@ -21,6 +21,7 @@ export function registerUniversalCommands() {
   clearAllUniversalBookmarks();
   changeUniversalBookmarkColor();
   editUniversalBookmarkLabel();
+  copyUniversalBookmarkCommand();
 }
 
 const universalTypePickItems: QuickPickItem[] = [
@@ -87,17 +88,7 @@ export function addUniversalBookmark() {
         placeHolder: '请输入内容',
       });
 
-      switch (newBookmark.type) {
-        case 'code':
-          newBookmark.code = input;
-          break;
-        case 'command':
-          newBookmark.command = input;
-          break;
-        case 'link':
-          newBookmark.link = input;
-          break;
-      }
+      newBookmark[newBookmark.type!] = input;
     }
 
     const controller = resolveUniversalController();
@@ -166,7 +157,6 @@ function editUniversalBookmarkLabel() {
         title: l10n.t(
           'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
         ),
-        // @ts-ignore
         value: meta[meta.type] || meta.label,
       });
       if (!input) {
@@ -178,4 +168,27 @@ function editUniversalBookmarkLabel() {
       });
     },
   );
+}
+/**
+ * 复制命令
+ */
+function copyUniversalBookmarkCommand() {
+  registerCommand('copyUniversalBookmarkContent', (ctx: UniversalContext) => {
+    const {meta} = ctx;
+    if (!meta) return;
+    const content = meta[meta.type];
+    const clipboard = env.clipboard;
+    clipboard.writeText(content);
+  });
+}
+
+/**
+ * 打开保存的链接
+ */
+function openUniversalLink() {
+  registerCommand('openUniversalLink', (ctx: UniversalBookmarkMeta) => {
+    const {meta} = ctx;
+    if (!meta || meta.type !== 'link') return;
+    const link = meta[meta.type];
+  });
 }
