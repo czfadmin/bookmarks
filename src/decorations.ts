@@ -15,13 +15,14 @@ import {
   StringIndexType,
 } from './types';
 
-import {BookmarksController} from './controllers/BookmarksController';
+import BookmarksController from './controllers/BookmarksController';
 import {createBookmarkIcon, createTagIcon, svgToUri} from './utils/icon';
 import logger from './utils/logger';
 import {DEFAULT_BOOKMARK_COLOR} from './constants';
 import {getAllColors, getCreateDecorationOptions} from './configurations';
 import gutters, {getTagGutters} from './gutter';
 import {translate} from './utils';
+import {resolveBookmarkController} from './bootstrap';
 
 export let decorations = {} as Record<
   BookmarkDecorationKey,
@@ -212,13 +213,11 @@ export const updateDecorationsByEditor = (
   if (!editor) {
     return;
   }
-  if (!BookmarksController.instance) {
+  const controller = resolveBookmarkController() as BookmarksController;
+  if (!controller) {
     return;
   }
-  const bookmarkStore = BookmarksController.instance.getBookmarkStoreByFileUri(
-    editor.document.uri,
-  );
-  const bookmarks = bookmarkStore?.bookmarks || [];
+  const bookmarks = controller.getBookmarkStoreByFileUri(editor.document.uri);
   const colors = getAllColors();
   const decorationsGroupByLevel: StringIndexType<any[]> = {};
   Object.keys(colors).forEach(color => {

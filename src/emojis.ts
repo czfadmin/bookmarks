@@ -3,7 +3,7 @@
  */
 'use strict';
 import {workspace, Uri} from 'vscode';
-import {getExtensionContext} from './extension';
+import {resolveExtensionCtx} from './extension';
 import {TextDecoder} from 'util';
 
 const emojiRegex = /:(\w.*?)/g;
@@ -21,7 +21,7 @@ export async function ensureEmojis() {
 }
 
 async function loadEmojiMap() {
-  const context = getExtensionContext();
+  const context = resolveExtensionCtx();
 
   const uri = (Uri as any).joinPath(
     context.extensionUri,

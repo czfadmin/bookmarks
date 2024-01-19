@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.0.18
+
+### Patch Changes
+
+- 代码重构,增加通用书签功能
+
 ## 0.0.16
 
 ### Patch Changes

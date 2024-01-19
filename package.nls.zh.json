@@ -1,4 +1,5 @@
 {
+  "bookmark-manager": "书签管理器",
   "bookmark-manager.toggleLineBookmark": "切换行书签",
   "bookmark-manager.toggleLineBookmarkWithLabel": "切换带有标签的书签",
   "bookmark-manager.toggleLineBookmarkWithColor": "切换带颜色的切换行书签",
@@ -32,5 +33,15 @@
   "bookmark-manager.enableClick": "启用双击跳转到书签位置",
   "bookmark-manager.viewsWelcome.content": "增加一些书签",
   "bookmark-manager.openInEditor": "在编辑器中打开",
-  "bookmark-manager.listBookmarksInCurrentFile": "列出当前文件中的书签"
+  "bookmark-manager.listBookmarksInCurrentFile": "列出当前文件中的书签",
+  "bookmark-manager.universal": "书签管理器 - 全局通用",
+  "bookmark-manager.viewAsList": "列表展示",
+  "bookmark-manager.viewAsTree": "树形展示",
+  "bookmark-manager.createJsonFile.description": "开启此配置后, 将会再`.vscode`文件夹中创建一个`bookmarks.json`文件用于存储书签数据",
+  "bookmark-manager.addUniversalBookmark": "增加通用书签",
+  "bookmark-manager.deleteUniversalBookmark": "删除通用书签",
+  "bookmark-manager.changeUniversalBookmarkColor": "改变通用书签颜色",
+  "bookmark-manager.editUniversalBookmarkLabel": "编辑通用书签标签",
+  "bookmark-manager.clearAllUniversalBookmarks": "清除所有通用书签",
+  "bookmark-manager.copyUniversalBookmarkContent": "复制书签内容"
 }

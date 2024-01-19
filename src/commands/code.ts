@@ -1,5 +1,4 @@
 import {
-  ExtensionContext,
   QuickPickItem,
   Selection,
   TextEditorRevealType,
@@ -8,7 +7,7 @@ import {
   window,
   workspace,
 } from 'vscode';
-import {registerCommand} from './utils';
+import {registerCommand} from '../utils';
 import {
   CMD_TOGGLE_LINE_BOOKMARK,
   CMD_TOGGLE_BOOKMARK_WITH_LABEL,
@@ -21,11 +20,10 @@ import {
   CMD_JUMP_TO_BOOKMARK,
   CMD_CHANGE_BOOKMARK_COLOR,
   CMD_OPEN_IN_EDITOR,
-} from './constants';
+} from '../constants';
 
-import {updateActiveEditorAllDecorations} from './decorations';
-import {BookmarkMeta, LineBookmarkContext} from './types';
-import {BookmarksController} from './controllers/BookmarksController';
+import {updateActiveEditorAllDecorations} from '../decorations';
+import {BookmarkMeta, LineBookmarkContext} from '../types';
 
 import {
   checkIfBookmarksIsInCurrentEditor,
@@ -40,13 +38,14 @@ import {
   getBookmarkFromLineNumber,
   getBookmarksFromFileUri,
   getLineInfoStrFromBookmark,
-} from './utils/bookmark';
-import {BookmarksTreeItem} from './providers/BookmarksTreeItem';
-import gutters, {getTagGutters} from './gutter';
+} from '../utils/bookmark';
+import BookmarksTreeItem from '../providers/BookmarksTreeItem';
+import gutters, {getTagGutters} from '../gutter';
+import {resolveBookmarkController} from '../bootstrap';
 
 /**
  * 从`context`获取书签数据
- * @param context
+
  * @param cb
  * @returns
  */
@@ -62,7 +61,7 @@ function getBookmarkFromCtx(
   ) {
     bookmark = context.meta as BookmarkMeta;
   } else {
-    bookmark = getBookmarkFromLineNumber(undefined);
+    bookmark = getBookmarkFromLineNumber();
   }
 
   if (!bookmark && cb) {
@@ -73,33 +72,32 @@ function getBookmarkFromCtx(
 }
 
 /**
- * 注册所需要的命令
- * @param context
+ * 注册所需要的代码相关命令
  */
-export function registerCommands(context: ExtensionContext) {
-  toggleLineBookmark(context);
-  toggleLineBookmarkWithLabel(context);
-  toggleLineBookmarkWithColor(context);
-  clearAllBookmarks(context);
-  deleteBookmarkCMD(context);
-  editBookmark(context);
-  goToBookmark(context);
-  toggleSelectionBookmark(context);
-  quickPreviewOrJumpToBookmark(context);
-  changeBookmarkColor(context);
-  clearAllBookmarksInCurrentFile(context);
-  addMoreMemo(context);
-  openInEditor(context);
-  listBookmarksInCurrentFile(context);
+export function registerCodeCommands() {
+  toggleLineBookmark();
+  toggleLineBookmarkWithLabel();
+  toggleLineBookmarkWithColor();
+  clearAllBookmarks();
+  deleteBookmarkCMD();
+  editBookmark();
+  goToBookmark();
+  toggleSelectionBookmark();
+  quickPreviewOrJumpToBookmark();
+  changeBookmarkColor();
+  clearAllBookmarksInCurrentFile();
+  addMoreMemo();
+  openInEditor();
+  listBookmarksInCurrentFile();
+  viewAsList();
+  viewAsTree();
 }
 
 /**
  * 开启行书签, 使用默认颜色且无标签等相关信息
- * @param context
  */
-function toggleLineBookmark(context: ExtensionContext) {
+function toggleLineBookmark() {
   registerCommand(
-    context,
     CMD_TOGGLE_LINE_BOOKMARK,
     async (args: LineBookmarkContext) => {
       toggleBookmark(args, {type: 'line'});
@@ -109,11 +107,9 @@ function toggleLineBookmark(context: ExtensionContext) {
 
 /**
  * 开启带有标签的行书签
- * @param context
  */
-function toggleLineBookmarkWithLabel(context: ExtensionContext) {
+function toggleLineBookmarkWithLabel() {
   registerCommand(
-    context,
     CMD_TOGGLE_BOOKMARK_WITH_LABEL,
     async (context: LineBookmarkContext) => {
       const label = await window.showInputBox({
@@ -135,11 +131,9 @@ function toggleLineBookmarkWithLabel(context: ExtensionContext) {
 
 /**
  * 开启行书签,并可以指定书签颜色
- * @param context
  */
-function toggleLineBookmarkWithColor(context: ExtensionContext) {
+function toggleLineBookmarkWithColor() {
   registerCommand(
-    context,
     'toggleLineBookmarkWithColor',
     async (context: LineBookmarkContext) => {
       toggleBookmark(context, {
@@ -152,37 +146,38 @@ function toggleLineBookmarkWithColor(context: ExtensionContext) {
 
 /**
  * 清除书签
- * @param context
  */
-function clearAllBookmarks(context: ExtensionContext) {
-  registerCommand(context, CMD_CLEAR_ALL, args => {
+function clearAllBookmarks() {
+  registerCommand(CMD_CLEAR_ALL, args => {
     updateActiveEditorAllDecorations(true);
     let fileUri,
       clearAll = false;
+    const controller = resolveBookmarkController();
+    if (!controller) return;
     if (args && args.meta) {
       fileUri = args.meta.fileUri;
-      BookmarksController.instance.clearAllBookmarkInFile(fileUri);
+      controller.clearAllBookmarkInFile(fileUri);
     } else {
-      BookmarksController.instance.clearAll();
+      controller.clearAll();
       clearAll = true;
     }
     updateActiveEditorAllDecorations(clearAll);
   });
 }
 
-function deleteBookmarkCMD(context: ExtensionContext) {
+function deleteBookmarkCMD() {
   // 删除书签
   registerCommand(
-    context,
     CMD_DELETE_BOOKMARK,
     (context: LineBookmarkContext | BookmarksTreeItem) => {
-      if (!context) {
+      const controller = resolveBookmarkController();
+      if (!context || !controller) {
         return;
       }
       updateActiveEditorAllDecorations(true);
       // 从treeView中执行此命令
       if ('meta' in context && 'color' in context.meta) {
-        BookmarksController.instance.remove(context.meta);
+        controller.remove(context.meta.id);
         updateActiveEditorAllDecorations();
         return;
       }
@@ -197,12 +192,10 @@ function deleteBookmarkCMD(context: ExtensionContext) {
 
 /**
  * 编辑书签
- * @param context
  */
-function editBookmark(context: ExtensionContext) {
+function editBookmark() {
   // 编辑书签标签
   registerCommand(
-    context,
     CMD_EDIT_LABEL,
     (context: LineBookmarkContext | BookmarksTreeItem | undefined) => {
       let bookmark: BookmarkMeta | undefined = getBookmarkFromCtx(context);
@@ -221,6 +214,7 @@ function editBookmark(context: ExtensionContext) {
           title: l10n.t(
             'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
           ),
+          value: bookmark.label,
         })
         .then(label => {
           if (!label || !bookmark) {
@@ -234,20 +228,18 @@ function editBookmark(context: ExtensionContext) {
 
 /**
  * 定位书签位置,并跳转到书签位置
- * @param context
  */
-function goToBookmark(context: ExtensionContext) {
-  registerCommand(context, CMD_GO_TO_SOURCE_LOCATION, args => {
+function goToBookmark() {
+  registerCommand(CMD_GO_TO_SOURCE_LOCATION, args => {
     gotoSourceLocation(args.meta || args);
   });
 }
 
 /**
  * 为选中的区域增加书签
- * @param context
  */
-function toggleSelectionBookmark(context: ExtensionContext) {
-  registerCommand(context, CMD_TOGGLE_BOOKMARK_WITH_SECTIONS, ctx => {
+function toggleSelectionBookmark() {
+  registerCommand(CMD_TOGGLE_BOOKMARK_WITH_SECTIONS, ctx => {
     window
       .showInputBox({
         placeHolder: l10n.t('Type a label for your bookmarks'),
@@ -267,18 +259,16 @@ function toggleSelectionBookmark(context: ExtensionContext) {
 
 /**
  * 快速跳转到书签位置,并预览书签
- * @param context
  */
-function quickPreviewOrJumpToBookmark(context: ExtensionContext) {
-  registerCommand(context, CMD_JUMP_TO_BOOKMARK, args => {
+function quickPreviewOrJumpToBookmark() {
+  registerCommand(CMD_JUMP_TO_BOOKMARK, args => {
     quicklyJumpToBookmark();
   });
 }
 
-function changeBookmarkColor(context: ExtensionContext) {
+function changeBookmarkColor() {
   // 改变书签颜色
   registerCommand(
-    context,
     CMD_CHANGE_BOOKMARK_COLOR,
     async (ctx: LineBookmarkContext | BookmarksTreeItem | undefined) => {
       let bookmark: BookmarkMeta | undefined = getBookmarkFromCtx(ctx);
@@ -294,7 +284,9 @@ function changeBookmarkColor(context: ExtensionContext) {
       if (!newColor) {
         return;
       }
-      BookmarksController.instance.update(bookmark, {
+      const controller = resolveBookmarkController();
+      if (!controller) return;
+      controller.update(bookmark.id, {
         color: newColor,
       });
       updateActiveEditorAllDecorations();
@@ -304,16 +296,14 @@ function changeBookmarkColor(context: ExtensionContext) {
 
 /**
  * 删除当前打开的文档中的已存在的书签
- * @param context
  */
-function clearAllBookmarksInCurrentFile(context: ExtensionContext) {
-  registerCommand(context, 'clearAllBookmarksInCurrentFile', async args => {
+function clearAllBookmarksInCurrentFile() {
+  registerCommand('clearAllBookmarksInCurrentFile', async args => {
     const activedEditor = window.activeTextEditor;
-    if (!activedEditor) return;
+    const controller = resolveBookmarkController();
+    if (!activedEditor || !controller) return;
     if (checkIfBookmarksIsInCurrentEditor(activedEditor)) {
-      BookmarksController.instance.clearAllBookmarkInFile(
-        activedEditor.document.uri,
-      );
+      controller.clearAllBookmarkInFile(activedEditor.document.uri);
       updateActiveEditorAllDecorations();
     }
   });
@@ -321,11 +311,9 @@ function clearAllBookmarksInCurrentFile(context: ExtensionContext) {
 
 /**
  * 为书签增加备注信息
- * @param context
  */
-function addMoreMemo(context: ExtensionContext) {
+function addMoreMemo() {
   registerCommand(
-    context,
     CMD_BOOKMARK_ADD_MORE_MEMO,
     (ctx: LineBookmarkContext | BookmarksTreeItem | undefined) => {
       let bookmark: BookmarkMeta | undefined = getBookmarkFromCtx(ctx);
@@ -356,20 +344,19 @@ function addMoreMemo(context: ExtensionContext) {
 
 /**
  * 列出当前文件中的所有信息
- * @param context
  */
-export function listBookmarksInCurrentFile(context: ExtensionContext) {
+export function listBookmarksInCurrentFile() {
   registerCommand(
-    context,
     'listBookmarksInCurrentFile',
     async (ctx: LineBookmarkContext | BookmarksTreeItem | undefined) => {
       const editor = window.activeTextEditor;
-      const bookmarkDS = BookmarksController.instance.datasource;
+      const controller = resolveBookmarkController();
+      const bookmarkDS = controller.datasource;
       if (!editor || !bookmarkDS) return;
-      const store = getBookmarksFromFileUri(editor.document.uri);
-      if (!store) return;
+      const bookmarks = getBookmarksFromFileUri(editor.document.uri);
+      if (!bookmarks.length) return;
       const tagGutters = getTagGutters();
-      const pickItems = store.bookmarks.map(it => {
+      const pickItems = bookmarks.map((it: any) => {
         const iconPath = it.label
           ? tagGutters[it.color] || tagGutters['default']
           : gutters[it.color] || tagGutters['default'];
@@ -427,12 +414,31 @@ export function listBookmarksInCurrentFile(context: ExtensionContext) {
 
 /**
  * @TODO 注册命令在 `editor` 中打开书签管理器中的数据
- * @param context
  */
-export function openInEditor(context: ExtensionContext) {
-  registerCommand(context, CMD_OPEN_IN_EDITOR, args => {
+export function openInEditor() {
+  registerCommand(CMD_OPEN_IN_EDITOR, args => {
     window.showInformationMessage(
       l10n.t('This feature has not been developed yet, thanks!'),
     );
+  });
+}
+
+/**
+ * 按照树格式展示
+ */
+function viewAsTree() {
+  registerCommand('viewAsTree', args => {
+    const controller = resolveBookmarkController();
+    controller.changeViewType('tree');
+  });
+}
+
+/**
+ * 按照列表方式显示
+ */
+function viewAsList() {
+  registerCommand('viewAsList', args => {
+    const controller = resolveBookmarkController();
+    controller.changeViewType('list');
   });
 }

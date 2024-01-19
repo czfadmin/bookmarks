@@ -14,15 +14,16 @@ import {
   TextDocumentChangeEvent,
   l10n,
 } from 'vscode';
-import {BookmarksController} from '../controllers/BookmarksController';
 import {
   updateActiveEditorAllDecorations,
   updateDecorationsByEditor,
 } from '../decorations';
 import {getAllColors} from '../configurations';
 import gutters, {getTagGutters} from '../gutter';
-import {BookmarkMeta, BookmarkStoreType, LineBookmarkContext} from '../types';
+import {BookmarkMeta, LineBookmarkContext} from '../types';
+import {resolveBookmarkController} from '../bootstrap';
 
+const REGEXP_NEWLINE = /(\r\n)|(\n)/g;
 /**
  * 检查当前行是否存在标签, 并移除对应标签
  */
@@ -30,27 +31,23 @@ export function checkIfBookmarkIsInGivenSelectionAndRemove(
   editor: TextEditor | undefined,
   range: Range,
 ) {
-  if (!editor) {
+  const controller = resolveBookmarkController();
+  if (!editor || !controller) {
     return;
   }
-  const bookmarkStore = BookmarksController.instance.getBookmarkStoreByFileUri(
-    editor.document.uri,
-  );
-  if (bookmarkStore) {
-    const existedBookmaks = bookmarkStore.bookmarks;
+  const bookmarks = controller.getBookmarkStoreByFileUri(editor.document.uri);
+  if (!bookmarks.length) {
     let item;
     try {
-      for (item of existedBookmaks) {
+      for (item of bookmarks) {
         if (range.isEqual(item.selection)) {
           throw new Error(item.id);
         }
       }
     } catch (error) {
-      const _bookmark = existedBookmaks.find(
-        it => it.id === (error as any).message,
-      );
+      const _bookmark = bookmarks.find(it => it.id === (error as any).message);
       if (_bookmark) {
-        BookmarksController.instance.remove(_bookmark);
+        controller.remove(_bookmark.id);
         updateDecorationsByEditor(editor);
         return true;
       }
@@ -64,33 +61,26 @@ export function checkIfBookmarkIsInGivenSelectionAndRemove(
  * @param editor
  */
 export function checkIfBookmarksIsInCurrentEditor(editor: TextEditor) {
-  const bookmarkStore = BookmarksController.instance.getBookmarkStoreByFileUri(
-    editor.document.uri,
-  );
-  return bookmarkStore && bookmarkStore.bookmarks.length;
+  const controller = resolveBookmarkController();
+  const bookmarks = controller.getBookmarkStoreByFileUri(editor.document.uri);
+  return bookmarks.length;
 }
 
 /**
  * 从当前编辑的行号获取当前位置存在的书签
  */
 export function getBookmarkFromLineNumber(
-  store?: BookmarkStoreType,
   line?: number,
 ): BookmarkMeta | undefined {
   const editor = window.activeTextEditor;
+  const controller = resolveBookmarkController();
   if (!editor) return;
-
-  let _store = store;
-  if (!_store) {
-    _store = BookmarksController.instance.getBookmarkStoreByFileUri(
-      editor.document.uri,
-    );
-  }
-  if (!_store) return;
+  const bookmarks = controller.getBookmarkStoreByFileUri(editor.document.uri);
+  if (!bookmarks.length) return;
 
   const lineNumber = line || editor.selection.active.line;
   let bookmark;
-  const bookmarks = _store.bookmarks.map(it => ({
+  const _bookmarks = bookmarks.map(it => ({
     ...it,
     startLine: it.selection.start.line,
     endLine:
@@ -99,7 +89,7 @@ export function getBookmarkFromLineNumber(
         : it.selection.start.line,
   }));
   try {
-    for (bookmark of bookmarks) {
+    for (bookmark of _bookmarks) {
       if (bookmark.startLine <= lineNumber && lineNumber <= bookmark.endLine) {
         throw new Error(bookmark.id);
       }
@@ -116,22 +106,18 @@ export function getBookmarkFromLineNumber(
  * @returns  返回书签列表或者 `undefined`
  */
 export function getBookmarksBelowChangedLine(
-  store?: BookmarkStoreType,
   line?: number,
 ): BookmarkMeta[] | undefined {
   const editor = window.activeTextEditor;
+  const controller = resolveBookmarkController();
   if (!editor) return;
 
-  let _store = store;
-  if (!_store) {
-    _store = BookmarksController.instance.getBookmarkStoreByFileUri(
-      editor.document.uri,
-    );
-  }
-  if (!store) return;
+  const bookmarks = controller.getBookmarkStoreByFileUri(editor.document.uri);
+
+  if (!bookmarks.length) return;
 
   const lineNumber = line || editor.selection.active.line;
-  const bookmarks = store.bookmarks
+  const _bookmarks = bookmarks
     .map(it => ({
       ...it,
       startLine: it.selection.start.line,
@@ -139,7 +125,7 @@ export function getBookmarksBelowChangedLine(
     }))
     .sort((a, b) => a.startLine - b.startLine);
 
-  return bookmarks.filter(it => it.startLine > lineNumber);
+  return _bookmarks.filter(it => it.startLine > lineNumber);
 }
 
 /**
@@ -230,7 +216,8 @@ export async function openDocumentAndGotoLocation(fileUri: Uri, range: Range) {
  */
 export function editBookmarkDescription(bookmark: BookmarkMeta, memo: string) {
   bookmark.description = memo;
-  BookmarksController.instance.update(bookmark, {
+  const controller = resolveBookmarkController();
+  controller.update(bookmark.id, {
     description: memo,
     rangesOrOptions: {
       ...bookmark.rangesOrOptions,
@@ -238,13 +225,14 @@ export function editBookmarkDescription(bookmark: BookmarkMeta, memo: string) {
     },
   });
   updateActiveEditorAllDecorations();
-  BookmarksController.instance.refresh();
+  controller.refresh();
 }
 
 export function editBookmarkLabel(bookmark: BookmarkMeta, label: string) {
-  BookmarksController.instance.editLabel(bookmark, label);
+  const controller = resolveBookmarkController();
+  controller.editLabel(bookmark, label);
   updateActiveEditorAllDecorations();
-  BookmarksController.instance.refresh();
+  controller.refresh();
 }
 
 /**
@@ -272,16 +260,13 @@ export async function toggleBookmark(
     withColor?: boolean;
   },
 ) {
+  const controller = resolveBookmarkController();
   const editor = window.activeTextEditor;
   if (!editor) {
     return;
   }
 
   if (editor.document.isUntitled) {
-    return;
-  }
-
-  if (!BookmarksController.instance) {
     return;
   }
 
@@ -333,7 +318,7 @@ export async function toggleBookmark(
       return;
     }
   }
-
+  const fileUri = editor.document.uri;
   const bookmark: Omit<BookmarkMeta, 'id'> = {
     type: bookmarkType,
     label,
@@ -342,6 +327,8 @@ export async function toggleBookmark(
     fileUri: editor.document.uri,
     languageId: editor.document.languageId,
     selectionContent,
+    fileId: fileUri.fsPath,
+    fileName: editor.document.fileName,
     rangesOrOptions: {
       range,
       hoverMessage: '',
@@ -352,7 +339,7 @@ export async function toggleBookmark(
   };
 
   bookmark.rangesOrOptions.hoverMessage = createHoverMessage(bookmark, true);
-  BookmarksController.instance.add(editor, bookmark);
+  controller.add(bookmark);
   updateDecorationsByEditor(editor);
 }
 /**
@@ -361,17 +348,14 @@ export async function toggleBookmark(
  * @returns
  */
 export function deleteBookmark(context: LineBookmarkContext) {
-  if (!context) {
-    return;
-  }
   const editor = window.activeTextEditor;
-
-  if (!editor) {
+  const controller = resolveBookmarkController();
+  if (!context || !editor || !controller) {
     return;
   }
+
   // 获取当前行所在的`bookmark`信息
   const bookmark = getBookmarkFromLineNumber(
-    undefined,
     'lineNumber' in context
       ? context.lineNumber - 1
       : editor.selection.active.line,
@@ -379,7 +363,7 @@ export function deleteBookmark(context: LineBookmarkContext) {
   if (!bookmark) {
     return;
   }
-  BookmarksController.instance.remove(bookmark);
+  controller.remove(bookmark.id);
   updateDecorationsByEditor(editor);
 }
 
@@ -428,34 +412,27 @@ export async function chooseBookmarkColor() {
  * 快速跳转到书签指定位置
  */
 export async function quicklyJumpToBookmark() {
-  const datasource = BookmarksController.instance.datasource;
-  if (!datasource) {
-    return;
-  }
-  const bookmarksGroupByFile = datasource?.data;
+  const controller = resolveBookmarkController();
+  if (!controller || !controller.datasource) return;
   const tagGutters = getTagGutters();
-  const pickItems = bookmarksGroupByFile.reduce((arr, b) => {
-    arr.push(
-      ...b.bookmarks.map(it => {
-        const iconPath = it.label
-          ? tagGutters[it.color] || tagGutters['default']
-          : gutters[it.color] || tagGutters['default'];
-        return {
-          filename: b.filename,
-          label:
-            it.label || it.description || it.selectionContent?.slice(0, 120),
-          description: getLineInfoStrFromBookmark(it),
-          detail: b.filename,
-          iconPath: iconPath,
-          meta: {
-            ...it,
-            selection: new Selection(it.selection.anchor, it.selection.active),
-          },
-        };
-      }),
-    );
-    return arr;
-  }, [] as any[]);
+
+  const pickItems = controller.datasource.bookmarks.map(it => {
+    const iconPath = it.label
+      ? tagGutters[it.color] || tagGutters['default']
+      : gutters[it.color] || (tagGutters['default'] as any);
+    return {
+      filename: it.fileName || '',
+      label:
+        it.label || it.description || it.selectionContent?.slice(0, 120) || '',
+      description: getLineInfoStrFromBookmark(it),
+      detail: it.fileName,
+      iconPath: iconPath,
+      meta: {
+        ...it,
+        selection: new Selection(it.selection.anchor, it.selection.active),
+      },
+    };
+  });
   const choosedBookmarks = await window.showQuickPick(pickItems, {
     title: l10n.t('Select a bookmark to jump to the corresponding location.'),
     placeHolder: l10n.t('Please select the bookmark you want to open'),
@@ -569,18 +546,17 @@ function resolveMarkdownLineNumber(range: Range, code: string) {
  * @returns
  */
 export function updateBookmarksGroupByChangedLine(
-  store: BookmarkStoreType,
   event: TextDocumentChangeEvent,
   change: TextDocumentContentChangeEvent,
 ) {
   const {document} = event;
 
   const changeText = change.text;
-  const isNewLine = /(\r\n)|(\n)(\s.*?)/g.test(changeText);
+  const isNewLine = REGEXP_NEWLINE.test(changeText);
 
   const isDeleteLine = change.range.end.line > change.range.start.line;
 
-  const bookmarkInCurrentLine = getBookmarkFromLineNumber(store);
+  const bookmarkInCurrentLine = getBookmarkFromLineNumber();
   // 1. 当发生改变的区域存在行书签
   if (bookmarkInCurrentLine) {
     // 发生改变的行
@@ -639,7 +615,7 @@ export function updateBookmarksGroupByChangedLine(
     } else if (isNewLine) {
       // 进行换行操作, 转换为区域标签
       let newLines = 1;
-      const matches = change.text.match(/\r\n/g);
+      const matches = change.text.match(REGEXP_NEWLINE);
       if (matches) {
         newLines = matches.length;
       }
@@ -672,7 +648,7 @@ export function updateBookmarksGroupByChangedLine(
 
   if (!isNewLine && !isDeleteLine) return;
   // 2. 当前所发生改变的change 不存在书签 1> 发生改变的行下方的书签, 回车, 新增 , 以及删除
-  const bookmarksBlowChangedLine = getBookmarksBelowChangedLine(store);
+  const bookmarksBlowChangedLine = getBookmarksBelowChangedLine();
   if (bookmarksBlowChangedLine && bookmarksBlowChangedLine.length) {
     let bookmark,
       selection,
@@ -681,7 +657,7 @@ export function updateBookmarksGroupByChangedLine(
       startPos,
       matchedNewLines,
       newLines = 1;
-    matchedNewLines = change.text.match(/\r\n/g);
+    matchedNewLines = change.text.match(REGEXP_NEWLINE);
     if (matchedNewLines) {
       newLines = matchedNewLines.length;
     }
@@ -727,12 +703,13 @@ export function updateLineBookmarkRangeWhenDocumentChange(
   bookmark: any,
   dto: any,
 ) {
+  const controller = resolveBookmarkController();
   const {selection, selectionContent, ...rest} = dto;
   if (selectionContent) {
     bookmark.selectionContent = selectionContent;
   }
   // 更新当前行的书签信息
-  BookmarksController.instance.update(bookmark, {
+  controller.update(bookmark.id, {
     selection,
     selectionContent,
     ...(rest || {}),
@@ -781,5 +758,6 @@ export function sortBookmarksByLineNumber(bookmarks: BookmarkMeta[]) {
 }
 
 export function getBookmarksFromFileUri(uri: Uri) {
-  return BookmarksController.instance.getBookmarkStoreByFileUri(uri);
+  const controller = resolveBookmarkController();
+  return controller.getBookmarkStoreByFileUri(uri);
 }

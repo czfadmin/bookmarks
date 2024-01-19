@@ -1,80 +1,56 @@
-import * as vscode from 'vscode';
+import BookmarksTreeItem from './BookmarksTreeItem';
+import BaseTreeProvider from './BaseTreeProvider';
+import {ProviderResult, Selection, TreeItemCollapsibleState} from 'vscode';
+import {BookmarkMeta, BookmarkStoreRootType, BookmarkStoreType} from '../types';
+import {resolveBookmarkController} from '../bootstrap';
+import BookmarksController from '@/controllers/BookmarksController';
 
-import {BookmarksController} from '../controllers/BookmarksController';
-import {BookmarkManagerConfigure, BookmarkStoreType} from '../types';
-import {getExtensionConfiguration} from '../configurations';
-import {getRelativePath} from '../utils';
-
-import {BookmarksTreeItem} from './BookmarksTreeItem';
-
-export class BookmarksTreeProvider
-  implements vscode.TreeDataProvider<BookmarksTreeItem>
-{
-  private _onDidChangeEvent = new vscode.EventEmitter<BookmarksTreeItem>();
-  private _controller: BookmarksController;
-  private _extensionConfiguration: BookmarkManagerConfigure | undefined;
-
-  get datasource() {
-    return this._controller.datasource;
+export class BookmarksTreeProvider extends BaseTreeProvider<
+  BookmarksTreeItem,
+  BookmarksController
+> {
+  constructor() {
+    super(resolveBookmarkController());
   }
 
-  get extensionConfiguration() {
-    if (!this._extensionConfiguration) {
-      this._extensionConfiguration = getExtensionConfiguration();
-    }
-    return this._extensionConfiguration;
-  }
-
-  get isRelativePath() {
-    return this.extensionConfiguration.relativePath;
-  }
-
-  onDidChangeTreeData?:
-    | vscode.Event<
-        void | BookmarksTreeItem | BookmarksTreeItem[] | null | undefined
-      >
-    | undefined = this._onDidChangeEvent.event;
-
-  constructor(controller: BookmarksController) {
-    this._controller = controller;
-  }
-
-  getTreeItem(
-    element: BookmarksTreeItem,
-  ): vscode.TreeItem | Thenable<vscode.TreeItem> {
-    return element;
-  }
   getChildren(
     element?: BookmarksTreeItem | undefined,
-  ): vscode.ProviderResult<BookmarksTreeItem[]> {
-    if (!element) {
-      const bookmarkRootStoreArr = this.datasource?.data || [];
+  ): ProviderResult<BookmarksTreeItem[]> {
+    if (this.controller.viewType === 'tree') {
+      return this.getChildrenByFile(element);
+    } else {
+      return this.getChildrenByList(element);
+    }
+  }
 
+  getChildrenByFile(element?: BookmarksTreeItem | undefined) {
+    if (!element) {
+      const bookmarkRootStoreArr = this.controller.groupedByFileBookmarks;
       const children = bookmarkRootStoreArr.map(it => {
-        let label = it.filename;
-        if (this.isRelativePath) {
-          label = getRelativePath(it.filename);
-        }
+        let label = this.isRelativePath
+          ? this.getRelativePath(it.fileName)
+          : it.fileName;
         return new BookmarksTreeItem(
           label,
-          vscode.TreeItemCollapsibleState.Collapsed,
+          TreeItemCollapsibleState.Collapsed,
           'file',
           it,
         );
       });
+
       return Promise.resolve(children);
     }
     let children: BookmarksTreeItem[] = [];
     try {
       children = (element.meta as BookmarkStoreType).bookmarks.map(it => {
-        const selection = new vscode.Selection(
+        const selection = new Selection(
           it.selection.anchor,
           it.selection.active,
         );
 
         return new BookmarksTreeItem(
           it.label || it.selectionContent || it.id,
-          vscode.TreeItemCollapsibleState.None,
+          TreeItemCollapsibleState.None,
           'bookmark',
           {
             ...it,
@@ -87,9 +63,28 @@ export class BookmarksTreeProvider
       return Promise.resolve([]);
     }
   }
+  getChildrenByList(element?: BookmarksTreeItem | undefined) {
+    if (!element) {
+      const children = (
+        this.datasource as BookmarkStoreRootType
+      )?.bookmarks.map((it: BookmarkMeta) => {
+        const selection = new Selection(
+          it.selection.anchor,
+          it.selection.active,
+        );
 
-  public refresh() {
-    // @ts-ignore
-    this._onDidChangeEvent.fire();
+        return new BookmarksTreeItem(
+          it.label || it.selectionContent || it.id,
+          TreeItemCollapsibleState.None,
+          'bookmark',
+          {
+            ...it,
+            selection,
+          },
+        );
+      });
+      return Promise.resolve(children);
+    }
+    return Promise.resolve([]);
   }
 }
