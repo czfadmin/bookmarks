@@ -1,8 +1,15 @@
-import {MarkdownString, ThemeIcon, TreeItemCollapsibleState} from 'vscode';
+import {
+  MarkdownString,
+  ThemeIcon,
+  TreeItemCollapsibleState,
+  l10n,
+} from 'vscode';
 import BaseTreeItem from './BaseTreeItem';
 import {BookmarkMeta, BookmarkStoreType} from '../types';
 import gutters, {getTagGutters} from '../gutter';
 import {getLineInfoStrFromBookmark} from '../utils';
+import {getExtensionConfiguration} from '../configurations';
+import {CMD_GO_TO_SOURCE_LOCATION} from '../constants';
 
 export default class BookmarksTreeItem extends BaseTreeItem {
   public meta: BookmarkStoreType | BookmarkMeta;
@@ -25,6 +32,13 @@ export default class BookmarksTreeItem extends BaseTreeItem {
       this.iconPath = meta.label
         ? tagGutters[meta.color] || tagGutters['default']
         : gutters[meta.color] || gutters['default'];
+      if (getExtensionConfiguration().enableClick) {
+        this.command = {
+          title: l10n.t('Jump to bookmark position'),
+          command: `bookmark-manager.${CMD_GO_TO_SOURCE_LOCATION}`,
+          arguments: [this.meta],
+        };
+      }
       this._createTooltips();
     }
   }

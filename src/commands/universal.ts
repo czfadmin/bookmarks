@@ -179,6 +179,7 @@ function copyUniversalBookmarkCommand() {
     const content = meta[meta.type];
     const clipboard = env.clipboard;
     clipboard.writeText(content);
+    window.showInformationMessage('Copied!');
   });
 }
 

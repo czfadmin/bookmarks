@@ -88,6 +88,7 @@ export default class UniversalBookmarkController implements IController {
     }
     this._initial();
   }
+
   dispose() {}
 
   /**
@@ -135,7 +136,7 @@ export default class UniversalBookmarkController implements IController {
   }
 
   private _save() {
-    this.globalState.update(UNIVERSAL_STORE_KEY, this.datasource);
+    this.globalState.update(UNIVERSAL_STORE_KEY, this._datasource).then();
     this.refresh();
   }
 

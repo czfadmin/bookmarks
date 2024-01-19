@@ -46,6 +46,11 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
       showCollapseAll: true,
       canSelectMany: false,
     });
+    this.disposables.push(
+      this.controller.onDidChangeEvent(() => {
+        this.provider.refresh();
+      }),
+    );
   }
 
   dispose() {
