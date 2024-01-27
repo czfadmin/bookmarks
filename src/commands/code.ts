@@ -179,7 +179,8 @@ function deleteBookmarkCMD() {
       updateActiveEditorAllDecorations(true);
       // 从treeView中执行此命令
       if ('meta' in context && 'color' in context.meta) {
-        controller.remove(context.meta.id);
+        const _meta = context.meta as BookmarkMeta;
+        controller.remove(_meta.id);
         updateActiveEditorAllDecorations();
         return;
       }
