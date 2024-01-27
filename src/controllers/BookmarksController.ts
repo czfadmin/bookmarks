@@ -17,6 +17,7 @@ import {fileURLToPath} from 'node:url';
 import {IDisposable, generateUUID} from '../utils';
 import {createHoverMessage, sortBookmarksByLineNumber} from '../utils/bookmark';
 import {
+  BookmarkColor,
   BookmarkManagerConfigure,
   BookmarkMeta,
   BookmarkStoreRootType,
@@ -30,6 +31,13 @@ import {registerExtensionCustomContextByKey} from '../context';
 
 export type GroupedByFileType = BookmarkStoreType;
 
+export type TreeGroupView = 'file' | 'color' | 'default';
+
+export type GroupedByColorType = {
+  color: BookmarkColor;
+  bookmarks: BookmarkMeta[];
+};
+
 export default class BookmarksController implements IController {
   private _context: ExtensionContext;
 
@@ -39,7 +47,11 @@ export default class BookmarksController implements IController {
 
   private _groupedByFile: GroupedByFileType[] = [];
 
+  private _groupedByColor: GroupedByColorType[] = [];
+
   public viewType: ViewType = 'tree';
+
+  public groupView: TreeGroupView = 'default';
 
   private _disposables: IDisposable[] = [];
 
@@ -51,6 +63,10 @@ export default class BookmarksController implements IController {
 
   public get groupedByFileBookmarks(): GroupedByFileType[] {
     return this._groupedByFile;
+  }
+
+  public get groupedByColorBookmarks(): GroupedByColorType[] {
+    return this._groupedByColor;
   }
 
   public get workspaceState(): Memento {
@@ -85,11 +101,15 @@ export default class BookmarksController implements IController {
 
   private async _initial() {
     this.viewType = configUtils.getValue('code.viewType', 'tree');
+    this.groupView = configUtils.getValue('code.groupView', 'file');
 
     registerExtensionCustomContextByKey(
       'code.viewAsTree',
       this.viewType === 'tree',
     );
+
+    registerExtensionCustomContextByKey('code.view.groupView', this.groupView);
+
     this._initialDatasource();
     this._initialWatcher();
 
@@ -114,7 +134,6 @@ export default class BookmarksController implements IController {
     };
     if (this._configuration.createJsonFile) {
       _datasource = _datasourceFromFile;
-      this._changeView();
     } else {
       _datasource = this.workspaceState.get<any>(EXTENSION_ID);
       if (!_datasource) {
@@ -127,14 +146,21 @@ export default class BookmarksController implements IController {
         };
         if (_datasource.data && _datasource.data.length) {
           _newDatasouce.bookmarks = this._flatToList(_datasource.data);
-          this._datasource = _newDatasouce;
-          this.save();
         } else {
-          this._datasource = _datasource as BookmarkStoreRootType;
-          this._changeView();
+          _newDatasouce.bookmarks = (
+            _datasource.data ||
+            _datasource.bookmarks ||
+            []
+          ).map((it: any) => {
+            it.rangesOrOptions.hoverMessage = createHoverMessage(it, true);
+            return it;
+          });
         }
+        this._datasource = _newDatasouce;
+        this.save();
       }
     }
+    this._changeView();
   }
 
   private async _initialWatcher() {
@@ -161,7 +187,7 @@ export default class BookmarksController implements IController {
   private _resolveDatasourceFromStoreFile() {
     let ws;
     const wsFolders = workspace.workspaceFolders || [];
-    this._datasource = {
+    const _datasource: BookmarkStoreRootType = {
       bookmarks: [],
     };
     for (ws of wsFolders) {
@@ -170,25 +196,62 @@ export default class BookmarksController implements IController {
         './.vscode/bookmarks.json',
       );
       if (fs.existsSync(storeFilePath)) {
-        const _bookmarks = JSON.parse(
-          fs.readFileSync(storeFilePath).toString(),
+        const _bookmarks = (
+          JSON.parse(fs.readFileSync(storeFilePath).toString()) || {content: []}
         ).content;
-        this._datasource.bookmarks.push(..._bookmarks);
+
+        _datasource.bookmarks.push(
+          ..._bookmarks.map((it: any) => {
+            it.rangesOrOptions.hoverMessage = createHoverMessage(it, true);
+            return it;
+          }),
+        );
       }
     }
     this.refresh();
-    return this._datasource;
+    return _datasource;
   }
 
   private _changeView() {
     if (this.viewType === 'tree') {
-      this._groupedByFile = (this._getBookmarksGroupedByFile() || []).map(
-        it => {
-          sortBookmarksByLineNumber(it.bookmarks);
-          return it;
-        },
-      );
+      if (this.groupView === 'color') {
+        this._groupedByColor = (this._getBookmarksGroupedByColor() || []).map(
+          it => {
+            sortBookmarksByLineNumber(it.bookmarks);
+            return it;
+          },
+        );
+      }
+      if (this.groupView === 'default') {
+        this._groupedByFile = (this._getBookmarksGroupedByFile() || []).map(
+          it => {
+            sortBookmarksByLineNumber(it.bookmarks);
+            return it;
+          },
+        );
+      }
     }
+  }
+
+  /**
+   * 获取按照书签颜色设置的书签列表
+   * @returns
+   */
+  private _getBookmarksGroupedByColor() {
+    if (!this._datasource.bookmarks.length) return;
+    const groupedList: GroupedByColorType[] = [];
+    this._datasource.bookmarks.forEach(it => {
+      const existed = groupedList.find(item => item.color === it.color);
+      if (!existed) {
+        groupedList.push({
+          color: it.color,
+          bookmarks: [it],
+        });
+        return;
+      }
+      existed.bookmarks.push(it);
+    });
+    return groupedList;
   }
 
   changeSortType(sortType: SortType): void {}
@@ -339,10 +402,8 @@ export default class BookmarksController implements IController {
     if (store) {
       this._datasource = store;
     }
-    this._groupedByFile = (this._getBookmarksGroupedByFile() || []).map(it => {
-      sortBookmarksByLineNumber(it.bookmarks);
-      return it;
-    });
+
+    this._changeView();
 
     if (this._configuration.createJsonFile) {
       this._saveToDisk();
@@ -383,6 +444,14 @@ export default class BookmarksController implements IController {
       'code.viewAsTree',
       this.viewType === 'tree',
     );
+    this.refresh();
+  }
+
+  changeGroupView(groupType: TreeGroupView) {
+    this.groupView = groupType;
+    configUtils.updateValue('code.groupView', groupType);
+    this._changeView();
+
     this.refresh();
   }
 

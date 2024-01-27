@@ -43,5 +43,8 @@
   "bookmark-manager.changeUniversalBookmarkColor": "改变通用书签颜色",
   "bookmark-manager.editUniversalBookmarkLabel": "编辑通用书签标签",
   "bookmark-manager.clearAllUniversalBookmarks": "清除所有通用书签",
-  "bookmark-manager.copyUniversalBookmarkContent": "复制书签内容"
+  "bookmark-manager.copyUniversalBookmarkContent": "复制书签内容",
+  "bookmark-manager.groupedByColor": "按颜色分组",
+  "bookmark-manager.groupedByDefault": "默认分组",
+  "bookmark-manager.group": "分组"
 }

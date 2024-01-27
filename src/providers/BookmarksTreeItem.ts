@@ -10,28 +10,24 @@ import gutters, {getTagGutters} from '../gutter';
 import {getLineInfoStrFromBookmark} from '../utils';
 import {getExtensionConfiguration} from '../configurations';
 import {CMD_GO_TO_SOURCE_LOCATION} from '../constants';
+import {GroupedByColorType} from '@/controllers/BookmarksController';
 
 export default class BookmarksTreeItem extends BaseTreeItem {
-  public meta: BookmarkStoreType | BookmarkMeta;
+  public meta: BookmarkStoreType | BookmarkMeta | GroupedByColorType;
+
   constructor(
     label: string,
     collapsibleState: TreeItemCollapsibleState,
     contextValue: string,
-    meta: BookmarkStoreType | BookmarkMeta,
+    meta: BookmarkStoreType | BookmarkMeta | GroupedByColorType,
   ) {
     super(label, collapsibleState, contextValue);
     this.meta = meta;
-    const tagGutters = getTagGutters();
-    if (this.contextValue === 'file') {
-      this.iconPath = ThemeIcon.File;
-      this.resourceUri = this.meta.fileUri;
+    if (this.contextValue === 'color') {
+      this.label = label;
+    } else if (this.contextValue === 'file') {
       this._resolveFileOverview();
     } else {
-      const meta = this.meta as BookmarkMeta;
-
-      this.iconPath = meta.label
-        ? tagGutters[meta.color] || tagGutters['default']
-        : gutters[meta.color] || gutters['default'];
       if (getExtensionConfiguration().enableClick) {
         this.command = {
           title: l10n.t('Jump to bookmark position'),
@@ -41,8 +37,25 @@ export default class BookmarksTreeItem extends BaseTreeItem {
       }
       this._createTooltips();
     }
+    this._resolveIconPath();
   }
 
+  private _resolveIconPath() {
+    const tagGutters = getTagGutters();
+    if (this.contextValue === 'file') {
+      this.iconPath = ThemeIcon.File;
+      this.resourceUri = (this.meta as BookmarkStoreType).fileUri;
+    } else if (this.contextValue === 'color') {
+      const _meta = this.meta as GroupedByColorType;
+      this.iconPath = gutters[_meta.color] || gutters['default'];
+    } else if (this.contextValue === 'bookmark') {
+      const meta = this.meta as BookmarkMeta;
+
+      this.iconPath = meta.label
+        ? tagGutters[meta.color] || tagGutters['default']
+        : gutters[meta.color] || gutters['default'];
+    }
+  }
   /**
    * 为书签创建 提示信息
    */

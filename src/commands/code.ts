@@ -91,6 +91,8 @@ export function registerCodeCommands() {
   listBookmarksInCurrentFile();
   viewAsList();
   viewAsTree();
+  groupedByColor();
+  groupedByDefault();
 }
 
 /**
@@ -440,5 +442,25 @@ function viewAsList() {
   registerCommand('viewAsList', args => {
     const controller = resolveBookmarkController();
     controller.changeViewType('list');
+  });
+}
+
+/**
+ * 按颜色分组
+ */
+function groupedByColor() {
+  registerCommand('groupedByColor', args => {
+    const controller = resolveBookmarkController();
+    controller.changeGroupView('color');
+  });
+}
+
+/**
+ * 默认排序分组
+ */
+function groupedByDefault() {
+  registerCommand('groupedByDefault', args => {
+    const controller = resolveBookmarkController();
+    controller.changeGroupView('default');
   });
 }
