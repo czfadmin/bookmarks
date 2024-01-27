@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.0.19
+
+### Patch Changes
+
+- 修复BUG以及增加按照颜色排序功能
+
 ## 0.0.18
 
 ### Patch Changes

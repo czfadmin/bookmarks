@@ -91,6 +91,8 @@ export function registerCodeCommands() {
   listBookmarksInCurrentFile();
   viewAsList();
   viewAsTree();
+  groupedByColor();
+  groupedByDefault();
 }
 
 /**
@@ -177,7 +179,8 @@ function deleteBookmarkCMD() {
       updateActiveEditorAllDecorations(true);
       // 从treeView中执行此命令
       if ('meta' in context && 'color' in context.meta) {
-        controller.remove(context.meta.id);
+        const _meta = context.meta as BookmarkMeta;
+        controller.remove(_meta.id);
         updateActiveEditorAllDecorations();
         return;
       }
@@ -440,5 +443,25 @@ function viewAsList() {
   registerCommand('viewAsList', args => {
     const controller = resolveBookmarkController();
     controller.changeViewType('list');
+  });
+}
+
+/**
+ * 按颜色分组
+ */
+function groupedByColor() {
+  registerCommand('groupedByColor', args => {
+    const controller = resolveBookmarkController();
+    controller.changeGroupView('color');
+  });
+}
+
+/**
+ * 默认排序分组
+ */
+function groupedByDefault() {
+  registerCommand('groupedByDefault', args => {
+    const controller = resolveBookmarkController();
+    controller.changeGroupView('default');
   });
 }

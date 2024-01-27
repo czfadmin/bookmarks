@@ -43,5 +43,8 @@
   "bookmark-manager.changeUniversalBookmarkColor": "change the color of the universal bookmark",
   "bookmark-manager.editUniversalBookmarkLabel": "Edit the label of the universal bookmark.",
   "bookmark-manager.clearAllUniversalBookmarks": "Clear all universal bookmarks",
-  "bookmark-manager.copyUniversalBookmarkContent": "Copy content"
+  "bookmark-manager.copyUniversalBookmarkContent": "Copy content",
+  "bookmark-manager.groupedByColor": "Grouped by color",
+  "bookmark-manager.groupedByDefault": "Grouped by default",
+  "bookmark-manager.group": "Group"
 }

@@ -82,17 +82,12 @@ export function getExtensionConfiguration(): BookmarkManagerConfigure {
   };
 }
 
-/**
- * 获取插件的内部配置
- */
-export function getExtensionInternalConfiguration() {}
-
 export const configUtils = {
   getValue<T>(key: string, defaultValue: T) {
     const context = resolveExtensionCtx();
     return (
       context.globalState.get<T>(
-        `bookmark-manager.globale.configuration.${key}`,
+        `bookmark-manager.global.configuration.${key}`,
       ) || defaultValue
     );
   },
@@ -100,7 +95,7 @@ export const configUtils = {
   updateValue(key: string, value: any) {
     const context = resolveExtensionCtx();
     context.globalState.update(
-      `bookmark-manager.globale.configuration.${key}`,
+      `bookmark-manager.global.configuration.${key}`,
       value,
     );
   },

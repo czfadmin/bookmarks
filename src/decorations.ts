@@ -188,6 +188,7 @@ export function updateDecoration(
       noTagRangeOrOptions,
     );
   } catch (error) {
+    // @ts-ignore
     logger.error(error);
   }
 }

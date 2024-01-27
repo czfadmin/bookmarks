@@ -2,7 +2,7 @@
   "name": "bookmark-manager",
   "displayName": "Bookmark Manager (BM)",
   "description": "Simple and easy to use bookmark manager",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "engines": {
     "vscode": "^1.82.0"
   },
@@ -163,6 +163,16 @@
         "command": "bookmark-manager.copyUniversalBookmarkContent",
         "title": "%bookmark-manager.copyUniversalBookmarkContent%",
         "icon": "$(clippy)",
+        "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.groupedByDefault",
+        "title": "%bookmark-manager.groupedByDefault%",
+        "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.groupedByColor",
+        "title": "%bookmark-manager.groupedByColor%",
         "category": "Bookmark Manager (BM)"
       }
     ],
@@ -378,6 +388,16 @@
           "group": "bookmarksActionsGroup2@1"
         }
       ],
+      "bookmark-manager.codeGroupSubmenu": [
+        {
+          "command": "bookmark-manager.groupedByDefault",
+          "group": "group@1"
+        },
+        {
+          "command": "bookmark-manager.groupedByColor",
+          "group": "group@2"
+        }
+      ],
       "view/title": [
         {
           "command": "bookmark-manager.viewAsTree",
@@ -408,6 +428,10 @@
           "command": "bookmark-manager.clearAllUniversalBookmarks",
           "when": "view == bookmark-manager.universal",
           "group": "navigation@2"
+        },
+        {
+          "submenu": "bookmark-manager.codeGroupSubmenu",
+          "when": "view === bookmark-manager"
         }
       ],
       "view/item/context": [
@@ -478,6 +502,14 @@
         {
           "command": "bookmark-manager.copyUniversalBookmarkContent",
           "when": "false"
+        },
+        {
+          "command": "bookmark-manager.groupedByColor",
+          "when": "false"
+        },
+        {
+          "command": "bookmark-manager.groupedByDefault",
+          "when": "false"
         }
       ]
     },
@@ -485,6 +517,10 @@
       {
         "id": "bookmark-manager",
         "label": "Bookmark Manager"
+      },
+      {
+        "id": "bookmark-manager.codeGroupSubmenu",
+        "label": "%bookmark-manager.group%"
       }
     ],
     "keybindings": {

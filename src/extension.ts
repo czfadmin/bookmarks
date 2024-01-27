@@ -18,7 +18,6 @@ export const resolveExtensionCtx = (): ExtensionContext => _context;
 
 export async function activate(context: ExtensionContext) {
   _context = context;
-  logger.log(`${EXTENSION_ID} is now active!`);
   bootstrap(context);
 }
 

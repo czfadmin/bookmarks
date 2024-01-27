@@ -18,6 +18,8 @@ import {
 } from './events';
 import {updateStatusBarItem} from './statusbar';
 import {registerCodeCommands, registerUniversalCommands} from './commands';
+import {registerTelemetryLogger} from './utils';
+import logger from './utils/logger';
 
 let controllerManager: any = {};
 
@@ -66,8 +68,8 @@ function updateEverything(
 }
 
 function initialController(context: ExtensionContext) {
-  // controllerManager['bookmarks'] && controllerManager['bookmarks'].dispose();
-  // controllerManager['universal'] && controllerManager['universal'].dispose();
+  controllerManager['bookmarks'] && controllerManager['bookmarks'].dispose();
+  controllerManager['universal'] && controllerManager['universal'].dispose();
   const bookmarksController = new BookmarksController(context);
   const universalControlelr = new UniversalBookmarkController(context);
   controllerManager['bookmarks'] = bookmarksController;
@@ -75,7 +77,12 @@ function initialController(context: ExtensionContext) {
 }
 
 export default function bootstrap(context: ExtensionContext) {
+  const outputChannel = registerTelemetryLogger();
+
+  logger.log(`${EXTENSION_ID} is now active!`);
+
   initialController(context);
+
   const configuration = getExtensionConfiguration();
 
   registerExtensionCustomContext(configuration);
@@ -86,10 +93,12 @@ export default function bootstrap(context: ExtensionContext) {
       if (!ev.affectsConfiguration(EXTENSION_ID)) {
         return;
       }
-      // initialController(context);
       updateEverything(context);
     }),
   );
+
+  context.subscriptions.push(outputChannel);
+
   registerAllTreeView(context);
 
   // 注册命令

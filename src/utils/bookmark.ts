@@ -749,6 +749,7 @@ export function getLineInfoStrFromBookmark(bookmark: BookmarkMeta) {
     ? `Ln: ${lineInfo.line}`
     : `Start { Ln: ${lineInfo.start?.line}, Col: ${lineInfo.start?.col} }. End { Ln: ${lineInfo.end?.line}, Col: ${lineInfo.end?.col} }`;
 }
+
 /**
  * 对书签进行按照行号排序
  * @param bookmarks

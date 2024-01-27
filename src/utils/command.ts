@@ -1,7 +1,7 @@
 import {commands} from 'vscode';
 import {EXTENSION_ID} from '../constants';
 import {resolveExtensionCtx} from '../extension';
-
+import logger from './logger';
 export function registerCommand(
   commandName: string,
   callback?: (args: any) => any,
@@ -10,7 +10,12 @@ export function registerCommand(
   return context.subscriptions.push(
     commands.registerCommand(`${EXTENSION_ID}.${commandName}`, (args: any) => {
       if (callback) {
-        callback(args);
+        // 捕获异常失败?
+        try {
+          callback(args);
+        } catch (error) {
+          logger.error(error as any);
+        }
       }
     }),
   );
