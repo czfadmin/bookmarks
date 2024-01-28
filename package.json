@@ -552,8 +552,10 @@
     "change": "changeset",
     "bump": "changeset publish",
     "prettier": "prettier --fix  -w  ./src/**/*.{js,ts} ",
-    "prepare": "husky install",
+    "postinstall": "husky install && husky set .husky/pre-commit \"yarn lint-staged\"",
     "publish:beta": "vsce package --pre-release",
+    "publish": "vsce publish",
+    "lint-staged": "lint-staged",
     "l10n": "node ./node_modules/@vscode/l10n-dev/dist/cli.js export -o ./l10n ./src"
   },
   "devDependencies": {
@@ -581,11 +583,13 @@
   },
   "dependencies": {
     "@vscode/l10n": "^0.0.16",
+    "@vscode/vsce": "^2.23.0",
     "bootstrap-icons": "^1.11.2",
     "lodash": "^4.17.21",
     "uuid": "^9.0.1"
   },
   "lint-staged": {
+    "*.{ts,js}": "eslint --fix",
     "**/*": "prettier --write --ignore-unknown"
   }
 }

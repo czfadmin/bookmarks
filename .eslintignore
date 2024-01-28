@@ -1,0 +1,7 @@
+.git
+.github
+.changeset
+.husky
+.vscode
+dist
+node_modules
