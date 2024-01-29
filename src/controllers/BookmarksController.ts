@@ -81,7 +81,7 @@ export default class BookmarksController implements IController {
    * 返回书签的总个数
    */
   public get totalCount(): number {
-    if (!this._datasource) return 0;
+    if (!this._datasource) {return 0;}
     return this._datasource.bookmarks.length;
   }
 
@@ -89,7 +89,7 @@ export default class BookmarksController implements IController {
    * 获取带有标签的书签
    */
   public get labeledCount(): number {
-    if (!this._datasource) return 0;
+    if (!this._datasource) {return 0;}
     return this._datasource.bookmarks.filter(it => it.label).length;
   }
 
@@ -170,7 +170,7 @@ export default class BookmarksController implements IController {
       10,
     );
     if (existedStoreFile.length && this._configuration.createJsonFile) {
-      if (this._watcher) this._watcher.dispose();
+      if (this._watcher) {this._watcher.dispose();}
       this._watcher = workspace.createFileSystemWatcher(
         '**/.vscode/bookmarks.json',
       );
@@ -199,13 +199,14 @@ export default class BookmarksController implements IController {
         const _bookmarks = (
           JSON.parse(fs.readFileSync(storeFilePath).toString()) || {content: []}
         ).content;
-
-        _datasource.bookmarks.push(
-          ..._bookmarks.map((it: any) => {
-            it.rangesOrOptions.hoverMessage = createHoverMessage(it, true);
-            return it;
-          }),
-        );
+        if (_bookmarks && _bookmarks.length) {
+          _datasource.bookmarks.push(
+            ..._bookmarks.map((it: any) => {
+              it.rangesOrOptions.hoverMessage = createHoverMessage(it, true);
+              return it;
+            }),
+          );
+        }
       }
     }
     this.refresh();
@@ -238,7 +239,7 @@ export default class BookmarksController implements IController {
    * @returns
    */
   private _getBookmarksGroupedByColor() {
-    if (!this._datasource.bookmarks.length) return;
+    if (!this._datasource || !this._datasource.bookmarks.length) {return;}
     const groupedList: GroupedByColorType[] = [];
     this._datasource.bookmarks.forEach(it => {
       const existed = groupedList.find(item => item.color === it.color);
@@ -323,6 +324,7 @@ export default class BookmarksController implements IController {
   }
 
   getBookmarkStoreByFileUri(fileUri: Uri): BookmarkMeta[] {
+    if (!this._datasource) {return [];}
     return this._datasource.bookmarks.filter(
       it => it.fileId === fileUri.fsPath,
     );
@@ -345,7 +347,7 @@ export default class BookmarksController implements IController {
    * ]
    */
   private _getBookmarksGroupedByFile() {
-    if (!this._datasource.bookmarks.length) return;
+    if (!this._datasource.bookmarks.length) {return;}
     const groupedList: GroupedByFileType[] = [];
     this._datasource.bookmarks.forEach(it => {
       const existed = groupedList.find(item => item.fileId === it.fileId);
@@ -444,6 +446,7 @@ export default class BookmarksController implements IController {
       'code.viewAsTree',
       this.viewType === 'tree',
     );
+    this._changeView();
     this.refresh();
   }
 
