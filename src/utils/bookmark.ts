@@ -36,24 +36,18 @@ export function checkIfBookmarkIsInGivenSelectionAndRemove(
     return;
   }
   const bookmarks = controller.getBookmarkStoreByFileUri(editor.document.uri);
-  if (!bookmarks.length) {
-    let item;
-    try {
-      for (item of bookmarks) {
-        if (range.isEqual(item.selection)) {
-          throw new Error(item.id);
-        }
-      }
-    } catch (error) {
-      const _bookmark = bookmarks.find(it => it.id === (error as any).message);
-      if (_bookmark) {
-        controller.remove(_bookmark.id);
-        updateDecorationsByEditor(editor);
-        return true;
-      }
+  if (!bookmarks.length) {return;}
+  let item;
+  let matched = [];
+
+  for (item of bookmarks) {
+    if (range.isEqual(item.selection)) {
+      matched.push(item.id);
+      controller.remove(item.id);
     }
   }
-  return false;
+  updateDecorationsByEditor(editor);
+  return matched.length > 0;
 }
 
 /**
@@ -74,9 +68,9 @@ export function getBookmarkFromLineNumber(
 ): BookmarkMeta | undefined {
   const editor = window.activeTextEditor;
   const controller = resolveBookmarkController();
-  if (!editor) return;
+  if (!editor) {return;}
   const bookmarks = controller.getBookmarkStoreByFileUri(editor.document.uri);
-  if (!bookmarks.length) return;
+  if (!bookmarks.length) {return;}
 
   const lineNumber = line || editor.selection.active.line;
   let bookmark;
@@ -110,11 +104,11 @@ export function getBookmarksBelowChangedLine(
 ): BookmarkMeta[] | undefined {
   const editor = window.activeTextEditor;
   const controller = resolveBookmarkController();
-  if (!editor) return;
+  if (!editor) {return;}
 
   const bookmarks = controller.getBookmarkStoreByFileUri(editor.document.uri);
 
-  if (!bookmarks.length) return;
+  if (!bookmarks.length) {return;}
 
   const lineNumber = line || editor.selection.active.line;
   const _bookmarks = bookmarks
@@ -151,7 +145,7 @@ export function highlightSelection(
  * @param bookmark
  */
 export async function gotoSourceLocation(bookmark?: BookmarkMeta) {
-  if (!bookmark) return;
+  if (!bookmark) {return;}
   const activeEditor = window.activeTextEditor;
   const {fileUri, rangesOrOptions, selection} = bookmark;
 
@@ -413,7 +407,7 @@ export async function chooseBookmarkColor() {
  */
 export async function quicklyJumpToBookmark() {
   const controller = resolveBookmarkController();
-  if (!controller || !controller.datasource) return;
+  if (!controller || !controller.datasource) {return;}
   const tagGutters = getTagGutters();
 
   const pickItems = controller.datasource.bookmarks.map(it => {
@@ -646,7 +640,7 @@ export function updateBookmarksGroupByChangedLine(
     return;
   }
 
-  if (!isNewLine && !isDeleteLine) return;
+  if (!isNewLine && !isDeleteLine) {return;}
   // 2. 当前所发生改变的change 不存在书签 1> 发生改变的行下方的书签, 回车, 新增 , 以及删除
   const bookmarksBlowChangedLine = getBookmarksBelowChangedLine();
   if (bookmarksBlowChangedLine && bookmarksBlowChangedLine.length) {
