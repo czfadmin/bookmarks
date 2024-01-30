@@ -24,14 +24,6 @@
 
 ![picture 1](./images/454a86e976aac9448e305cc9942b13273a70e7cc89bec928f8e4234ed75411f2.png)
 
-- 对选中内容进行书签标记
-
-![toggle-bookmark-with-selections](./images/toggle-bookmark-with-selections.gif)
-
-- 快速预览并跳转到书签位置
-
-![quick-jump](./images/quick-jump.gif)
-
 - 悬浮时显示书签详情
 
 ![picture 5](images/5880f91f811e917059eb6012407449ebbd177483a3bfe5ead87c7cac8dc4a8d8.png)

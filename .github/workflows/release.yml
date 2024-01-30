@@ -26,10 +26,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: 'yarn'
       - name: 'install dependencies'
         run: yarn
       - name: 'Publish to marketplace'
         run: 'yarn publish -p $VSCE_AIUTH_TOKEN'
         env:
-          VSCE_AIUTH_TOKEN: ${{env.RELEASE_TOEKN}}
+          VSCE_AIUTH_TOKEN: ${{secrets.RELEASE_TOEKN}}
