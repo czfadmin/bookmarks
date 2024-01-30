@@ -155,7 +155,7 @@ function clearAllBookmarks() {
     let fileUri,
       clearAll = false;
     const controller = resolveBookmarkController();
-    if (!controller) return;
+    if (!controller) {return;}
     if (args && args.meta) {
       fileUri = args.meta.fileUri;
       controller.clearAllBookmarkInFile(fileUri);
@@ -166,9 +166,10 @@ function clearAllBookmarks() {
     updateActiveEditorAllDecorations(clearAll);
   });
 }
-
+/**
+ * 通过命令行删除书签
+ */
 function deleteBookmarkCMD() {
-  // 删除书签
   registerCommand(
     CMD_DELETE_BOOKMARK,
     (context: LineBookmarkContext | BookmarksTreeItem) => {
@@ -195,36 +196,34 @@ function deleteBookmarkCMD() {
 
 /**
  * 编辑书签
+ * 从`editor`中追加书签的情况下
+ *  - 如果存在, 更新书签的label
+ *  - 如果不存在, 创建书签并追加label
  */
 function editBookmark() {
-  // 编辑书签标签
   registerCommand(
     CMD_EDIT_LABEL,
-    (context: LineBookmarkContext | BookmarksTreeItem | undefined) => {
+    async (context: LineBookmarkContext | BookmarksTreeItem | undefined) => {
       let bookmark: BookmarkMeta | undefined = getBookmarkFromCtx(context);
 
-      if (!bookmark) {
-        window.showInformationMessage(
-          l10n.t('Please select the bookmark before proceeding.'),
-          {},
-        );
+      const label = await window.showInputBox({
+        placeHolder: l10n.t('Type a label for your bookmarks'),
+        title: l10n.t(
+          'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
+        ),
+        value: bookmark?.label || '',
+      });
+      if (!label) {
         return;
       }
-
-      window
-        .showInputBox({
-          placeHolder: l10n.t('Type a label for your bookmarks'),
-          title: l10n.t(
-            'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
-          ),
-          value: bookmark.label,
-        })
-        .then(label => {
-          if (!label || !bookmark) {
-            return;
-          }
-          editBookmarkLabel(bookmark, label);
+      if (!bookmark) {
+        toggleBookmark(context as LineBookmarkContext | undefined, {
+          label,
+          type: 'line',
         });
+      } else {
+        editBookmarkLabel(bookmark, label);
+      }
     },
   );
 }
@@ -288,7 +287,7 @@ function changeBookmarkColor() {
         return;
       }
       const controller = resolveBookmarkController();
-      if (!controller) return;
+      if (!controller) {return;}
       controller.update(bookmark.id, {
         color: newColor,
       });
@@ -304,7 +303,7 @@ function clearAllBookmarksInCurrentFile() {
   registerCommand('clearAllBookmarksInCurrentFile', async args => {
     const activedEditor = window.activeTextEditor;
     const controller = resolveBookmarkController();
-    if (!activedEditor || !controller) return;
+    if (!activedEditor || !controller) {return;}
     if (checkIfBookmarksIsInCurrentEditor(activedEditor)) {
       controller.clearAllBookmarkInFile(activedEditor.document.uri);
       updateActiveEditorAllDecorations();
@@ -355,9 +354,9 @@ export function listBookmarksInCurrentFile() {
       const editor = window.activeTextEditor;
       const controller = resolveBookmarkController();
       const bookmarkDS = controller.datasource;
-      if (!editor || !bookmarkDS) return;
+      if (!editor || !bookmarkDS) {return;}
       const bookmarks = getBookmarksFromFileUri(editor.document.uri);
-      if (!bookmarks.length) return;
+      if (!bookmarks.length) {return;}
       const tagGutters = getTagGutters();
       const pickItems = bookmarks.map((it: any) => {
         const iconPath = it.label

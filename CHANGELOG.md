@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.0.21
+
+### Patch Changes
+
+- 修复无法正常开启/关闭书签问题
+
 ## 0.0.20
 
 ### Patch Changes

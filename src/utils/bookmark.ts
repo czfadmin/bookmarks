@@ -26,6 +26,7 @@ import {resolveBookmarkController} from '../bootstrap';
 const REGEXP_NEWLINE = /(\r\n)|(\n)/g;
 /**
  * 检查当前行是否存在标签, 并移除对应标签
+ * @TODO: 将两个操作拆分出来
  */
 export function checkIfBookmarkIsInGivenSelectionAndRemove(
   editor: TextEditor | undefined,
@@ -36,7 +37,9 @@ export function checkIfBookmarkIsInGivenSelectionAndRemove(
     return;
   }
   const bookmarks = controller.getBookmarkStoreByFileUri(editor.document.uri);
-  if (!bookmarks.length) {return;}
+  if (!bookmarks.length) {
+    return;
+  }
   let item;
   let matched = [];
 
@@ -68,9 +71,13 @@ export function getBookmarkFromLineNumber(
 ): BookmarkMeta | undefined {
   const editor = window.activeTextEditor;
   const controller = resolveBookmarkController();
-  if (!editor) {return;}
+  if (!editor) {
+    return;
+  }
   const bookmarks = controller.getBookmarkStoreByFileUri(editor.document.uri);
-  if (!bookmarks.length) {return;}
+  if (!bookmarks.length) {
+    return;
+  }
 
   const lineNumber = line || editor.selection.active.line;
   let bookmark;
@@ -104,11 +111,15 @@ export function getBookmarksBelowChangedLine(
 ): BookmarkMeta[] | undefined {
   const editor = window.activeTextEditor;
   const controller = resolveBookmarkController();
-  if (!editor) {return;}
+  if (!editor) {
+    return;
+  }
 
   const bookmarks = controller.getBookmarkStoreByFileUri(editor.document.uri);
 
-  if (!bookmarks.length) {return;}
+  if (!bookmarks.length) {
+    return;
+  }
 
   const lineNumber = line || editor.selection.active.line;
   const _bookmarks = bookmarks
@@ -145,7 +156,9 @@ export function highlightSelection(
  * @param bookmark
  */
 export async function gotoSourceLocation(bookmark?: BookmarkMeta) {
-  if (!bookmark) {return;}
+  if (!bookmark) {
+    return;
+  }
   const activeEditor = window.activeTextEditor;
   const {fileUri, rangesOrOptions, selection} = bookmark;
 
@@ -407,7 +420,9 @@ export async function chooseBookmarkColor() {
  */
 export async function quicklyJumpToBookmark() {
   const controller = resolveBookmarkController();
-  if (!controller || !controller.datasource) {return;}
+  if (!controller || !controller.datasource) {
+    return;
+  }
   const tagGutters = getTagGutters();
 
   const pickItems = controller.datasource.bookmarks.map(it => {
@@ -640,7 +655,9 @@ export function updateBookmarksGroupByChangedLine(
     return;
   }
 
-  if (!isNewLine && !isDeleteLine) {return;}
+  if (!isNewLine && !isDeleteLine) {
+    return;
+  }
   // 2. 当前所发生改变的change 不存在书签 1> 发生改变的行下方的书签, 回车, 新增 , 以及删除
   const bookmarksBlowChangedLine = getBookmarksBelowChangedLine();
   if (bookmarksBlowChangedLine && bookmarksBlowChangedLine.length) {
