@@ -1,7 +1,7 @@
 import {Event, EventEmitter, ExtensionContext, Uri} from 'vscode';
 import {BaseMeta, BookmarkColor} from '../types';
 import {generateUUID} from '../utils';
-import IController, {SortType, ViewType} from './IController';
+import IController, {SortType, TreeGroupView, ViewType} from './IController';
 import {configUtils} from '../configurations';
 export const UNIVERSAL_STORE_KEY = 'bookmark-manager.universal';
 export type UniversalBookmarkType = 'file' | 'link' | 'command' | 'code';
@@ -88,6 +88,12 @@ export default class UniversalBookmarkController implements IController {
     }
     this._initial();
   }
+  get viewType(): ViewType {
+    return 'list';
+  }
+  get groupView(): TreeGroupView {
+    return 'default';
+  }
 
   dispose() {}
 
@@ -108,16 +114,16 @@ export default class UniversalBookmarkController implements IController {
   }
   remove(id: string) {
     const idx = this.datasource?.bookmarks.findIndex(it => it.id === id);
-    if (idx === -1) return;
+    if (idx === -1) {return;}
     this.datasource!.bookmarks = this.datasource!.bookmarks.filter(
       it => it.id !== id,
     );
     this._save();
   }
   update(id: string, bookmarkDto: Partial<Omit<UniversalBookmarkMeta, 'id'>>) {
-    if (!this.datasource) return;
+    if (!this.datasource) {return;}
     const idx = this.datasource.bookmarks.findIndex(it => it.id === id);
-    if (idx === -1) return;
+    if (idx === -1) {return;}
 
     const existed = this.datasource.bookmarks[idx];
     this.datasource.bookmarks[idx] = {
@@ -127,7 +133,7 @@ export default class UniversalBookmarkController implements IController {
     this._save();
   }
   clearAll() {
-    if (!this.datasource) return;
+    if (!this.datasource) {return;}
     this.datasource.bookmarks = [];
     this._save();
   }
