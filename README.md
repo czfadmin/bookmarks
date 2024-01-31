@@ -14,7 +14,9 @@
 ### Preview
 
 - Overview
-  ![intro.gif](images/intro.gif)
+
+![picture 8](images/6217a2dedefaf433e61dda94f782a283bdf01bafdf6e50b2dc32d29838c28e69.png)
+
 - Sidebar bookmark management
 
 ![picture 6](images/b0e8682a5dacc5c7df3d350fc89b0de76a9347f52f43c9693fa901ada57a3c6c.png)
