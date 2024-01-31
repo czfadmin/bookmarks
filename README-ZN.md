@@ -13,8 +13,9 @@
 
 ### 预览
 
-- Overview
-  ![intro.gif](images/intro.gif)
+- 总览
+
+  ![picture 8](images/6217a2dedefaf433e61dda94f782a283bdf01bafdf6e50b2dc32d29838c28e69.png)
 
 - 侧边栏书签管理
 

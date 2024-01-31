@@ -1,8 +1,9 @@
 import BaseTreeItem from '@/providers/BaseTreeItem';
 import BaseTreeProvider from '@/providers/BaseTreeProvider';
-import {Disposable, TreeView, window} from 'vscode';
+import {Disposable, TreeDragAndDropController, TreeView, window} from 'vscode';
 import {dispose} from '../utils';
 import IController from '@/controllers/IController';
+import {updateActiveEditorAllDecorations} from '../decorations';
 export enum TreeViewEnum {
   BASE = 0,
   UNIVERSAL,
@@ -21,6 +22,10 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
   private _bookmarkTreeView: TreeView<T>;
 
   private _disposables: Disposable[] = [];
+
+  private _dndController: TreeDragAndDropController<T> | undefined;
+
+  private _draggingSource: T[] = [];
 
   get disposables() {
     return this._disposables;
@@ -41,14 +46,50 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
   constructor(viewName: string, provider: BaseTreeProvider<T, C>) {
     this._controller = provider.controller;
     this._provider = provider;
+    const self = this;
+    this._dndController = {
+      dragMimeTypes: ['application/vnd.code.tree.bookmark-manager'],
+      dropMimeTypes: ['application/vnd.code.tree.bookmark-manager'],
+      handleDrag(source, dataTransfer, token) {
+        self._draggingSource = [...source];
+      },
+      handleDrop(target, dataTransfer, token) {
+        const draggedSource = self._draggingSource[0];
+        if (self._controller.groupView !== 'color' || !target) {
+          return;
+        }
+
+        // 整个树进行拖拽
+        if (
+          draggedSource.meta.bookmarks &&
+          draggedSource.meta.bookmarks.length &&
+          draggedSource.meta.color !== target.meta.color
+        ) {
+          for (let item of draggedSource.meta.bookmarks) {
+            self._controller.update(item.id, {
+              color: target.meta.color,
+            });
+          }
+          return;
+        }
+
+        if (draggedSource.meta.color !== target.meta.color) {
+          self._controller.update(draggedSource.meta.id, {
+            color: target.meta.color,
+          });
+        }
+      },
+    };
     this._bookmarkTreeView = window.createTreeView(viewName, {
       treeDataProvider: this._provider,
       showCollapseAll: true,
       canSelectMany: false,
+      dragAndDropController: this._dndController,
     });
     this.disposables.push(
       this.controller.onDidChangeEvent(() => {
         this.provider.refresh();
+        updateActiveEditorAllDecorations();
       }),
     );
   }

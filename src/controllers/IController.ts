@@ -12,12 +12,18 @@ export type ViewType = 'tree' | 'list';
  */
 export type SortType = 'name' | 'time';
 
+export type TreeGroupView = 'file' | 'color' | 'default';
+
 export default interface IController extends Disposable {
   get datasource(): BookmarkStoreRootType | UniversalStoreType | undefined;
 
   get totalCount(): number;
 
   get labeledCount(): number;
+
+  get viewType(): ViewType;
+
+  get groupView(): TreeGroupView;
 
   onDidChangeEvent: Event<void>;
 

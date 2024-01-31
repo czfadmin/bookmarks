@@ -25,13 +25,11 @@ import {
 } from '../types';
 import {EXTENSION_ID} from '../constants';
 
-import IController, {SortType, ViewType} from './IController';
+import IController, {SortType, TreeGroupView, ViewType} from './IController';
 import {configUtils, getExtensionConfiguration} from '../configurations';
 import {registerExtensionCustomContextByKey} from '../context';
 
 export type GroupedByFileType = BookmarkStoreType;
-
-export type TreeGroupView = 'file' | 'color' | 'default';
 
 export type GroupedByColorType = {
   color: BookmarkColor;

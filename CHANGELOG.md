@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.0.22
+
+### Patch Changes
+
+- 代码书签为颜色视图时, 支持书签分组拖拽
+
 ## 0.0.21
 
 ### Patch Changes
