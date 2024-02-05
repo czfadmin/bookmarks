@@ -8,27 +8,36 @@ import BaseTreeItem from './BaseTreeItem';
 import {BookmarkMeta, BookmarkStoreType} from '../types';
 import gutters, {getTagGutters} from '../gutter';
 import {getLineInfoStrFromBookmark} from '../utils';
-import {getExtensionConfiguration} from '../configurations';
 import {CMD_GO_TO_SOURCE_LOCATION} from '../constants';
 import {GroupedByColorType} from '@/controllers/BookmarksController';
+import ConfigService from '../services/ConfigService';
 
 export default class BookmarksTreeItem extends BaseTreeItem {
   public meta: BookmarkStoreType | BookmarkMeta | GroupedByColorType;
+
+  private _configService: ConfigService;
 
   constructor(
     label: string,
     collapsibleState: TreeItemCollapsibleState,
     contextValue: string,
     meta: BookmarkStoreType | BookmarkMeta | GroupedByColorType,
+    configService: ConfigService,
   ) {
     super(label, collapsibleState, contextValue);
     this.meta = meta;
+    this._configService = configService;
+
     if (this.contextValue === 'color') {
       this.label = label;
     } else if (this.contextValue === 'file') {
+      const _meta = this.meta as BookmarkMeta;
       this._resolveFileOverview();
+      const filenameArr = _meta.fileName.split('\\');
+      this.label = filenameArr[filenameArr.length - 1];
+      this.description = label;
     } else {
-      if (getExtensionConfiguration().enableClick) {
+      if (this._configService.configuration.enableClick) {
         this.command = {
           title: l10n.t('Jump to bookmark position'),
           command: `bookmark-manager.${CMD_GO_TO_SOURCE_LOCATION}`,
@@ -56,6 +65,7 @@ export default class BookmarksTreeItem extends BaseTreeItem {
         : gutters[meta.color] || gutters['default'];
     }
   }
+
   /**
    * 为书签创建 提示信息
    */

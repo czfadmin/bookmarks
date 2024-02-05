@@ -14,10 +14,6 @@ import {
   TextDocumentChangeEvent,
   l10n,
 } from 'vscode';
-import {
-  updateActiveEditorAllDecorations,
-  updateDecorationsByEditor,
-} from '../decorations';
 import {getAllColors} from '../configurations';
 import gutters, {getTagGutters} from '../gutter';
 import {BookmarkMeta, LineBookmarkContext} from '../types';
@@ -49,7 +45,6 @@ export function checkIfBookmarkIsInGivenSelectionAndRemove(
       controller.remove(item.id);
     }
   }
-  updateDecorationsByEditor(editor);
   return matched.length > 0;
 }
 
@@ -231,14 +226,12 @@ export function editBookmarkDescription(bookmark: BookmarkMeta, memo: string) {
       hoverMessage: createHoverMessage(bookmark, true, true),
     },
   });
-  updateActiveEditorAllDecorations();
   controller.refresh();
 }
 
 export function editBookmarkLabel(bookmark: BookmarkMeta, label: string) {
   const controller = resolveBookmarkController();
   controller.editLabel(bookmark, label);
-  updateActiveEditorAllDecorations();
   controller.refresh();
 }
 
@@ -347,7 +340,6 @@ export async function toggleBookmark(
 
   bookmark.rangesOrOptions.hoverMessage = createHoverMessage(bookmark, true);
   controller.add(bookmark);
-  updateDecorationsByEditor(editor);
 }
 /**
  * 删除行标签
@@ -371,7 +363,6 @@ export function deleteBookmark(context: LineBookmarkContext) {
     return;
   }
   controller.remove(bookmark.id);
-  updateDecorationsByEditor(editor);
 }
 
 /**

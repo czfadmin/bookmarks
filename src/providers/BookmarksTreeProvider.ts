@@ -4,6 +4,7 @@ import {ProviderResult, Selection, TreeItemCollapsibleState} from 'vscode';
 import {BookmarkMeta, BookmarkStoreRootType, BookmarkStoreType} from '../types';
 import {resolveBookmarkController} from '../bootstrap';
 import BookmarksController from '@/controllers/BookmarksController';
+import {ServiceManager} from '../services/ServiceManager';
 
 export class BookmarksTreeProvider extends BaseTreeProvider<
   BookmarksTreeItem,
@@ -54,6 +55,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
           TreeItemCollapsibleState.Collapsed,
           'file',
           it,
+          this.configService,
         );
       });
 
@@ -75,6 +77,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
             ...it,
             selection,
           },
+          this.configService,
         );
       });
       return Promise.resolve(children);
@@ -101,6 +104,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
             ...it,
             selection,
           },
+          this.configService,
         );
       });
       return Promise.resolve(children);
@@ -116,6 +120,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
           TreeItemCollapsibleState.Collapsed,
           'color',
           it,
+          this.configService,
         );
       });
 
@@ -137,6 +142,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
             ...it,
             selection,
           },
+          this.configService,
         );
       });
       return Promise.resolve(children);

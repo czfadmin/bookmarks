@@ -22,7 +22,6 @@ import {
   CMD_OPEN_IN_EDITOR,
 } from '../constants';
 
-import {updateActiveEditorAllDecorations} from '../decorations';
 import {BookmarkMeta, LineBookmarkContext} from '../types';
 
 import {
@@ -151,11 +150,12 @@ function toggleLineBookmarkWithColor() {
  */
 function clearAllBookmarks() {
   registerCommand(CMD_CLEAR_ALL, args => {
-    updateActiveEditorAllDecorations(true);
     let fileUri,
       clearAll = false;
     const controller = resolveBookmarkController();
-    if (!controller) {return;}
+    if (!controller) {
+      return;
+    }
     if (args && args.meta) {
       fileUri = args.meta.fileUri;
       controller.clearAllBookmarkInFile(fileUri);
@@ -163,7 +163,6 @@ function clearAllBookmarks() {
       controller.clearAll();
       clearAll = true;
     }
-    updateActiveEditorAllDecorations(clearAll);
   });
 }
 /**
@@ -177,19 +176,16 @@ function deleteBookmarkCMD() {
       if (!context || !controller) {
         return;
       }
-      updateActiveEditorAllDecorations(true);
       // 从treeView中执行此命令
       if ('meta' in context && 'color' in context.meta) {
         const _meta = context.meta as BookmarkMeta;
         controller.remove(_meta.id);
-        updateActiveEditorAllDecorations();
         return;
       }
       // 从`decoration`或者`command palette`那边删除调用此命令
       if (!('bookmarks' in context)) {
         deleteBookmark(context as LineBookmarkContext);
       }
-      updateActiveEditorAllDecorations();
     },
   );
 }
@@ -287,11 +283,12 @@ function changeBookmarkColor() {
         return;
       }
       const controller = resolveBookmarkController();
-      if (!controller) {return;}
+      if (!controller) {
+        return;
+      }
       controller.update(bookmark.id, {
         color: newColor,
       });
-      updateActiveEditorAllDecorations();
     },
   );
 }
@@ -303,10 +300,11 @@ function clearAllBookmarksInCurrentFile() {
   registerCommand('clearAllBookmarksInCurrentFile', async args => {
     const activedEditor = window.activeTextEditor;
     const controller = resolveBookmarkController();
-    if (!activedEditor || !controller) {return;}
+    if (!activedEditor || !controller) {
+      return;
+    }
     if (checkIfBookmarksIsInCurrentEditor(activedEditor)) {
       controller.clearAllBookmarkInFile(activedEditor.document.uri);
-      updateActiveEditorAllDecorations();
     }
   });
 }
@@ -354,9 +352,13 @@ export function listBookmarksInCurrentFile() {
       const editor = window.activeTextEditor;
       const controller = resolveBookmarkController();
       const bookmarkDS = controller.datasource;
-      if (!editor || !bookmarkDS) {return;}
+      if (!editor || !bookmarkDS) {
+        return;
+      }
       const bookmarks = getBookmarksFromFileUri(editor.document.uri);
-      if (!bookmarks.length) {return;}
+      if (!bookmarks.length) {
+        return;
+      }
       const tagGutters = getTagGutters();
       const pickItems = bookmarks.map((it: any) => {
         const iconPath = it.label

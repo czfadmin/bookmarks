@@ -26,8 +26,12 @@ import {
 import {EXTENSION_ID} from '../constants';
 
 import IController, {SortType, TreeGroupView, ViewType} from './IController';
-import {configUtils, getExtensionConfiguration} from '../configurations';
+import {configUtils} from '../configurations';
 import {registerExtensionCustomContextByKey} from '../context';
+import ConfigService from '../services/ConfigService';
+import resolveServiceManager, {
+  ServiceManager,
+} from '../services/ServiceManager';
 
 export type GroupedByFileType = BookmarkStoreType;
 
@@ -56,6 +60,10 @@ export default class BookmarksController implements IController {
   private _watcher: FileSystemWatcher | undefined;
 
   private _configuration: BookmarkManagerConfigure;
+
+  private _configService: ConfigService;
+
+  private _serviceManager: ServiceManager;
 
   public onDidChangeEvent: Event<void> = this._onDidChangeEvent.event;
 
@@ -97,13 +105,29 @@ export default class BookmarksController implements IController {
 
   constructor(context: ExtensionContext) {
     this._context = context;
-    this._configuration = getExtensionConfiguration();
+    this._serviceManager = resolveServiceManager();
+    this._configService = this._serviceManager.configService;
+    this._configuration = this._configService.configuration;
     this._initial();
   }
 
   private async _initial() {
     this.viewType = configUtils.getValue('code.viewType', 'tree');
     this.groupView = configUtils.getValue('code.groupView', 'file');
+
+    this._configService.onExtensionConfigChange(configuration => {
+      this._configuration = configuration;
+    });
+
+    this._configService.onDidChangeConfiguration(ev => {
+      if (!ev.affectsConfiguration(`${EXTENSION_ID}.createJsonFile`)) {
+        return;
+      }
+      this._initialDatasource();
+      if (!this._configuration.createJsonFile) {
+        this._watcher?.dispose();
+      }
+    });
 
     registerExtensionCustomContextByKey(
       'code.viewAsTree',
@@ -114,19 +138,6 @@ export default class BookmarksController implements IController {
 
     this._initialDatasource();
     this._initialWatcher();
-
-    this._disposables.push(
-      workspace.onDidChangeConfiguration(ev => {
-        if (!ev.affectsConfiguration(`${EXTENSION_ID}.createJsonFile`)) {
-          return;
-        }
-        this._configuration = getExtensionConfiguration();
-        this._initialDatasource();
-        if (!this._configuration.createJsonFile) {
-          this._watcher?.dispose();
-        }
-      }),
-    );
   }
 
   private async _initialDatasource() {
@@ -418,7 +429,6 @@ export default class BookmarksController implements IController {
       it => it.fileId !== fileUri.fsPath,
     );
     this.save();
-    this.refresh();
   }
 
   save(store?: BookmarkStoreRootType) {
@@ -529,6 +539,7 @@ export default class BookmarksController implements IController {
   }
 
   private _fire() {
+    this._serviceManager.decorationService.updateActiveEditorAllDecorations();
     this._onDidChangeEvent.fire();
   }
 }

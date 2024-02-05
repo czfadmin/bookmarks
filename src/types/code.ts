@@ -14,6 +14,7 @@ export interface BookmarkMeta extends BaseMeta {
   selectionContent?: string;
   description?: string;
   languageId?: string;
+  tag?: string;
   workspaceFolder?: WorkspaceFolder;
   rangesOrOptions: DecorationOptions;
 }

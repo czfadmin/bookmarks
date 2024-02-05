@@ -100,7 +100,7 @@ export function addUniversalBookmark() {
 function deleteUniversalBookmark() {
   registerCommand('deleteUniversalBookmark', async (ctx: UniversalContext) => {
     const {meta} = ctx;
-    if (!meta) return;
+    if (!meta) {return;}
 
     const controller = resolveUniversalController();
     controller.remove(meta.id);
@@ -136,7 +136,7 @@ function changeUniversalBookmarkColor() {
         placeHolder: l10n.t('Please select bookmark color'),
         canPickMany: false,
       });
-      if (!choosedColor) return;
+      if (!choosedColor) {return;}
       const controller = resolveUniversalController();
       controller.update(meta.id, {
         color: choosedColor.label,
@@ -150,7 +150,7 @@ function editUniversalBookmarkLabel() {
     'editUniversalBookmarkLabel',
     async (ctx: UniversalContext) => {
       const {meta} = ctx;
-      if (!meta) return;
+      if (!meta) {return;}
 
       const input = await window.showInputBox({
         placeHolder: l10n.t('Type a label for your bookmarks'),
@@ -169,13 +169,14 @@ function editUniversalBookmarkLabel() {
     },
   );
 }
+
 /**
  * 复制命令
  */
 function copyUniversalBookmarkCommand() {
   registerCommand('copyUniversalBookmarkContent', (ctx: UniversalContext) => {
     const {meta} = ctx;
-    if (!meta) return;
+    if (!meta) {return;}
     const content = meta[meta.type];
     const clipboard = env.clipboard;
     clipboard.writeText(content);
@@ -189,7 +190,7 @@ function copyUniversalBookmarkCommand() {
 function openUniversalLink() {
   registerCommand('openUniversalLink', (ctx: UniversalBookmarkMeta) => {
     const {meta} = ctx;
-    if (!meta || meta.type !== 'link') return;
+    if (!meta || meta.type !== 'link') {return;}
     const link = meta[meta.type];
   });
 }

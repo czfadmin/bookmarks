@@ -3,7 +3,9 @@ import BaseTreeProvider from '@/providers/BaseTreeProvider';
 import {Disposable, TreeDragAndDropController, TreeView, window} from 'vscode';
 import {dispose} from '../utils';
 import IController from '@/controllers/IController';
-import {updateActiveEditorAllDecorations} from '../decorations';
+import resolveServiceManager, {
+  ServiceManager,
+} from '../services/ServiceManager';
 export enum TreeViewEnum {
   BASE = 0,
   UNIVERSAL,
@@ -27,6 +29,7 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
 
   private _draggingSource: T[] = [];
 
+  private _serviceManager: ServiceManager;
   get disposables() {
     return this._disposables;
   }
@@ -46,6 +49,7 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
   constructor(viewName: string, provider: BaseTreeProvider<T, C>) {
     this._controller = provider.controller;
     this._provider = provider;
+    this._serviceManager = resolveServiceManager();
     const self = this;
     this._dndController = {
       dragMimeTypes: ['application/vnd.code.tree.bookmark-manager'],
@@ -89,7 +93,7 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
     this.disposables.push(
       this.controller.onDidChangeEvent(() => {
         this.provider.refresh();
-        updateActiveEditorAllDecorations();
+        this._serviceManager.decorationService.updateActiveEditorAllDecorations();
       }),
     );
   }
