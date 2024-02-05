@@ -308,7 +308,8 @@
           "description": "%bookmark-manager.colors.description%",
           "additionalProperties": {
             "type": "string"
-          }
+          },
+          "default": {}
         },
         "bookmark-manager.defaultBookmarkIconColor": {
           "type": "string",
@@ -324,19 +325,12 @@
           "type": "boolean",
           "description": "%bookmark-manager.createJsonFile.description%",
           "default": false
+        },
+        "bookmark-manager.useBuiltInColors": {
+          "type": "boolean",
+          "default": true,
+          "description": "%bookmark-manager.useBuiltInColors%"
         }
-      }
-    },
-    "configurationDefaults": {
-      "bookmark-manager.colors": {
-        "red": "red",
-        "green": "green",
-        "blue": "blue",
-        "white": "white",
-        "yellow": "yellow",
-        "orange": "orange",
-        "purple": "purple",
-        "black": "black"
       }
     },
     "menus": {

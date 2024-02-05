@@ -8,7 +8,7 @@ import {
 import BaseTreeItem from './BaseTreeItem';
 import {BookmarkManagerConfigure} from '../types';
 import {getRelativePath} from '../utils';
-import IController from '@/controllers/IController';
+import IController from '../controllers/IController';
 import resolveServiceManager, {
   ServiceManager,
 } from '../services/ServiceManager';

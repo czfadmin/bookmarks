@@ -4,7 +4,7 @@ import BaseTreeProvider from './BaseTreeProvider';
 import {UniversalTreeItem} from './UniversalTreeItem';
 import UniversalBookmarkController, {
   UniversalStoreType,
-} from '@/controllers/UniversalBookmarkController';
+} from '../controllers/UniversalBookmarkController';
 
 export class UniversalTreeProvider extends BaseTreeProvider<
   UniversalTreeItem,

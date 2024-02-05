@@ -1,13 +1,13 @@
-import {QuickPickItem, ThemeIcon, commands, env, l10n, window} from 'vscode';
+import {QuickPickItem, ThemeIcon, env, l10n, window} from 'vscode';
 import {registerCommand} from '../utils';
 import {resolveUniversalController} from '../bootstrap';
 import {
   UniversalBookmarkMeta,
   UniversalBookmarkType,
-} from '@/controllers/UniversalBookmarkController';
-import {getAllColors} from '../configurations';
+} from '../controllers/UniversalBookmarkController';
 import gutters from '../gutter';
-import {UniversalTreeItem} from '@/providers/UniversalTreeItem';
+import {UniversalTreeItem} from '../providers/UniversalTreeItem';
+import resolveServiceManager from '../services/ServiceManager';
 
 export type UniversalContext = UniversalTreeItem;
 
@@ -63,6 +63,7 @@ function resolveIcon(type: string) {
 }
 
 export function addUniversalBookmark() {
+  const sm = resolveServiceManager();
   registerCommand('addUniversalBookmark', async (ctx: any) => {
     const selectedType = await window.showQuickPick(universalTypePickItems, {
       title: '请选择类型',
@@ -77,7 +78,7 @@ export function addUniversalBookmark() {
     let newBookmark: Partial<UniversalBookmarkMeta> = {
       label: input || '',
       type: selectedType.label as UniversalBookmarkType,
-      color: getAllColors()['default'],
+      color: sm.configService.colors['default'],
     } as UniversalBookmarkMeta;
 
     newBookmark.icon = resolveIcon(newBookmark.type as string);
@@ -100,7 +101,9 @@ export function addUniversalBookmark() {
 function deleteUniversalBookmark() {
   registerCommand('deleteUniversalBookmark', async (ctx: UniversalContext) => {
     const {meta} = ctx;
-    if (!meta) {return;}
+    if (!meta) {
+      return;
+    }
 
     const controller = resolveUniversalController();
     controller.remove(meta.id);
@@ -115,6 +118,7 @@ function clearAllUniversalBookmarks() {
 }
 
 function changeUniversalBookmarkColor() {
+  const sm = resolveServiceManager();
   registerCommand(
     'changeUniversalBookmarkColor',
     async (ctx: UniversalContext) => {
@@ -122,7 +126,7 @@ function changeUniversalBookmarkColor() {
       if (!meta) {
         return;
       }
-      const colors = getAllColors();
+      const colors = sm.configService.colors;
       const pickItems = Object.keys(colors).map(color => {
         return {
           label: color,
@@ -136,7 +140,9 @@ function changeUniversalBookmarkColor() {
         placeHolder: l10n.t('Please select bookmark color'),
         canPickMany: false,
       });
-      if (!choosedColor) {return;}
+      if (!choosedColor) {
+        return;
+      }
       const controller = resolveUniversalController();
       controller.update(meta.id, {
         color: choosedColor.label,
@@ -150,7 +156,9 @@ function editUniversalBookmarkLabel() {
     'editUniversalBookmarkLabel',
     async (ctx: UniversalContext) => {
       const {meta} = ctx;
-      if (!meta) {return;}
+      if (!meta) {
+        return;
+      }
 
       const input = await window.showInputBox({
         placeHolder: l10n.t('Type a label for your bookmarks'),
@@ -176,7 +184,9 @@ function editUniversalBookmarkLabel() {
 function copyUniversalBookmarkCommand() {
   registerCommand('copyUniversalBookmarkContent', (ctx: UniversalContext) => {
     const {meta} = ctx;
-    if (!meta) {return;}
+    if (!meta) {
+      return;
+    }
     const content = meta[meta.type];
     const clipboard = env.clipboard;
     clipboard.writeText(content);
@@ -190,7 +200,9 @@ function copyUniversalBookmarkCommand() {
 function openUniversalLink() {
   registerCommand('openUniversalLink', (ctx: UniversalBookmarkMeta) => {
     const {meta} = ctx;
-    if (!meta || meta.type !== 'link') {return;}
+    if (!meta || meta.type !== 'link') {
+      return;
+    }
     const link = meta[meta.type];
   });
 }

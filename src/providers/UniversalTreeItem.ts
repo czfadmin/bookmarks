@@ -1,4 +1,4 @@
-import {UniversalBookmarkMeta} from '@/controllers/UniversalBookmarkController';
+import {UniversalBookmarkMeta} from '../controllers/UniversalBookmarkController';
 import BaseTreeItem from './BaseTreeItem';
 import {ThemeIcon, TreeItemCollapsibleState} from 'vscode';
 

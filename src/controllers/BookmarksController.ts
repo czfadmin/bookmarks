@@ -26,7 +26,6 @@ import {
 import {EXTENSION_ID} from '../constants';
 
 import IController, {SortType, TreeGroupView, ViewType} from './IController';
-import {configUtils} from '../configurations';
 import {registerExtensionCustomContextByKey} from '../context';
 import ConfigService from '../services/ConfigService';
 import resolveServiceManager, {
@@ -112,8 +111,11 @@ export default class BookmarksController implements IController {
   }
 
   private async _initial() {
-    this.viewType = configUtils.getValue('code.viewType', 'tree');
-    this.groupView = configUtils.getValue('code.groupView', 'file');
+    this.viewType = this._configService.getGlobalValue('code.viewType', 'tree');
+    this.groupView = this._configService.getGlobalValue(
+      'code.groupView',
+      'file',
+    );
 
     this._configService.onExtensionConfigChange(configuration => {
       this._configuration = configuration;
@@ -471,7 +473,7 @@ export default class BookmarksController implements IController {
 
   changeViewType(viewType: ViewType) {
     this.viewType = viewType;
-    configUtils.updateValue('code.viewType', viewType);
+    this._configService.updateGlobalValue('code.viewType', viewType);
 
     registerExtensionCustomContextByKey(
       'code.viewAsTree',
@@ -483,7 +485,7 @@ export default class BookmarksController implements IController {
 
   changeGroupView(groupType: TreeGroupView) {
     this.groupView = groupType;
-    configUtils.updateValue('code.groupView', groupType);
+    this._configService.updateGlobalValue('code.groupView', groupType);
     this._changeView();
 
     this.refresh();

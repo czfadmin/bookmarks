@@ -14,10 +14,11 @@ import {
   TextDocumentChangeEvent,
   l10n,
 } from 'vscode';
-import {getAllColors} from '../configurations';
 import gutters, {getTagGutters} from '../gutter';
 import {BookmarkMeta, LineBookmarkContext} from '../types';
 import {resolveBookmarkController} from '../bootstrap';
+import resolveServiceManager from '../services/ServiceManager';
+import {defaultColors} from '../constants/colors';
 
 const REGEXP_NEWLINE = /(\r\n)|(\n)/g;
 /**
@@ -389,7 +390,14 @@ export function getSelectionFromLine(
  * @returns 用户选取的颜色
  */
 export async function chooseBookmarkColor() {
-  const colors = getAllColors();
+  const sm = resolveServiceManager();
+  let colors = {...sm.configService.colors};
+  if (
+    !sm.configService.configuration.useBuiltInColors &&
+    sm.configService.configuration.colors.length
+  ) {
+    Object.keys(defaultColors).forEach(it => delete colors[it]);
+  }
   const pickItems = Object.keys(colors).map(color => {
     return {
       label: color,

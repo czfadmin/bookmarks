@@ -9,7 +9,7 @@ import {BookmarkMeta, BookmarkStoreType} from '../types';
 import gutters, {getTagGutters} from '../gutter';
 import {getLineInfoStrFromBookmark} from '../utils';
 import {CMD_GO_TO_SOURCE_LOCATION} from '../constants';
-import {GroupedByColorType} from '@/controllers/BookmarksController';
+import {GroupedByColorType} from '../controllers/BookmarksController';
 import ConfigService from '../services/ConfigService';
 
 export default class BookmarksTreeItem extends BaseTreeItem {

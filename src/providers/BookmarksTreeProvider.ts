@@ -3,7 +3,7 @@ import BaseTreeProvider from './BaseTreeProvider';
 import {ProviderResult, Selection, TreeItemCollapsibleState} from 'vscode';
 import {BookmarkMeta, BookmarkStoreRootType, BookmarkStoreType} from '../types';
 import {resolveBookmarkController} from '../bootstrap';
-import BookmarksController from '@/controllers/BookmarksController';
+import BookmarksController from '../controllers/BookmarksController';
 import {ServiceManager} from '../services/ServiceManager';
 
 export class BookmarksTreeProvider extends BaseTreeProvider<

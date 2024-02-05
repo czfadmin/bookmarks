@@ -12,7 +12,6 @@ import {
   updateFilesRenameAndDeleteListeners,
   updateTextEditorSelectionListener,
 } from './events';
-import {updateStatusBarItem} from './statusbar';
 import {registerCodeCommands, registerUniversalCommands} from './commands';
 import {registerTelemetryLogger} from './utils';
 import logger from './utils/logger';
@@ -21,6 +20,7 @@ import resolveServiceManager, {
   ServiceManager,
   initServiceManager,
 } from './services/ServiceManager';
+import StatusbarService from './services/StatusbarService';
 
 let controllerManager: any = {};
 
@@ -51,16 +51,9 @@ function registerAllCommands() {
  * @param needRefresh 是否需要刷新书签的树视图
  */
 function updateEverything(needRefresh: boolean = true) {
-  if (!sm) {
-    sm = resolveServiceManager();
-  }
-  sm.decorationService.restoreDecorations();
-  sm.decorationService.updateActiveEditorAllDecorations();
-  updateStatusBarItem();
   updateCursorChangeListener();
   updateChangeActiveTextEditorListener();
   updateChangeVisibleTextEidtorsListener();
-
   updateBookmarkInfoWhenTextChangeListener();
   updateFilesRenameAndDeleteListeners();
   updateTextEditorSelectionListener();
@@ -86,6 +79,9 @@ export default function bootstrap(context: ExtensionContext) {
 
   initServiceManager(context);
   initialController(context);
+  const serviceManager = resolveServiceManager();
+  // 依赖bookmark controller 单独注册
+  serviceManager.registerStatusbarService();
 
   if (!sm) {
     sm = resolveServiceManager();

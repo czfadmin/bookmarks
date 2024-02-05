@@ -15,7 +15,6 @@ export interface CreateDecorationOptions {
   border: string;
   showOutline: boolean;
   outline: string;
-  createJsonFile: boolean;
 }
 
 export type BookmarkManagerConfigure = CreateDecorationOptions & {
@@ -24,4 +23,6 @@ export type BookmarkManagerConfigure = CreateDecorationOptions & {
   relativePath: boolean;
   enableClick: boolean;
   defaultBookmarkIconColor?: string;
+  createJsonFile: boolean;
+  useBuiltInColors: boolean;
 };

@@ -19,12 +19,11 @@ import {
   svgToUri,
   translate,
 } from '../utils';
-import {getAllColors} from '../configurations';
 import {DEFAULT_BOOKMARK_COLOR} from '../constants';
 import gutters, {getTagGutters} from '../gutter';
-import {ServiceManager} from './ServiceManager';
+import resolveServiceManager, {ServiceManager} from './ServiceManager';
 import {resolveBookmarkController} from '../bootstrap';
-import BookmarksController from '@/controllers/BookmarksController';
+import BookmarksController from '../controllers/BookmarksController';
 import logger from '../utils/logger';
 /**
  * 装饰器服务类
@@ -42,13 +41,20 @@ export default class DecorationService implements IDisposable {
 
   private _init() {
     this.restoreDecorations();
+    if (!this._serviceManager) {
+      this._serviceManager = resolveServiceManager();
+    }
+    this._serviceManager.configService.onDidChangeConfiguration(() => {
+      this.restoreDecorations();
+      this.updateActiveEditorAllDecorations();
+    });
   }
 
   restoreDecorations() {
     this.disposeAllDiscorations();
     this.decorations = {};
     this.tagDecorations = {};
-    const colors = getAllColors(true);
+    const colors = this._serviceManager.configService.getAllColors(true);
     const configService = this._serviceManager.configService;
 
     const options: CreateDecorationOptions =
@@ -73,7 +79,7 @@ export default class DecorationService implements IDisposable {
     hasTag: boolean = false,
     defaultColor: string = DEFAULT_BOOKMARK_COLOR,
   ) {
-    const colors = getAllColors();
+    const colors = this._serviceManager.configService.colors;
     const tagGutters = getTagGutters();
     let color = colors[colorLabel];
     let gutterIconPath = gutters[colorLabel];
@@ -240,7 +246,7 @@ export default class DecorationService implements IDisposable {
       return;
     }
     const bookmarks = controller.getBookmarkStoreByFileUri(editor.document.uri);
-    const colors = getAllColors();
+    const colors = this._serviceManager.configService.colors;
     const decorationsGroupByLevel: StringIndexType<any[]> = {};
     Object.keys(colors).forEach(color => {
       if (!decorationsGroupByLevel[color]) {
