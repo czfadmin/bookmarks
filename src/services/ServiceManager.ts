@@ -3,6 +3,7 @@ import ConfigService from './ConfigService';
 import DecorationService from './DecorationService';
 import {IDisposable} from '../utils';
 import StatusbarService from './StatusbarService';
+import GutterService from './GutterService';
 export interface IServiceManager {
   readonly configService: ConfigService;
   readonly decorationService: DecorationService;
@@ -13,6 +14,8 @@ let _serviceManager: ServiceManager;
 export class ServiceManager implements IServiceManager, IDisposable {
   readonly configService: ConfigService;
   readonly decorationService: DecorationService;
+
+  readonly gutterService: GutterService;
 
   private _statusbarService: StatusbarService | undefined;
   public get statusbarService(): StatusbarService | undefined {
@@ -27,6 +30,7 @@ export class ServiceManager implements IServiceManager, IDisposable {
   constructor(context: ExtensionContext) {
     this._context = context;
     this.configService = new ConfigService(this);
+    this.gutterService = new GutterService(this);
     this.decorationService = new DecorationService(this);
   }
 

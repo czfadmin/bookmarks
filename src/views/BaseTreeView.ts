@@ -1,8 +1,8 @@
-import BaseTreeItem from '@/providers/BaseTreeItem';
-import BaseTreeProvider from '@/providers/BaseTreeProvider';
+import BaseTreeItem from '../providers/BaseTreeItem';
+import BaseTreeProvider from '../providers/BaseTreeProvider';
 import {Disposable, TreeDragAndDropController, TreeView, window} from 'vscode';
 import {dispose} from '../utils';
-import IController from '@/controllers/IController';
+import IController from '../controllers/IController';
 import resolveServiceManager, {
   ServiceManager,
 } from '../services/ServiceManager';

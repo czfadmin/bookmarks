@@ -25,6 +25,7 @@ import resolveServiceManager, {ServiceManager} from './ServiceManager';
 import {resolveBookmarkController} from '../bootstrap';
 import BookmarksController from '../controllers/BookmarksController';
 import logger from '../utils/logger';
+
 /**
  * 装饰器服务类
  */
@@ -54,7 +55,7 @@ export default class DecorationService implements IDisposable {
     this.disposeAllDiscorations();
     this.decorations = {};
     this.tagDecorations = {};
-    const colors = this._serviceManager.configService.getAllColors(true);
+    const colors = this._serviceManager.configService.colors;
     const configService = this._serviceManager.configService;
 
     const options: CreateDecorationOptions =
@@ -81,9 +82,9 @@ export default class DecorationService implements IDisposable {
   ) {
     const colors = this._serviceManager.configService.colors;
     const tagGutters = getTagGutters();
-    let color = colors[colorLabel];
-    let gutterIconPath = gutters[colorLabel];
-    let tagGutterIconPath = tagGutters[colorLabel];
+    let color = colors[colorLabel] || colors['default'];
+    let gutterIconPath = gutters[colorLabel] || gutters['default'];
+    let tagGutterIconPath = tagGutters[colorLabel] || tagGutters['default'];
     // 用户配置
     const {
       fontWeight,

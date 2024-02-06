@@ -394,7 +394,7 @@ export async function chooseBookmarkColor() {
   let colors = {...sm.configService.colors};
   if (
     !sm.configService.configuration.useBuiltInColors &&
-    sm.configService.configuration.colors.length
+    Object.keys(sm.configService.customColors).length
   ) {
     Object.keys(defaultColors).forEach(it => delete colors[it]);
   }

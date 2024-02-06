@@ -3,6 +3,7 @@ import {
   Disposable,
   Event,
   EventEmitter,
+  WorkspaceConfiguration,
   commands,
   workspace,
 } from 'vscode';
@@ -30,9 +31,12 @@ export default class ConfigService implements Disposable {
     new EventEmitter<ConfigurationChangeEvent>();
   private _configuration: BookmarkManagerConfigure | undefined;
 
+  private _wsConfiguration: WorkspaceConfiguration | undefined;
   private _decorationConfiguration: CreateDecorationOptions | undefined;
 
   private _colors: StringIndexType<string> = {};
+
+  private _customColors: StringIndexType<string> = {};
 
   private _serviceManager: ServiceManager;
   onDidChangeConfiguration: Event<ConfigurationChangeEvent> =
@@ -42,6 +46,14 @@ export default class ConfigService implements Disposable {
 
   onExtensionConfigChange = this._onExtensionConfigChangeEvent.event;
 
+  get colors() {
+    return this._colors;
+  }
+
+  get customColors() {
+    return this._customColors;
+  }
+
   get configuration() {
     if (!this._configuration) {
       this._configuration = this._getExtensionConfiguration();
@@ -49,10 +61,9 @@ export default class ConfigService implements Disposable {
     return this._configuration;
   }
 
-  get colors() {
-    return this._colors;
+  get workspaceConfiguration() {
+    return this._wsConfiguration;
   }
-
   get decorationConfiguration() {
     if (!this._decorationConfiguration) {
       this._decorationConfiguration = this._getCreateDecorationOptions();
@@ -62,22 +73,31 @@ export default class ConfigService implements Disposable {
 
   constructor(sm: ServiceManager) {
     this._serviceManager = sm;
+    this._resolveWorkspaceConfiguration();
     workspace.onDidChangeConfiguration(ev => {
       if (!ev.affectsConfiguration(EXTENSION_ID)) {
         return;
       }
-
+      this._resolveWorkspaceConfiguration();
+      this._init();
       this.fire(ev);
     });
     this._init();
   }
 
+  private _resolveWorkspaceConfiguration() {
+    this._wsConfiguration = workspace.getConfiguration(EXTENSION_ID);
+  }
+
   private _init() {
     this._configuration = this._getExtensionConfiguration();
     this._registerContextKey();
-    this.getAllColors();
+    this.resolveAllColors(true);
   }
 
+  /**
+   * 将用户配置的内容注册到`context`中
+   */
   private _registerContextKey() {
     this._registerExtensionCustomContext();
     registerExtensionCustomContextByKey('toggleBookmarkWithSelection', false);
@@ -88,7 +108,7 @@ export default class ConfigService implements Disposable {
    * @returns 返回一个书签装饰的配置
    */
   private _getCreateDecorationOptions(): CreateDecorationOptions {
-    const configuration = this._getConfiguration();
+    const configuration = this._wsConfiguration!;
     return {
       showGutterIcon: configuration.get('showGutterIcon') || false,
       showGutterInOverviewRuler:
@@ -111,8 +131,14 @@ export default class ConfigService implements Disposable {
     } as CreateDecorationOptions;
   }
 
+  /**
+   * 获取插件的所有配置
+   *  - 装饰器配置
+   *  - 额外配置
+   * @returns
+   */
   private _getExtensionConfiguration(): BookmarkManagerConfigure {
-    const configuration = this._getConfiguration();
+    const configuration = this._wsConfiguration!;
     const createDecoration = this._getCreateDecorationOptions();
     return {
       ...createDecoration,
@@ -124,10 +150,6 @@ export default class ConfigService implements Disposable {
       createJsonFile: configuration.get('createJsonFile') || false,
       useBuiltInColors: configuration.get('useBuiltInColors') || false,
     };
-  }
-
-  private _getConfiguration() {
-    return workspace.getConfiguration(EXTENSION_ID);
   }
 
   /**
@@ -145,15 +167,17 @@ export default class ConfigService implements Disposable {
     registerExtensionCustomContextByKey('toggleBookmarkWithSelection', false);
   }
 
-  getAllColors(isRestore: boolean = false) {
+  resolveAllColors(isRestore: boolean = false) {
     if (!isRestore && Object.keys(this._colors).length) {
       return this._colors;
     }
 
     this._colors = {} as StringIndexType<string>;
-    const config = this._getConfiguration();
+    const config = this._wsConfiguration!;
 
-    Object.entries(config.get('colors') as object).filter(([key, value]) => {
+    this.resolveCustomColors();
+
+    Object.entries(this._customColors).forEach(([key, value]) => {
       if (typeof value === 'string') {
         this._colors[key] = value;
       }
@@ -162,10 +186,26 @@ export default class ConfigService implements Disposable {
     Object.entries(defaultColors).filter(([key, color]) => {
       this._colors[key] = color;
     });
+
     this._colors['default'] =
       config.get('defaultBookmarkIconColor') || DEFAULT_BOOKMARK_COLOR;
+
     return this._colors;
   }
+
+  /**
+   * 处理用户自定义的颜色(标签)配置
+   */
+  resolveCustomColors() {
+    const config = this._wsConfiguration!;
+    this._customColors = {} as StringIndexType<string>;
+    Object.entries(config.get('colors') as object).filter(([key, value]) => {
+      if (typeof value === 'string') {
+        this._customColors[key] = value;
+      }
+    });
+  }
+
   /**
    * 获取插件全局配置
    * @param key

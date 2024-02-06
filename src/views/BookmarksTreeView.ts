@@ -2,7 +2,7 @@ import {EXTENSION_VIEW_ID} from '../constants';
 import BookmarksTreeItem from '../providers/BookmarksTreeItem';
 import BaseTreeView, {TreeViewEnum} from './BaseTreeView';
 import {BookmarksTreeProvider} from '../providers/BookmarksTreeProvider';
-import BookmarksController from '@/controllers/BookmarksController';
+import BookmarksController from '../controllers/BookmarksController';
 
 export class BookmarksTreeView extends BaseTreeView<
   BookmarksTreeItem,
@@ -23,7 +23,7 @@ export class BookmarksTreeView extends BaseTreeView<
    * 构建treeView中的 Badge
    */
   private _buildViewBadge() {
-    if (this.type !== TreeViewEnum.CODE) return;
+    if (this.type !== TreeViewEnum.CODE) {return;}
     const totalBookmarksNum = this.controller.totalCount;
     this.bookmarkTreeView.badge =
       totalBookmarksNum === 0

@@ -1,8 +1,8 @@
-import {UniversalTreeItem} from '@/providers/UniversalTreeItem';
+import {UniversalTreeItem} from '../providers/UniversalTreeItem';
 import BaseTreeView, {TreeViewEnum} from './BaseTreeView';
 import {UniversalTreeProvider} from '../providers/UniversalTreeProvider';
 import {EXTENSION_UNIVERSAL_VIEW_ID} from '../constants';
-import UniversalBookmarkController from '@/controllers/UniversalBookmarkController';
+import UniversalBookmarkController from '../controllers/UniversalBookmarkController';
 
 /**
  * 通用的书签视图
