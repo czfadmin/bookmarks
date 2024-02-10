@@ -14,7 +14,6 @@ import {
   TextDocumentChangeEvent,
   l10n,
 } from 'vscode';
-import gutters, {getTagGutters} from '../gutter';
 import {BookmarkMeta, LineBookmarkContext} from '../types';
 import {resolveBookmarkController} from '../bootstrap';
 import resolveServiceManager from '../services/ServiceManager';
@@ -227,13 +226,11 @@ export function editBookmarkDescription(bookmark: BookmarkMeta, memo: string) {
       hoverMessage: createHoverMessage(bookmark, true, true),
     },
   });
-  controller.refresh();
 }
 
 export function editBookmarkLabel(bookmark: BookmarkMeta, label: string) {
   const controller = resolveBookmarkController();
   controller.editLabel(bookmark, label);
-  controller.refresh();
 }
 
 /**
@@ -339,7 +336,11 @@ export async function toggleBookmark(
     },
   };
 
-  bookmark.rangesOrOptions.hoverMessage = createHoverMessage(bookmark, true);
+  bookmark.rangesOrOptions.hoverMessage = createHoverMessage(
+    bookmark,
+    true,
+    true,
+  );
   controller.add(bookmark);
 }
 /**
@@ -391,17 +392,21 @@ export function getSelectionFromLine(
  */
 export async function chooseBookmarkColor() {
   const sm = resolveServiceManager();
-  let colors = {...sm.configService.colors};
+  const gutterService = sm.gutterService;
+  const colors = {...sm.configService.colors};
   if (
     !sm.configService.configuration.useBuiltInColors &&
     Object.keys(sm.configService.customColors).length
   ) {
     Object.keys(defaultColors).forEach(it => delete colors[it]);
   }
+
   const pickItems = Object.keys(colors).map(color => {
     return {
       label: color,
-      iconPath: gutters[color] || gutters['default'],
+      iconPath: (
+        gutterService.gutters[color] || gutterService.gutters['default']
+      ).iconPath,
     } as QuickPickItem;
   });
   const choosedColor = await window.showQuickPick(pickItems, {
@@ -419,22 +424,24 @@ export async function chooseBookmarkColor() {
  */
 export async function quicklyJumpToBookmark() {
   const controller = resolveBookmarkController();
+  const sm = resolveServiceManager();
+  const gutters = sm.gutterService.gutters;
+  const tagGutters = sm.gutterService.tagGutters;
   if (!controller || !controller.datasource) {
     return;
   }
-  const tagGutters = getTagGutters();
 
   const pickItems = controller.datasource.bookmarks.map(it => {
     const iconPath = it.label
-      ? tagGutters[it.color] || tagGutters['default']
-      : gutters[it.color] || (tagGutters['default'] as any);
+      ? (tagGutters[it.color] || tagGutters['default']).iconPath
+      : (gutters[it.color] || (tagGutters['default'] as any)).iconPath;
     return {
       filename: it.fileName || '',
       label:
         it.label || it.description || it.selectionContent?.slice(0, 120) || '',
       description: getLineInfoStrFromBookmark(it),
       detail: it.fileName,
-      iconPath: iconPath,
+      iconPath: iconPath as any,
       meta: {
         ...it,
         selection: new Selection(it.selection.anchor, it.selection.active),
@@ -488,9 +495,11 @@ export function createHoverMessage(
   const {
     rangesOrOptions: {hoverMessage: _hoverMessage},
   } = bookmark;
+
   let markdownString = isRestore
     ? new MarkdownString('', true)
     : _hoverMessage || new MarkdownString('', true);
+
   if (Array.isArray(markdownString)) {
     const _markdownString = new MarkdownString('', true);
     appendMarkdown(bookmark, _markdownString, showExtIcon);

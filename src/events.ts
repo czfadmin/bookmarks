@@ -157,7 +157,9 @@ export function updateBookmarkInfoWhenTextChangeListener() {
     // 代表存在文档发生变化
     if (contentChanges.length) {
       const bookmarks = controller.getBookmarkStoreByFileUri(document.uri);
-      if (!bookmarks.length) {return;}
+      if (!bookmarks.length) {
+        return;
+      }
       for (let change of contentChanges) {
         updateBookmarksGroupByChangedLine(e, change);
       }
@@ -201,11 +203,15 @@ export function updateFilesRenameAndDeleteListeners() {
   // 监听文件删除
   onDidDeleteFilesDisposable = workspace.onDidDeleteFiles(e => {
     const {files} = e;
+    const excludeFolders = ['node_modules', '.vscode', 'dist', '.git'];
     if (!files.length) {
       return;
     }
-    let file;
-    for (file of files) {
+    let file,
+      _files = files.filter(
+        it => !excludeFolders.some(folder => it.fsPath.includes(folder)),
+      );
+    for (file of _files) {
       controller.clearAllBookmarkInFile(file);
     }
   });
@@ -219,7 +225,9 @@ export function updateTextEditorSelectionListener() {
   onDidTextSelectionDisposable?.dispose();
   onDidTextSelectionDisposable = window.onDidChangeTextEditorSelection(ev => {
     const editor = ev.textEditor;
-    if (!editor) {return;}
+    if (!editor) {
+      return;
+    }
     const selection = editor.selection;
     registerExtensionCustomContextByKey(
       'editorHasSelection',

@@ -1,8 +1,13 @@
 import {Disposable, Uri} from 'vscode';
 import {ServiceManager} from './ServiceManager';
+import {createBookmarkIcon, createTagIcon, svgToUri} from '../utils';
+import {DEFAULT_BOOKMARK_COLOR} from '../constants';
 
 export interface Gutter {
-  [key: string]: Uri | string;
+  [key: string]: {
+    color: string;
+    iconPath: Uri | string;
+  };
 }
 
 /**
@@ -30,7 +35,23 @@ export default class GutterService implements Disposable {
     });
   }
 
-  private _initial() {}
+  /**
+   * 初始化gutter
+   */
+  private _initial() {
+    const configService = this._sm.configService;
+    const colors = configService.colors;
+    Object.entries(colors).forEach(([key, value]) => {
+      this._gutters[key] = {
+        color: value,
+        iconPath: svgToUri(createBookmarkIcon(value || DEFAULT_BOOKMARK_COLOR)),
+      };
+      this._tagGutters[key] = {
+        color: value,
+        iconPath: svgToUri(createTagIcon(value || DEFAULT_BOOKMARK_COLOR)),
+      };
+    });
+  }
 
   dispose() {}
 }

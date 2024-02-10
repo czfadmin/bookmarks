@@ -9,18 +9,9 @@ import {
   BookmarkColor,
   BookmarkDecorationKey,
   BookmarkMeta,
-  CreateDecorationOptions,
   StringIndexType,
 } from '../types';
-import {
-  IDisposable,
-  createBookmarkIcon,
-  createTagIcon,
-  svgToUri,
-  translate,
-} from '../utils';
-import {DEFAULT_BOOKMARK_COLOR} from '../constants';
-import gutters, {getTagGutters} from '../gutter';
+import {IDisposable, translate} from '../utils';
 import resolveServiceManager, {ServiceManager} from './ServiceManager';
 import {resolveBookmarkController} from '../bootstrap';
 import BookmarksController from '../controllers/BookmarksController';
@@ -55,14 +46,12 @@ export default class DecorationService implements IDisposable {
     this.disposeAllDiscorations();
     this.decorations = {};
     this.tagDecorations = {};
-    const colors = this._serviceManager.configService.colors;
     const configService = this._serviceManager.configService;
+    const colors = configService.colors;
 
-    const options: CreateDecorationOptions =
-      configService.decorationConfiguration;
     Object.keys(colors).forEach(item => {
-      this.decorations[item] = this.createDecoration(item, options);
-      this.tagDecorations[item] = this.createDecoration(item, options, true);
+      this.decorations[item] = this.createDecoration(item);
+      this.tagDecorations[item] = this.createDecoration(item, true);
     });
   }
 
@@ -71,20 +60,17 @@ export default class DecorationService implements IDisposable {
    * @param colorLabel
    * @param options
    * @param hasTag
-   * @param defaultColor
    * @returns
    */
-  createDecoration(
-    colorLabel: string,
-    options: CreateDecorationOptions,
-    hasTag: boolean = false,
-    defaultColor: string = DEFAULT_BOOKMARK_COLOR,
-  ) {
+  createDecoration(colorLabel: string, hasTag: boolean = false) {
     const colors = this._serviceManager.configService.colors;
-    const tagGutters = getTagGutters();
+    const gutters = this._serviceManager.gutterService.gutters;
+    const tagGutters = this._serviceManager.gutterService.tagGutters;
     let color = colors[colorLabel] || colors['default'];
-    let gutterIconPath = gutters[colorLabel] || gutters['default'];
-    let tagGutterIconPath = tagGutters[colorLabel] || tagGutters['default'];
+    let gutterIconPath = (gutters[colorLabel] || gutters['default']).iconPath;
+    let tagGutterIconPath = (tagGutters[colorLabel] || tagGutters['default'])
+      .iconPath;
+
     // 用户配置
     const {
       fontWeight,
@@ -101,18 +87,7 @@ export default class DecorationService implements IDisposable {
       border,
       showOutline,
       outline,
-    } = options;
-
-    if (!gutterIconPath && !hasTag) {
-      gutterIconPath = svgToUri(createBookmarkIcon(color || defaultColor));
-      // 初始化gutter 颜色
-      gutters[colorLabel] = gutterIconPath;
-    }
-
-    if (!tagGutterIconPath && hasTag) {
-      tagGutterIconPath = svgToUri(createTagIcon(color || defaultColor));
-      tagGutters[colorLabel] = tagGutterIconPath;
-    }
+    } = this._serviceManager.configService.decorationConfiguration;
 
     let overviewRulerColor;
     let overviewRulerLane: OverviewRulerLane | undefined = undefined;
@@ -223,6 +198,7 @@ export default class DecorationService implements IDisposable {
         tagRangeOrOptions,
       );
       const noTagRangeOrOptions = this.createRangeOrOptions(noLabelBookmarks);
+
       editor?.setDecorations(
         this.decorations[options.color] || this.decorations['default'],
         noTagRangeOrOptions,
@@ -247,9 +223,16 @@ export default class DecorationService implements IDisposable {
       return;
     }
     const bookmarks = controller.getBookmarkStoreByFileUri(editor.document.uri);
-    const colors = this._serviceManager.configService.colors;
+    const colors = new Set<string>();
+
+    [
+      ...bookmarks.map(it => it.color),
+      ...Object.keys(this._serviceManager.configService.colors),
+    ].forEach(it => colors.add(it));
+
     const decorationsGroupByLevel: StringIndexType<any[]> = {};
-    Object.keys(colors).forEach(color => {
+
+    colors.forEach(color => {
       if (!decorationsGroupByLevel[color]) {
         decorationsGroupByLevel[color] = [] as any;
       }
@@ -257,6 +240,7 @@ export default class DecorationService implements IDisposable {
         ...bookmarks.filter(it => it.color == color),
       );
     });
+
     Object.keys(decorationsGroupByLevel).forEach(it => {
       this.updateDecoration(editor, {
         color: it as BookmarkColor,

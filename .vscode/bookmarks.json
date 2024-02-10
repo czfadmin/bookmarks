@@ -1,14 +1,52 @@
 {
-  "files": [
+  "version": "0.0.22",
+  "workspace": "bookmarks",
+  "updatedDate": "2/10/2024",
+  "content": [
     {
-      "path": "package.nls.json",
-      "bookmarks": [
-        {
-          "line": 47,
-          "column": 43,
-          "label": ""
-        }
-      ]
+      "type": "line",
+      "color": "default",
+      "selection": {
+        "start": {"line": 231, "character": 8},
+        "end": {"line": 231, "character": 35},
+        "active": {"line": 231, "character": 35},
+        "anchor": {"line": 231, "character": 8}
+      },
+      "fileUri": {
+        "$mid": 1,
+        "fsPath": "d:\\projects\\myrepo\\bookmarks\\src\\controllers\\BookmarksController.ts",
+        "_sep": 1,
+        "external": "file:///d%3A/projects/myrepo/bookmarks/src/controllers/BookmarksController.ts",
+        "path": "/d:/projects/myrepo/bookmarks/src/controllers/BookmarksController.ts",
+        "scheme": "file"
+      },
+      "languageId": "typescript",
+      "selectionContent": "const storeFilePath = path.join(",
+      "fileId": "d:\\projects\\myrepo\\bookmarks\\src\\controllers\\BookmarksController.ts",
+      "fileName": "d:\\projects\\myrepo\\bookmarks\\src\\controllers\\BookmarksController.ts",
+      "rangesOrOptions": {
+        "range": {
+          "start": {"line": 231, "character": 8},
+          "end": {"line": 231, "character": 35},
+          "active": {"line": 231, "character": 35},
+          "anchor": {"line": 231, "character": 8}
+        },
+        "hoverMessage": {},
+        "renderOptions": {"after": {}}
+      },
+      "workspaceFolder": {
+        "uri": {
+          "$mid": 1,
+          "fsPath": "d:\\projects\\myrepo\\bookmarks",
+          "_sep": 1,
+          "external": "file:///d%3A/projects/myrepo/bookmarks",
+          "path": "/D:/projects/myrepo/bookmarks",
+          "scheme": "file"
+        },
+        "name": "bookmarks",
+        "index": 0
+      },
+      "id": "e899efd6-417d-4b12-82ed-ffe66541ac9b"
     }
   ]
 }

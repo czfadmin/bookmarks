@@ -39,8 +39,8 @@ import {
   getLineInfoStrFromBookmark,
 } from '../utils/bookmark';
 import BookmarksTreeItem from '../providers/BookmarksTreeItem';
-import gutters, {getTagGutters} from '../gutter';
 import {resolveBookmarkController} from '../bootstrap';
+import resolveServiceManager from '../services/ServiceManager';
 
 /**
  * 从`context`获取书签数据
@@ -351,6 +351,8 @@ export function listBookmarksInCurrentFile() {
     async (ctx: LineBookmarkContext | BookmarksTreeItem | undefined) => {
       const editor = window.activeTextEditor;
       const controller = resolveBookmarkController();
+      const sm = resolveServiceManager();
+
       const bookmarkDS = controller.datasource;
       if (!editor || !bookmarkDS) {
         return;
@@ -359,11 +361,12 @@ export function listBookmarksInCurrentFile() {
       if (!bookmarks.length) {
         return;
       }
-      const tagGutters = getTagGutters();
+      const tagGutters = sm.gutterService.tagGutters;
+      const gutters = sm.gutterService.gutters;
       const pickItems = bookmarks.map((it: any) => {
         const iconPath = it.label
           ? tagGutters[it.color] || tagGutters['default']
-          : gutters[it.color] || tagGutters['default'];
+          : gutters[it.color] || gutters['default'];
         return {
           label:
             it.label ||
@@ -372,7 +375,7 @@ export function listBookmarksInCurrentFile() {
             '',
           description: getLineInfoStrFromBookmark(it),
           detail: it.fileUri.fsPath,
-          iconPath: iconPath as Uri,
+          iconPath: iconPath.iconPath as any,
           meta: {
             ...it,
             selection: new Selection(it.selection.anchor, it.selection.active),

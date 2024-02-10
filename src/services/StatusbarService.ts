@@ -17,7 +17,7 @@ export default class StatusbarService implements Disposable {
   constructor(sm: ServiceManager) {
     this._serviceManager = sm;
     this.updateStatusBarItem();
-    this._serviceManager.configService.onDecorationConfigChange(() => {
+    this._serviceManager.configService.onDidChangeConfiguration(() => {
       this.updateStatusBarItem();
     });
   }

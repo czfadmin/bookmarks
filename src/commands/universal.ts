@@ -5,7 +5,6 @@ import {
   UniversalBookmarkMeta,
   UniversalBookmarkType,
 } from '../controllers/UniversalBookmarkController';
-import gutters from '../gutter';
 import {UniversalTreeItem} from '../providers/UniversalTreeItem';
 import resolveServiceManager from '../services/ServiceManager';
 
@@ -127,10 +126,11 @@ function changeUniversalBookmarkColor() {
         return;
       }
       const colors = sm.configService.colors;
+      const gutters = sm.gutterService.gutters;
       const pickItems = Object.keys(colors).map(color => {
         return {
           label: color,
-          iconPath: gutters[color] || gutters['default'],
+          iconPath: (gutters[color] || gutters['default']).iconPath,
         } as QuickPickItem;
       });
       const choosedColor = await window.showQuickPick(pickItems, {

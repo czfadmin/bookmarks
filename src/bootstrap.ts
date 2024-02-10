@@ -20,7 +20,6 @@ import resolveServiceManager, {
   ServiceManager,
   initServiceManager,
 } from './services/ServiceManager';
-import StatusbarService from './services/StatusbarService';
 
 let controllerManager: any = {};
 
@@ -57,10 +56,10 @@ function updateEverything(needRefresh: boolean = true) {
   updateBookmarkInfoWhenTextChangeListener();
   updateFilesRenameAndDeleteListeners();
   updateTextEditorSelectionListener();
-  if (needRefresh) {
-    const controller = resolveBookmarkController();
-    controller.refresh();
-  }
+  // if (needRefresh) {
+  //   const controller = resolveBookmarkController();
+  //   controller.refresh();
+  // }
 }
 
 function initialController(context: ExtensionContext) {
@@ -79,6 +78,7 @@ export default function bootstrap(context: ExtensionContext) {
 
   initServiceManager(context);
   initialController(context);
+
   const serviceManager = resolveServiceManager();
   // 依赖bookmark controller 单独注册
   serviceManager.registerStatusbarService();

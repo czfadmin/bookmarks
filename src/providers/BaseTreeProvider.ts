@@ -54,11 +54,23 @@ export default class BaseTreeProvider<
     this._controller = controller;
     this._serviceManager = resolveServiceManager();
     this._extensionConfiguration = this.configService.configuration;
+
+    // 监听插件的配置变化
     this.configService?.onExtensionConfigChange(
       (config: BookmarkManagerConfigure) => {
         this._extensionConfiguration = config;
       },
     );
+
+    // 当书签的数据发生变化时, 刷新 provider
+    this._controller.onDidChangeEvent(() => {
+      this.refresh();
+      if (!this.controller.datasource) {return;}
+      const needClear = this.controller.datasource.bookmarks.length === 0;
+      this._serviceManager.decorationService.updateActiveEditorAllDecorations(
+        needClear,
+      );
+    });
   }
 
   onDidChangeTreeData?: Event<void | T | T[] | null | undefined> | undefined =

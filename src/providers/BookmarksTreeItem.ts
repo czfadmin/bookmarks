@@ -6,27 +6,26 @@ import {
 } from 'vscode';
 import BaseTreeItem from './BaseTreeItem';
 import {BookmarkMeta, BookmarkStoreType} from '../types';
-import gutters, {getTagGutters} from '../gutter';
 import {getLineInfoStrFromBookmark} from '../utils';
 import {CMD_GO_TO_SOURCE_LOCATION} from '../constants';
 import {GroupedByColorType} from '../controllers/BookmarksController';
-import ConfigService from '../services/ConfigService';
+import {ServiceManager} from '../services/ServiceManager';
 
 export default class BookmarksTreeItem extends BaseTreeItem {
   public meta: BookmarkStoreType | BookmarkMeta | GroupedByColorType;
 
-  private _configService: ConfigService;
+  private _sm: ServiceManager;
 
   constructor(
     label: string,
     collapsibleState: TreeItemCollapsibleState,
     contextValue: string,
     meta: BookmarkStoreType | BookmarkMeta | GroupedByColorType,
-    configService: ConfigService,
+    sm: ServiceManager,
   ) {
     super(label, collapsibleState, contextValue);
     this.meta = meta;
-    this._configService = configService;
+    this._sm = sm;
 
     if (this.contextValue === 'color') {
       this.label = label;
@@ -37,7 +36,7 @@ export default class BookmarksTreeItem extends BaseTreeItem {
       this.label = filenameArr[filenameArr.length - 1];
       this.description = label;
     } else {
-      if (this._configService.configuration.enableClick) {
+      if (this._sm.configService.configuration.enableClick) {
         this.command = {
           title: l10n.t('Jump to bookmark position'),
           command: `bookmark-manager.${CMD_GO_TO_SOURCE_LOCATION}`,
@@ -50,19 +49,19 @@ export default class BookmarksTreeItem extends BaseTreeItem {
   }
 
   private _resolveIconPath() {
-    const tagGutters = getTagGutters();
+    const tagGutters = this._sm.gutterService.tagGutters;
+    const gutters = this._sm.gutterService.gutters;
     if (this.contextValue === 'file') {
       this.iconPath = ThemeIcon.File;
       this.resourceUri = (this.meta as BookmarkStoreType).fileUri;
     } else if (this.contextValue === 'color') {
       const _meta = this.meta as GroupedByColorType;
-      this.iconPath = gutters[_meta.color] || gutters['default'];
+      this.iconPath = (gutters[_meta.color] || gutters['default']).iconPath;
     } else if (this.contextValue === 'bookmark') {
       const meta = this.meta as BookmarkMeta;
-
       this.iconPath = meta.label
-        ? tagGutters[meta.color] || tagGutters['default']
-        : gutters[meta.color] || gutters['default'];
+        ? (tagGutters[meta.color] || tagGutters['default']).iconPath
+        : (gutters[meta.color] || gutters['default']).iconPath;
     }
   }
 

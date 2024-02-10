@@ -149,8 +149,13 @@ export default class BookmarksController implements IController {
     };
     if (this._configuration.createJsonFile) {
       _datasource = _datasourceFromFile;
+      this._datasource = _datasource!;
+      this.refresh();
     } else {
-      _datasource = this.workspaceState.get<any>(EXTENSION_ID);
+      _datasource =
+        _datasourceFromFile.bookmarks.length !== 0
+          ? _datasourceFromFile
+          : this.workspaceState.get<any>(EXTENSION_ID);
       if (!_datasource) {
         this._datasource = _datasourceFromFile;
         this.save(this._datasource);
@@ -171,7 +176,11 @@ export default class BookmarksController implements IController {
               it.selection.anchor,
               it.selection.active,
             );
-            it.rangesOrOptions.hoverMessage = createHoverMessage(it, true);
+            it.rangesOrOptions.hoverMessage = createHoverMessage(
+              it,
+              true,
+              true,
+            );
             return it;
           });
         }
@@ -182,6 +191,9 @@ export default class BookmarksController implements IController {
     this._changeView();
   }
 
+  /**
+   * 初始化文件监听器, 监听`bookmarks.json`的文件变化
+   */
   private async _initialWatcher() {
     const existedStoreFile = await workspace.findFiles(
       '**/bookmarks.json',
@@ -201,9 +213,15 @@ export default class BookmarksController implements IController {
         };
         this.save();
       });
+      this._watcher.onDidChange(uri => {
+        this._datasource = this._resolveDatasourceFromStoreFile();
+        this._changeView();
+        this.refresh();
+      });
       this._disposables.push(this._watcher);
     }
   }
+
   /**
    * 从文件中读取书签数据
    * @returns []
@@ -230,17 +248,23 @@ export default class BookmarksController implements IController {
                 it.selection.anchor,
                 it.selection.active,
               );
-              it.rangesOrOptions.hoverMessage = createHoverMessage(it, true);
+              it.rangesOrOptions.hoverMessage = createHoverMessage(
+                it,
+                true,
+                true,
+              );
               return it;
             }),
           );
         }
       }
     }
-    this.refresh();
     return _datasource;
   }
 
+  /**
+   * 当viewType改变的时候, 转换成对应的格式
+   */
   private _changeView() {
     if (this.viewType === 'tree') {
       if (this.groupView === 'color') {
@@ -305,7 +329,7 @@ export default class BookmarksController implements IController {
         ),
         rangesOrOptions: {
           ...bookmark.rangesOrOptions,
-          hoverMessage: createHoverMessage(bookmark, true),
+          hoverMessage: createHoverMessage(bookmark, true, true),
         },
         workspaceFolder: workspace.getWorkspaceFolder(store.fileUri),
       }));
@@ -438,15 +462,12 @@ export default class BookmarksController implements IController {
       this._datasource = store;
     }
 
-    this._changeView();
-
     if (this._configuration.createJsonFile) {
       this._saveToDisk();
     } else {
-      this.workspaceState
-        .update(EXTENSION_ID, store || this._datasource)
-        .then();
+      this.workspaceState.update(EXTENSION_ID, store || this._datasource);
     }
+    this._changeView();
     this._fire();
   }
 
@@ -480,20 +501,19 @@ export default class BookmarksController implements IController {
       this.viewType === 'tree',
     );
     this._changeView();
-    this.refresh();
+    this._fire();
   }
 
   changeGroupView(groupType: TreeGroupView) {
     this.groupView = groupType;
     this._configService.updateGlobalValue('code.groupView', groupType);
     this._changeView();
-
-    this.refresh();
+    this._fire();
   }
 
   /**
    * 将数据写入到`.vscode/bookmark.json`中
-   * @returns {undefined}
+   * @returns
    */
   private async _saveToDisk() {
     if (env.appHost == 'desktop') {
@@ -541,7 +561,7 @@ export default class BookmarksController implements IController {
   }
 
   private _fire() {
-    this._serviceManager.decorationService.updateActiveEditorAllDecorations();
+    if (!this._datasource) {return;}
     this._onDidChangeEvent.fire();
   }
 }

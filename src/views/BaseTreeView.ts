@@ -90,12 +90,6 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
       canSelectMany: false,
       dragAndDropController: this._dndController,
     });
-    this.disposables.push(
-      this.controller.onDidChangeEvent(() => {
-        this.provider.refresh();
-        this._serviceManager.decorationService.updateActiveEditorAllDecorations();
-      }),
-    );
   }
 
   dispose() {
