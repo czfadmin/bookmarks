@@ -5,12 +5,13 @@
   "content": [
     {
       "type": "line",
+      "label": "hhh",
       "color": "default",
       "selection": {
-        "start": {"line": 231, "character": 8},
-        "end": {"line": 231, "character": 35},
-        "active": {"line": 231, "character": 35},
-        "anchor": {"line": 231, "character": 8}
+        "start": {"line": 250, "character": 6},
+        "end": {"line": 250, "character": 38},
+        "active": {"line": 250, "character": 38},
+        "anchor": {"line": 250, "character": 6}
       },
       "fileUri": {
         "$mid": 1,
@@ -26,10 +27,10 @@
       "fileName": "d:\\projects\\myrepo\\bookmarks\\src\\controllers\\BookmarksController.ts",
       "rangesOrOptions": {
         "range": {
-          "start": {"line": 231, "character": 8},
-          "end": {"line": 231, "character": 35},
-          "active": {"line": 231, "character": 35},
-          "anchor": {"line": 231, "character": 8}
+          "start": {"line": 250, "character": 6},
+          "end": {"line": 250, "character": 38},
+          "active": {"line": 250, "character": 38},
+          "anchor": {"line": 250, "character": 6}
         },
         "hoverMessage": {},
         "renderOptions": {"after": {}}
@@ -40,13 +41,13 @@
           "fsPath": "d:\\projects\\myrepo\\bookmarks",
           "_sep": 1,
           "external": "file:///d%3A/projects/myrepo/bookmarks",
-          "path": "/D:/projects/myrepo/bookmarks",
+          "path": "/d:/projects/myrepo/bookmarks",
           "scheme": "file"
         },
         "name": "bookmarks",
         "index": 0
       },
-      "id": "e899efd6-417d-4b12-82ed-ffe66541ac9b"
+      "id": "8504796e-3390-465b-bdd9-1233c4f978ca"
     }
   ]
 }

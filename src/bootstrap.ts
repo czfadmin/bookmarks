@@ -1,4 +1,4 @@
-import {ExtensionContext} from 'vscode';
+import {ExtensionContext, workspace} from 'vscode';
 import BookmarksController from './controllers/BookmarksController';
 import UniversalBookmarkController from './controllers/UniversalBookmarkController';
 import {BookmarksTreeView} from './views/BookmarksTreeView';
@@ -47,19 +47,14 @@ function registerAllCommands() {
 /**
  * 更新全局的监听器以及填充装饰器
  * @param context
- * @param needRefresh 是否需要刷新书签的树视图
  */
-function updateEverything(needRefresh: boolean = true) {
+function updateEverything() {
   updateCursorChangeListener();
   updateChangeActiveTextEditorListener();
   updateChangeVisibleTextEidtorsListener();
   updateBookmarkInfoWhenTextChangeListener();
   updateFilesRenameAndDeleteListeners();
   updateTextEditorSelectionListener();
-  // if (needRefresh) {
-  //   const controller = resolveBookmarkController();
-  //   controller.refresh();
-  // }
 }
 
 function initialController(context: ExtensionContext) {
@@ -72,6 +67,9 @@ function initialController(context: ExtensionContext) {
 }
 
 export default function bootstrap(context: ExtensionContext) {
+  if (!workspace.workspaceFolders) {
+    return;
+  }
   context.subscriptions.push(registerTelemetryLogger());
 
   logger.log(`${EXTENSION_ID} is now active!`);
@@ -97,7 +95,7 @@ export default function bootstrap(context: ExtensionContext) {
   registerAllCommands();
 
   // 首次激活时更新全局的一些监听器和装饰器填充步骤
-  updateEverything(false);
+  updateEverything();
 }
 
 export function resolveBookmarkController(): BookmarksController {

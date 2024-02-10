@@ -92,6 +92,7 @@ export function registerCodeCommands() {
   viewAsTree();
   groupedByColor();
   groupedByDefault();
+  groupedByWorkspace();
 }
 
 /**
@@ -467,5 +468,15 @@ function groupedByDefault() {
   registerCommand('groupedByDefault', args => {
     const controller = resolveBookmarkController();
     controller.changeGroupView('default');
+  });
+}
+
+/**
+ * 按照工作区间分组
+ */
+function groupedByWorkspace() {
+  registerCommand('groupedByWorkspace', args => {
+    const controller = resolveBookmarkController();
+    controller.changeGroupView('workspace');
   });
 }

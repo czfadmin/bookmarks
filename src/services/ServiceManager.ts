@@ -4,6 +4,8 @@ import DecorationService from './DecorationService';
 import {IDisposable} from '../utils';
 import StatusbarService from './StatusbarService';
 import GutterService from './GutterService';
+import WorkspaceService from './WorksapceService';
+
 export interface IServiceManager {
   readonly configService: ConfigService;
   readonly decorationService: DecorationService;
@@ -16,6 +18,7 @@ export class ServiceManager implements IServiceManager, IDisposable {
   readonly decorationService: DecorationService;
 
   readonly gutterService: GutterService;
+  readonly workspaceService: WorkspaceService;
 
   private _statusbarService: StatusbarService | undefined;
   public get statusbarService(): StatusbarService | undefined {
@@ -32,6 +35,7 @@ export class ServiceManager implements IServiceManager, IDisposable {
     this.configService = new ConfigService(this);
     this.gutterService = new GutterService(this);
     this.decorationService = new DecorationService(this);
+    this.workspaceService = new WorkspaceService(this);
   }
 
   registerStatusbarService() {

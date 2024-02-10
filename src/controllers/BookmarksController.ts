@@ -39,6 +39,11 @@ export type GroupedByColorType = {
   bookmarks: BookmarkMeta[];
 };
 
+export type GroupedByWorkspaceType = {
+  workspace: WorkspaceFolder;
+  bookmarks: BookmarkMeta[];
+};
+
 export default class BookmarksController implements IController {
   private _context: ExtensionContext;
 
@@ -49,6 +54,8 @@ export default class BookmarksController implements IController {
   private _groupedByFile: GroupedByFileType[] = [];
 
   private _groupedByColor: GroupedByColorType[] = [];
+
+  private _groupedByWorkspaceFolders: GroupedByWorkspaceType[] = [];
 
   public viewType: ViewType = 'tree';
 
@@ -72,6 +79,10 @@ export default class BookmarksController implements IController {
 
   public get groupedByColorBookmarks(): GroupedByColorType[] {
     return this._groupedByColor;
+  }
+
+  public get groupedByWorkspaceFolders(): GroupedByWorkspaceType[] {
+    return this._groupedByWorkspaceFolders;
   }
 
   public get workspaceState(): Memento {
@@ -116,6 +127,10 @@ export default class BookmarksController implements IController {
       'code.groupView',
       'file',
     );
+
+    if (!workspace.workspaceFolders || workspace.workspaceFolders!.length < 2) {
+      this.groupView = 'default';
+    }
 
     this._configService.onExtensionConfigChange(configuration => {
       this._configuration = configuration;
@@ -283,6 +298,14 @@ export default class BookmarksController implements IController {
           },
         );
       }
+      if (this.groupView === 'workspace') {
+        this._groupedByWorkspaceFolders = (
+          this._getBookmarksGroupedByWorkspace() || []
+        ).map(it => {
+          sortBookmarksByLineNumber(it.bookmarks);
+          return it;
+        });
+      }
     }
   }
 
@@ -309,6 +332,31 @@ export default class BookmarksController implements IController {
     return groupedList;
   }
 
+  /**
+   * 获取按照工作区间分组的书签列表
+   * @returns
+   */
+  private _getBookmarksGroupedByWorkspace() {
+    if (!this._datasource || !this._datasource.bookmarks.length) {
+      return;
+    }
+
+    const grouped: GroupedByWorkspaceType[] = [];
+    this._datasource.bookmarks.forEach(it => {
+      const existed = grouped.find(
+        item => item.workspace.name === it.workspaceFolder?.name,
+      );
+      if (!existed) {
+        grouped.push({
+          workspace: it.workspaceFolder!,
+          bookmarks: [it],
+        });
+        return;
+      }
+      existed.bookmarks.push(it);
+    });
+    return grouped;
+  }
   changeSortType(sortType: SortType): void {}
 
   /**
@@ -561,7 +609,9 @@ export default class BookmarksController implements IController {
   }
 
   private _fire() {
-    if (!this._datasource) {return;}
+    if (!this._datasource) {
+      return;
+    }
     this._onDidChangeEvent.fire();
   }
 }

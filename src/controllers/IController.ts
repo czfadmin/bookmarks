@@ -12,7 +12,7 @@ export type ViewType = 'tree' | 'list';
  */
 export type SortType = 'name' | 'time';
 
-export type TreeGroupView = 'file' | 'color' | 'default';
+export type TreeGroupView = 'file' | 'color' | 'default' | 'workspace';
 
 export default interface IController extends Disposable {
   get datasource(): BookmarkStoreRootType | UniversalStoreType | undefined;

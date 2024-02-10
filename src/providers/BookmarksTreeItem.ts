@@ -4,15 +4,23 @@ import {
   TreeItemCollapsibleState,
   l10n,
 } from 'vscode';
+
 import BaseTreeItem from './BaseTreeItem';
 import {BookmarkMeta, BookmarkStoreType} from '../types';
 import {getLineInfoStrFromBookmark} from '../utils';
 import {CMD_GO_TO_SOURCE_LOCATION} from '../constants';
-import {GroupedByColorType} from '../controllers/BookmarksController';
+import {
+  GroupedByColorType,
+  GroupedByWorkspaceType,
+} from '../controllers/BookmarksController';
 import {ServiceManager} from '../services/ServiceManager';
 
 export default class BookmarksTreeItem extends BaseTreeItem {
-  public meta: BookmarkStoreType | BookmarkMeta | GroupedByColorType;
+  public meta:
+    | BookmarkStoreType
+    | BookmarkMeta
+    | GroupedByColorType
+    | GroupedByWorkspaceType;
 
   private _sm: ServiceManager;
 
@@ -20,7 +28,11 @@ export default class BookmarksTreeItem extends BaseTreeItem {
     label: string,
     collapsibleState: TreeItemCollapsibleState,
     contextValue: string,
-    meta: BookmarkStoreType | BookmarkMeta | GroupedByColorType,
+    meta:
+      | BookmarkStoreType
+      | BookmarkMeta
+      | GroupedByColorType
+      | GroupedByWorkspaceType,
     sm: ServiceManager,
   ) {
     super(label, collapsibleState, contextValue);
@@ -29,6 +41,10 @@ export default class BookmarksTreeItem extends BaseTreeItem {
 
     if (this.contextValue === 'color') {
       this.label = label;
+    } else if (this.contextValue === 'workspace') {
+      this.label = label;
+      this.iconPath = ThemeIcon.Folder;
+      this.resourceUri = (this.meta as GroupedByWorkspaceType).workspace.uri;
     } else if (this.contextValue === 'file') {
       const _meta = this.meta as BookmarkMeta;
       this._resolveFileOverview();

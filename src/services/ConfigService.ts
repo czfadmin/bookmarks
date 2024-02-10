@@ -5,6 +5,7 @@ import {
   EventEmitter,
   WorkspaceConfiguration,
   commands,
+  window,
   workspace,
 } from 'vscode';
 import {
@@ -74,6 +75,7 @@ export default class ConfigService implements Disposable {
   constructor(sm: ServiceManager) {
     this._serviceManager = sm;
     this._resolveWorkspaceConfiguration();
+
     workspace.onDidChangeConfiguration(ev => {
       if (!ev.affectsConfiguration(EXTENSION_ID)) {
         return;
@@ -82,6 +84,7 @@ export default class ConfigService implements Disposable {
       this._init();
       this.fire(ev);
     });
+
     this._init();
   }
 
