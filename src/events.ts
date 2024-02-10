@@ -3,26 +3,18 @@ import {
   TextEditor,
   TextEditorDecorationType,
   Uri,
-  debug,
   window,
   workspace,
 } from 'vscode';
 
 import {
-  updateActiveEditorAllDecorations,
-  updateDecorationsByEditor,
-} from './decorations';
-
-import BookmarksController from './controllers/BookmarksController';
-
-import {
   getBookmarkFromLineNumber,
   updateBookmarksGroupByChangedLine,
 } from './utils/bookmark';
-import {getExtensionConfiguration} from './configurations';
 import {BookmarkMeta} from './types';
 import {registerExtensionCustomContextByKey} from './context';
 import {resolveBookmarkController} from './bootstrap';
+import resolveServiceManager from './services/ServiceManager';
 
 let onDidChangeActiveTextEditor: Disposable | undefined;
 let onDidChangeVisibleTextEditors: Disposable | undefined;
@@ -32,22 +24,23 @@ let onDidChangeBreakpoints: Disposable | undefined;
 let onDidChangeTextDocumentDisposable: Disposable | undefined;
 let onDidRenameFilesDisposable: Disposable | undefined;
 let onDidDeleteFilesDisposable: Disposable | undefined;
-let onDidCreatedFilesDisposable: Disposable | undefined;
 let onDidTextSelectionDisposable: Disposable | undefined;
+
 export function updateChangeActiveTextEditorListener() {
   onDidChangeActiveTextEditor?.dispose();
+  const sm = resolveServiceManager();
   // 当打开多个editor group时,更新每个editor的中的decorations
   const visibleTextEditors = window.visibleTextEditors;
   if (visibleTextEditors.length) {
     visibleTextEditors.forEach(editor => {
-      updateDecorationsByEditor(editor);
+      sm.decorationService.updateDecorationsByEditor(editor);
     });
   }
   onDidChangeActiveTextEditor = window.onDidChangeActiveTextEditor(ev => {
     if (!ev) {
       return;
     }
-    updateDecorationsByEditor(ev);
+    sm.decorationService.updateDecorationsByEditor(ev);
   });
 }
 
@@ -56,10 +49,11 @@ export function updateChangeActiveTextEditorListener() {
  */
 export function updateChangeVisibleTextEidtorsListener() {
   onDidChangeVisibleTextEditors?.dispose();
+  const sm = resolveServiceManager();
   onDidChangeVisibleTextEditors = window.onDidChangeVisibleTextEditors(
     editors => {
       for (let editor of editors) {
-        updateDecorationsByEditor(editor);
+        sm.decorationService.updateDecorationsByEditor(editor);
       }
     },
   );
@@ -75,8 +69,10 @@ export function updateCursorChangeListener() {
   onDidCursorChangeDisposable?.dispose();
   decoration?.dispose();
   lastPositionLine = -1;
+  const sm = resolveServiceManager();
+  const configService = sm.configService;
   const enableLineBlame =
-    (getExtensionConfiguration().lineBlame as boolean) || false;
+    (configService.configuration.lineBlame as boolean) || false;
   const activedEditor = window.activeTextEditor;
   if (activedEditor) {
     updateLineBlame(activedEditor, enableLineBlame);
@@ -155,16 +151,18 @@ function buildLineBlameInfo(bookmark: BookmarkMeta) {
 export function updateBookmarkInfoWhenTextChangeListener() {
   onDidChangeTextDocumentDisposable?.dispose();
   const controller = resolveBookmarkController();
+  const sm = resolveServiceManager();
   onDidChangeTextDocumentDisposable = workspace.onDidChangeTextDocument(e => {
     const {contentChanges, document} = e;
     // 代表存在文档发生变化
     if (contentChanges.length) {
       const bookmarks = controller.getBookmarkStoreByFileUri(document.uri);
-      if (!bookmarks.length) return;
+      if (!bookmarks.length) {
+        return;
+      }
       for (let change of contentChanges) {
         updateBookmarksGroupByChangedLine(e, change);
       }
-      updateActiveEditorAllDecorations();
     }
   });
 }
@@ -176,6 +174,7 @@ export function updateFilesRenameAndDeleteListeners() {
   onDidRenameFilesDisposable?.dispose();
   onDidDeleteFilesDisposable?.dispose();
   const controller = resolveBookmarkController();
+  const sm = resolveServiceManager();
   // 监听文件重命名, 同步修改书签的对应的文件信息
   onDidRenameFilesDisposable = workspace.onDidRenameFiles(e => {
     const {files} = e;
@@ -199,26 +198,23 @@ export function updateFilesRenameAndDeleteListeners() {
       });
     }
     controller.save();
-    updateActiveEditorAllDecorations();
   });
 
   // 监听文件删除
   onDidDeleteFilesDisposable = workspace.onDidDeleteFiles(e => {
     const {files} = e;
+    const excludeFolders = ['node_modules', '.vscode', 'dist', '.git'];
     if (!files.length) {
       return;
     }
-    let file;
-    for (file of files) {
+    let file,
+      _files = files.filter(
+        it => !excludeFolders.some(folder => it.fsPath.includes(folder)),
+      );
+    for (file of _files) {
       controller.clearAllBookmarkInFile(file);
     }
-    updateActiveEditorAllDecorations();
   });
-}
-
-export function updateChangeBreakpointsListener() {
-  onDidChangeBreakpoints?.dispose();
-  onDidChangeBreakpoints = debug.onDidChangeBreakpoints(ev => {});
 }
 
 /**
@@ -229,7 +225,9 @@ export function updateTextEditorSelectionListener() {
   onDidTextSelectionDisposable?.dispose();
   onDidTextSelectionDisposable = window.onDidChangeTextEditorSelection(ev => {
     const editor = ev.textEditor;
-    if (!editor) return;
+    if (!editor) {
+      return;
+    }
     const selection = editor.selection;
     registerExtensionCustomContextByKey(
       'editorHasSelection',

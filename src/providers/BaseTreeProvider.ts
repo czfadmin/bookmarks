@@ -7,9 +7,11 @@ import {
 } from 'vscode';
 import BaseTreeItem from './BaseTreeItem';
 import {BookmarkManagerConfigure} from '../types';
-import {getExtensionConfiguration} from '../configurations';
 import {getRelativePath} from '../utils';
-import IController from '@/controllers/IController';
+import IController from '../controllers/IController';
+import resolveServiceManager, {
+  ServiceManager,
+} from '../services/ServiceManager';
 
 export default class BaseTreeProvider<
   T extends BaseTreeItem,
@@ -22,9 +24,7 @@ export default class BaseTreeProvider<
 
   private _controller: C;
 
-  constructor(controller: C) {
-    this._controller = controller;
-  }
+  private _serviceManager: ServiceManager;
 
   get datasource() {
     return this._controller.datasource;
@@ -33,15 +33,44 @@ export default class BaseTreeProvider<
   get controller(): C {
     return this._controller;
   }
-  get extensionConfiguration() {
-    if (!this._extensionConfiguration) {
-      this._extensionConfiguration = getExtensionConfiguration();
-    }
+
+  get isRelativePath() {
+    return this._extensionConfiguration?.relativePath || false;
+  }
+
+  get extensionCOnfiguration() {
     return this._extensionConfiguration;
   }
 
-  get isRelativePath() {
-    return this.extensionConfiguration.relativePath;
+  get configService() {
+    return this.serviceManager.configService;
+  }
+
+  get serviceManager() {
+    return this._serviceManager;
+  }
+
+  constructor(controller: C) {
+    this._controller = controller;
+    this._serviceManager = resolveServiceManager();
+    this._extensionConfiguration = this.configService.configuration;
+
+    // 监听插件的配置变化
+    this.configService?.onExtensionConfigChange(
+      (config: BookmarkManagerConfigure) => {
+        this._extensionConfiguration = config;
+      },
+    );
+
+    // 当书签的数据发生变化时, 刷新 provider
+    this._controller.onDidChangeEvent(() => {
+      this.refresh();
+      if (!this.controller.datasource) {return;}
+      const needClear = this.controller.datasource.bookmarks.length === 0;
+      this._serviceManager.decorationService.updateActiveEditorAllDecorations(
+        needClear,
+      );
+    });
   }
 
   onDidChangeTreeData?: Event<void | T | T[] | null | undefined> | undefined =

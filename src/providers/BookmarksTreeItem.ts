@@ -4,31 +4,55 @@ import {
   TreeItemCollapsibleState,
   l10n,
 } from 'vscode';
+
 import BaseTreeItem from './BaseTreeItem';
 import {BookmarkMeta, BookmarkStoreType} from '../types';
-import gutters, {getTagGutters} from '../gutter';
 import {getLineInfoStrFromBookmark} from '../utils';
-import {getExtensionConfiguration} from '../configurations';
 import {CMD_GO_TO_SOURCE_LOCATION} from '../constants';
-import {GroupedByColorType} from '@/controllers/BookmarksController';
+import {
+  GroupedByColorType,
+  GroupedByWorkspaceType,
+} from '../controllers/BookmarksController';
+import {ServiceManager} from '../services/ServiceManager';
 
 export default class BookmarksTreeItem extends BaseTreeItem {
-  public meta: BookmarkStoreType | BookmarkMeta | GroupedByColorType;
+  public meta:
+    | BookmarkStoreType
+    | BookmarkMeta
+    | GroupedByColorType
+    | GroupedByWorkspaceType;
+
+  private _sm: ServiceManager;
 
   constructor(
     label: string,
     collapsibleState: TreeItemCollapsibleState,
     contextValue: string,
-    meta: BookmarkStoreType | BookmarkMeta | GroupedByColorType,
+    meta:
+      | BookmarkStoreType
+      | BookmarkMeta
+      | GroupedByColorType
+      | GroupedByWorkspaceType,
+    sm: ServiceManager,
   ) {
     super(label, collapsibleState, contextValue);
     this.meta = meta;
+    this._sm = sm;
+
     if (this.contextValue === 'color') {
       this.label = label;
+    } else if (this.contextValue === 'workspace') {
+      this.label = label;
+      this.iconPath = ThemeIcon.Folder;
+      this.resourceUri = (this.meta as GroupedByWorkspaceType).workspace.uri;
     } else if (this.contextValue === 'file') {
+      const _meta = this.meta as BookmarkMeta;
       this._resolveFileOverview();
+      const filenameArr = _meta.fileName.split('\\');
+      this.label = filenameArr[filenameArr.length - 1];
+      this.description = label;
     } else {
-      if (getExtensionConfiguration().enableClick) {
+      if (this._sm.configService.configuration.enableClick) {
         this.command = {
           title: l10n.t('Jump to bookmark position'),
           command: `bookmark-manager.${CMD_GO_TO_SOURCE_LOCATION}`,
@@ -41,21 +65,22 @@ export default class BookmarksTreeItem extends BaseTreeItem {
   }
 
   private _resolveIconPath() {
-    const tagGutters = getTagGutters();
+    const tagGutters = this._sm.gutterService.tagGutters;
+    const gutters = this._sm.gutterService.gutters;
     if (this.contextValue === 'file') {
       this.iconPath = ThemeIcon.File;
       this.resourceUri = (this.meta as BookmarkStoreType).fileUri;
     } else if (this.contextValue === 'color') {
       const _meta = this.meta as GroupedByColorType;
-      this.iconPath = gutters[_meta.color] || gutters['default'];
+      this.iconPath = (gutters[_meta.color] || gutters['default']).iconPath;
     } else if (this.contextValue === 'bookmark') {
       const meta = this.meta as BookmarkMeta;
-
       this.iconPath = meta.label
-        ? tagGutters[meta.color] || tagGutters['default']
-        : gutters[meta.color] || gutters['default'];
+        ? (tagGutters[meta.color] || tagGutters['default']).iconPath
+        : (gutters[meta.color] || gutters['default']).iconPath;
     }
   }
+
   /**
    * 为书签创建 提示信息
    */

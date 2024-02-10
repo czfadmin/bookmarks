@@ -46,5 +46,7 @@
   "bookmark-manager.copyUniversalBookmarkContent": "复制书签内容",
   "bookmark-manager.groupedByColor": "按颜色分组",
   "bookmark-manager.groupedByDefault": "默认分组",
-  "bookmark-manager.group": "分组"
+  "bookmark-manager.groupedByWorkspace": "按工作区间分组",
+  "bookmark-manager.group": "分组",
+  "bookmark-manager.useBuiltInColors": "开启此配置,将会在已定义的颜色(标签)集合中追加内置的颜色集合; 同时当用户未自定义颜色的时候, 默认也使用内置的颜色集合, 反之使用用户自定义颜色集合."
 }

@@ -1,5 +1,4 @@
 import {EXTENSION_ID} from './constants';
-import {disposeAllDiscorations} from './decorations';
 import {disablAllEvents} from './events';
 import logger from './utils/logger';
 import {ExtensionContext} from 'vscode';
@@ -26,7 +25,6 @@ export async function activate(context: ExtensionContext) {
  */
 function disposeAll() {
   disablAllEvents();
-  disposeAllDiscorations();
   logger.log(`${EXTENSION_ID} is now deactive!`);
 }
 

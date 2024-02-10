@@ -46,5 +46,7 @@
   "bookmark-manager.copyUniversalBookmarkContent": "Copy content",
   "bookmark-manager.groupedByColor": "Grouped by color",
   "bookmark-manager.groupedByDefault": "Grouped by default",
-  "bookmark-manager.group": "Group"
+  "bookmark-manager.groupedByWorkspace": "Grouped by workspace",
+  "bookmark-manager.group": "Group",
+  "bookmark-manager.useBuiltInColors": "When this configuration is turned on, the built-in color set will be added to the defined color (label) set; at the same time, when the user does not customize the color, the built-in color set will be used by default, otherwise the user-defined color set will be used."
 }

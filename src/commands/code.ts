@@ -22,7 +22,6 @@ import {
   CMD_OPEN_IN_EDITOR,
 } from '../constants';
 
-import {updateActiveEditorAllDecorations} from '../decorations';
 import {BookmarkMeta, LineBookmarkContext} from '../types';
 
 import {
@@ -40,8 +39,8 @@ import {
   getLineInfoStrFromBookmark,
 } from '../utils/bookmark';
 import BookmarksTreeItem from '../providers/BookmarksTreeItem';
-import gutters, {getTagGutters} from '../gutter';
 import {resolveBookmarkController} from '../bootstrap';
+import resolveServiceManager from '../services/ServiceManager';
 
 /**
  * 从`context`获取书签数据
@@ -93,6 +92,7 @@ export function registerCodeCommands() {
   viewAsTree();
   groupedByColor();
   groupedByDefault();
+  groupedByWorkspace();
 }
 
 /**
@@ -151,11 +151,12 @@ function toggleLineBookmarkWithColor() {
  */
 function clearAllBookmarks() {
   registerCommand(CMD_CLEAR_ALL, args => {
-    updateActiveEditorAllDecorations(true);
     let fileUri,
       clearAll = false;
     const controller = resolveBookmarkController();
-    if (!controller) {return;}
+    if (!controller) {
+      return;
+    }
     if (args && args.meta) {
       fileUri = args.meta.fileUri;
       controller.clearAllBookmarkInFile(fileUri);
@@ -163,7 +164,6 @@ function clearAllBookmarks() {
       controller.clearAll();
       clearAll = true;
     }
-    updateActiveEditorAllDecorations(clearAll);
   });
 }
 /**
@@ -177,19 +177,16 @@ function deleteBookmarkCMD() {
       if (!context || !controller) {
         return;
       }
-      updateActiveEditorAllDecorations(true);
       // 从treeView中执行此命令
       if ('meta' in context && 'color' in context.meta) {
         const _meta = context.meta as BookmarkMeta;
         controller.remove(_meta.id);
-        updateActiveEditorAllDecorations();
         return;
       }
       // 从`decoration`或者`command palette`那边删除调用此命令
       if (!('bookmarks' in context)) {
         deleteBookmark(context as LineBookmarkContext);
       }
-      updateActiveEditorAllDecorations();
     },
   );
 }
@@ -287,11 +284,12 @@ function changeBookmarkColor() {
         return;
       }
       const controller = resolveBookmarkController();
-      if (!controller) {return;}
+      if (!controller) {
+        return;
+      }
       controller.update(bookmark.id, {
         color: newColor,
       });
-      updateActiveEditorAllDecorations();
     },
   );
 }
@@ -303,10 +301,11 @@ function clearAllBookmarksInCurrentFile() {
   registerCommand('clearAllBookmarksInCurrentFile', async args => {
     const activedEditor = window.activeTextEditor;
     const controller = resolveBookmarkController();
-    if (!activedEditor || !controller) {return;}
+    if (!activedEditor || !controller) {
+      return;
+    }
     if (checkIfBookmarksIsInCurrentEditor(activedEditor)) {
       controller.clearAllBookmarkInFile(activedEditor.document.uri);
-      updateActiveEditorAllDecorations();
     }
   });
 }
@@ -353,15 +352,22 @@ export function listBookmarksInCurrentFile() {
     async (ctx: LineBookmarkContext | BookmarksTreeItem | undefined) => {
       const editor = window.activeTextEditor;
       const controller = resolveBookmarkController();
+      const sm = resolveServiceManager();
+
       const bookmarkDS = controller.datasource;
-      if (!editor || !bookmarkDS) {return;}
+      if (!editor || !bookmarkDS) {
+        return;
+      }
       const bookmarks = getBookmarksFromFileUri(editor.document.uri);
-      if (!bookmarks.length) {return;}
-      const tagGutters = getTagGutters();
+      if (!bookmarks.length) {
+        return;
+      }
+      const tagGutters = sm.gutterService.tagGutters;
+      const gutters = sm.gutterService.gutters;
       const pickItems = bookmarks.map((it: any) => {
         const iconPath = it.label
           ? tagGutters[it.color] || tagGutters['default']
-          : gutters[it.color] || tagGutters['default'];
+          : gutters[it.color] || gutters['default'];
         return {
           label:
             it.label ||
@@ -370,7 +376,7 @@ export function listBookmarksInCurrentFile() {
             '',
           description: getLineInfoStrFromBookmark(it),
           detail: it.fileUri.fsPath,
-          iconPath: iconPath as Uri,
+          iconPath: iconPath.iconPath as any,
           meta: {
             ...it,
             selection: new Selection(it.selection.anchor, it.selection.active),
@@ -462,5 +468,15 @@ function groupedByDefault() {
   registerCommand('groupedByDefault', args => {
     const controller = resolveBookmarkController();
     controller.changeGroupView('default');
+  });
+}
+
+/**
+ * 按照工作区间分组
+ */
+function groupedByWorkspace() {
+  registerCommand('groupedByWorkspace', args => {
+    const controller = resolveBookmarkController();
+    controller.changeGroupView('workspace');
   });
 }

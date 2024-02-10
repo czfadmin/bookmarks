@@ -3,25 +3,27 @@ import BookmarksController from './controllers/BookmarksController';
 import UniversalBookmarkController from './controllers/UniversalBookmarkController';
 import {BookmarksTreeView} from './views/BookmarksTreeView';
 import {UniversalBookmarksTreeView} from './views/UniversalBookmarksTreeView';
-import {getExtensionConfiguration} from './configurations';
-import {registerExtensionCustomContext} from './context';
 import {EXTENSION_ID} from './constants';
-import {initDecorations, updateActiveEditorAllDecorations} from './decorations';
 import {
   updateCursorChangeListener,
   updateChangeActiveTextEditorListener,
-  updateChangeBreakpointsListener,
   updateChangeVisibleTextEidtorsListener,
   updateBookmarkInfoWhenTextChangeListener,
   updateFilesRenameAndDeleteListeners,
   updateTextEditorSelectionListener,
 } from './events';
-import {updateStatusBarItem} from './statusbar';
 import {registerCodeCommands, registerUniversalCommands} from './commands';
 import {registerTelemetryLogger} from './utils';
 import logger from './utils/logger';
 
+import resolveServiceManager, {
+  ServiceManager,
+  initServiceManager,
+} from './services/ServiceManager';
+
 let controllerManager: any = {};
+
+let sm: ServiceManager;
 
 /**
  * 注册所有的视图
@@ -45,26 +47,14 @@ function registerAllCommands() {
 /**
  * 更新全局的监听器以及填充装饰器
  * @param context
- * @param needRefresh 是否需要刷新书签的树视图
  */
-function updateEverything(
-  context: ExtensionContext,
-  needRefresh: boolean = true,
-) {
-  initDecorations(context);
-  updateStatusBarItem();
+function updateEverything() {
   updateCursorChangeListener();
   updateChangeActiveTextEditorListener();
-  updateChangeBreakpointsListener();
   updateChangeVisibleTextEidtorsListener();
-  updateActiveEditorAllDecorations();
   updateBookmarkInfoWhenTextChangeListener();
   updateFilesRenameAndDeleteListeners();
   updateTextEditorSelectionListener();
-  if (needRefresh) {
-    const controller = resolveBookmarkController();
-    controller.refresh();
-  }
 }
 
 function initialController(context: ExtensionContext) {
@@ -77,27 +67,27 @@ function initialController(context: ExtensionContext) {
 }
 
 export default function bootstrap(context: ExtensionContext) {
-  const outputChannel = registerTelemetryLogger();
+  if (!workspace.workspaceFolders) {
+    return;
+  }
+  context.subscriptions.push(registerTelemetryLogger());
 
   logger.log(`${EXTENSION_ID} is now active!`);
 
+  initServiceManager(context);
   initialController(context);
 
-  const configuration = getExtensionConfiguration();
+  const serviceManager = resolveServiceManager();
+  // 依赖bookmark controller 单独注册
+  serviceManager.registerStatusbarService();
 
-  registerExtensionCustomContext(configuration);
+  if (!sm) {
+    sm = resolveServiceManager();
+  }
 
-  // 监听插件配置的变化
-  context.subscriptions.push(
-    workspace.onDidChangeConfiguration(ev => {
-      if (!ev.affectsConfiguration(EXTENSION_ID)) {
-        return;
-      }
-      updateEverything(context);
-    }),
-  );
-
-  context.subscriptions.push(outputChannel);
+  sm.configService.onDidChangeConfiguration(() => {
+    updateEverything();
+  });
 
   registerAllTreeView(context);
 
@@ -105,12 +95,13 @@ export default function bootstrap(context: ExtensionContext) {
   registerAllCommands();
 
   // 首次激活时更新全局的一些监听器和装饰器填充步骤
-  updateEverything(context, false);
+  updateEverything();
 }
 
 export function resolveBookmarkController(): BookmarksController {
   return controllerManager['bookmarks'];
 }
+
 export function resolveUniversalController(): UniversalBookmarkController {
   return controllerManager['universal'];
 }

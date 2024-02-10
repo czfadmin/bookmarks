@@ -3,7 +3,7 @@ import BaseTreeProvider from './BaseTreeProvider';
 import {ProviderResult, Selection, TreeItemCollapsibleState} from 'vscode';
 import {BookmarkMeta, BookmarkStoreRootType, BookmarkStoreType} from '../types';
 import {resolveBookmarkController} from '../bootstrap';
-import BookmarksController from '@/controllers/BookmarksController';
+import BookmarksController from '../controllers/BookmarksController';
 
 export class BookmarksTreeProvider extends BaseTreeProvider<
   BookmarksTreeItem,
@@ -27,18 +27,18 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
       return this.getChildrenByList(element);
     }
 
-    if (
-      this.controller.groupView === 'default' &&
-      this.controller.viewType === 'tree'
-    ) {
-      return this.getChildrenByFile(element);
-    }
+    if (this.controller.viewType === 'tree') {
+      if (this.controller.groupView === 'default') {
+        return this.getChildrenByFile(element);
+      }
 
-    if (
-      this.controller.viewType === 'tree' &&
-      this.controller.groupView === 'color'
-    ) {
-      return this.getChildrenByColor(element);
+      if (this.controller.groupView === 'color') {
+        return this.getChildrenByColor(element);
+      }
+
+      if (this.controller.groupView === 'workspace') {
+        return this.getChildrenByWorkspace(element);
+      }
     }
   }
 
@@ -54,6 +54,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
           TreeItemCollapsibleState.Collapsed,
           'file',
           it,
+          this.serviceManager,
         );
       });
 
@@ -75,6 +76,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
             ...it,
             selection,
           },
+          this.serviceManager,
         );
       });
       return Promise.resolve(children);
@@ -101,6 +103,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
             ...it,
             selection,
           },
+          this.serviceManager,
         );
       });
       return Promise.resolve(children);
@@ -116,6 +119,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
           TreeItemCollapsibleState.Collapsed,
           'color',
           it,
+          this.serviceManager,
         );
       });
 
@@ -137,6 +141,47 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
             ...it,
             selection,
           },
+          this.serviceManager,
+        );
+      });
+      return Promise.resolve(children);
+    } catch (error) {
+      return Promise.resolve([]);
+    }
+  }
+
+  getChildrenByWorkspace(element?: BookmarksTreeItem | undefined) {
+    if (!element) {
+      const store = this.controller.groupedByWorkspaceFolders;
+      const children = store.map(it => {
+        return new BookmarksTreeItem(
+          it.workspace.name,
+          TreeItemCollapsibleState.Collapsed,
+          'workspace',
+          it,
+          this.serviceManager,
+        );
+      });
+
+      return Promise.resolve(children);
+    }
+    let children: BookmarksTreeItem[] = [];
+    try {
+      children = (element.meta as BookmarkStoreType).bookmarks.map(it => {
+        const selection = new Selection(
+          it.selection.anchor,
+          it.selection.active,
+        );
+
+        return new BookmarksTreeItem(
+          it.label || it.selectionContent || it.id,
+          TreeItemCollapsibleState.None,
+          'bookmark',
+          {
+            ...it,
+            selection,
+          },
+          this.serviceManager,
         );
       });
       return Promise.resolve(children);
