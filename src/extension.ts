@@ -1,5 +1,5 @@
 import {EXTENSION_ID} from './constants';
-import {disablAllEvents} from './events';
+import {disableAllEvents} from './events';
 import logger from './utils/logger';
 import {ExtensionContext} from 'vscode';
 import bootstrap from './bootstrap';
@@ -24,8 +24,8 @@ export async function activate(context: ExtensionContext) {
  * 销毁所以的事件监听以及文本装饰器
  */
 function disposeAll() {
-  disablAllEvents();
-  logger.log(`${EXTENSION_ID} is now deactive!`);
+  disableAllEvents();
+  logger.log(`${EXTENSION_ID} is now deactivate!`);
 }
 
 export function deactivate() {

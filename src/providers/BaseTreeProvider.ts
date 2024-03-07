@@ -38,7 +38,7 @@ export default class BaseTreeProvider<
     return this._extensionConfiguration?.relativePath || false;
   }
 
-  get extensionCOnfiguration() {
+  get extensionConfiguration() {
     return this._extensionConfiguration;
   }
 

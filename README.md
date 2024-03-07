@@ -62,7 +62,7 @@
 - `bookmark-manager.toggleLineBookmarkWithColor`: Toggle line bookmark with color.
 - `bookmark-manager.toggleBookmarkWithSelection`: Toggle Bookmark with selection.
 - `bookmark-manager.editDescription`: Editing the description of a bookmark.
-- `bookmark-manager.clearAllBookmarksInCurrentFile`: Clear all bookmar in opened file.
+- `bookmark-manager.clearAllBookmarksInCurrentFile`: Clear all bookmark in opened file.
 - `bookmark-manager.changeBookmarkColor`: Change the color of the selected bookmark.
 - `bookmark-manager.clearAllBookmarks`: Clear all bookmarks.
 - `bookmark-manager.deleteBookmark`: Delete selected bookmark.
