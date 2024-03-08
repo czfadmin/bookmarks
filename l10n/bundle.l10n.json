@@ -1,6 +1,8 @@
 {
   "Type a label for your bookmarks": "Type a label for your bookmarks",
+  "Type a name for your bookmarks color": "Type a color name for your bookmarks",
   "Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)": "Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)",
+  "Bookmark Color Name (Press `Enter` to confirm or press `Escape` to cancel)": "Bookmark Color Name (Press `Enter` to confirm or press `Escape` to cancel)",
   "Please select the bookmark before proceeding.": "Please select the bookmark before proceeding.",
   "Please select bookmark color": "Please select bookmark color",
   "Type more info for your bookmarks": "Type more info for your bookmarks",

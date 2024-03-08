@@ -15,7 +15,7 @@ export type SortType = 'name' | 'time';
 export type TreeGroupView = 'file' | 'color' | 'default' | 'workspace';
 
 export default interface IController extends Disposable {
-  get datasource(): BookmarkStoreRootType | UniversalStoreType | undefined;
+  get datastore(): BookmarkStoreRootType | UniversalStoreType | undefined;
 
   get totalCount(): number;
 

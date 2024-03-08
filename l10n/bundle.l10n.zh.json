@@ -1,6 +1,8 @@
 {
   "Type a label for your bookmarks": "为你的书签输入标签信息",
+  "Type a name for your bookmarks color": "为你的书签输入颜色名称",
   "Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)": "书签标签（按 \"Enter\"确认或按 \"Escape\" 取消）",
+  "Bookmark Color Name (Press `Enter` to confirm or press `Escape` to cancel)": "书签颜色名称（按 \"Enter\"确认或按 \"Escape\" 取消）",
   "Please select the bookmark before proceeding.": "请选择书签后再继续。",
   "Please select bookmark color": "请选择书签颜色",
   "Type more info for your bookmarks": "输入更多的书签信息",

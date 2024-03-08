@@ -55,7 +55,7 @@ export interface UniversalStoreType {
  */
 export default class UniversalBookmarkController implements IController {
   private _context: ExtensionContext;
-  private _datasource: UniversalStoreType | undefined;
+  private _datastore: UniversalStoreType | undefined;
   private _onDidChangeEvent: EventEmitter<void> = new EventEmitter<void>();
 
   private _serviceManager: ServiceManager;
@@ -66,12 +66,12 @@ export default class UniversalBookmarkController implements IController {
     return this._context.globalState;
   }
 
-  get datasource(): UniversalStoreType | undefined {
-    return this._datasource;
+  get datastore(): UniversalStoreType | undefined {
+    return this._datastore;
   }
 
   get totalCount(): number {
-    return this.datasource?.bookmarks.length || 0;
+    return this.datastore?.bookmarks.length || 0;
   }
   get labeledCount(): number {
     return 0;
@@ -80,14 +80,14 @@ export default class UniversalBookmarkController implements IController {
   constructor(context: ExtensionContext) {
     this._context = context;
     this._serviceManager = resolveServiceManager();
-    this._datasource =
+    this._datastore =
       this._context.globalState.get<UniversalStoreType>(UNIVERSAL_STORE_KEY);
-    if (!this._datasource) {
+    if (!this._datastore) {
       this._context.globalState.update(UNIVERSAL_STORE_KEY, {
         createdTime: new Date().toLocaleDateString(),
         bookmarks: [],
       });
-      this._datasource =
+      this._datastore =
         this._context.globalState.get<UniversalStoreType>(UNIVERSAL_STORE_KEY);
     }
     this._initial();
@@ -113,43 +113,43 @@ export default class UniversalBookmarkController implements IController {
 
   add(bookmark: Omit<UniversalBookmarkMeta, 'id'>) {
     const id = generateUUID();
-    this.datasource!.bookmarks.push({
+    this.datastore!.bookmarks.push({
       id,
       ...bookmark,
     } as UniversalBookmarkMeta);
     this._save();
   }
   remove(id: string) {
-    const idx = this.datasource?.bookmarks.findIndex(it => it.id === id);
+    const idx = this.datastore?.bookmarks.findIndex(it => it.id === id);
     if (idx === -1) {
       return;
     }
-    this.datasource!.bookmarks = this.datasource!.bookmarks.filter(
+    this.datastore!.bookmarks = this.datastore!.bookmarks.filter(
       it => it.id !== id,
     );
     this._save();
   }
   update(id: string, bookmarkDto: Partial<Omit<UniversalBookmarkMeta, 'id'>>) {
-    if (!this.datasource) {
+    if (!this.datastore) {
       return;
     }
-    const idx = this.datasource.bookmarks.findIndex(it => it.id === id);
+    const idx = this.datastore.bookmarks.findIndex(it => it.id === id);
     if (idx === -1) {
       return;
     }
 
-    const existed = this.datasource.bookmarks[idx];
-    this.datasource.bookmarks[idx] = {
+    const existed = this.datastore.bookmarks[idx];
+    this.datastore.bookmarks[idx] = {
       ...existed,
       ...bookmarkDto,
     } as UniversalBookmarkMeta;
     this._save();
   }
   clearAll() {
-    if (!this.datasource) {
+    if (!this.datastore) {
       return;
     }
-    this.datasource.bookmarks = [];
+    this.datastore.bookmarks = [];
     this._save();
   }
   save() {
@@ -157,12 +157,12 @@ export default class UniversalBookmarkController implements IController {
   }
 
   private _save() {
-    this.globalState.update(UNIVERSAL_STORE_KEY, this._datasource).then();
+    this.globalState.update(UNIVERSAL_STORE_KEY, this._datastore).then();
     this.refresh();
   }
 
   restore(): void {
-    this._datasource = {
+    this._datastore = {
       createdTime: new Date().toLocaleDateString(),
       bookmarks: [],
     };

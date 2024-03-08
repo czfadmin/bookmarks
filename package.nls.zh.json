@@ -7,6 +7,7 @@
   "bookmark-manager.editDescription": "编辑备注",
   "bookmark-manager.clearAllBookmarksInCurrentFile": "清除当前文件中的所有书签",
   "bookmark-manager.changeBookmarkColor": "更换书签颜色",
+  "bookmark-manager.changeBookmarkColorName": "更换书签颜色名称",
   "bookmark-manager.clearAllBookmarks": "清除所有书签",
   "bookmark-manager.deleteBookmark": "删除书签",
   "bookmark-manager.editLabel": "编辑书签标签",
