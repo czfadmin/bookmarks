@@ -47,7 +47,7 @@ export function updateChangeActiveTextEditorListener() {
 /**
  * 监听`onDidChangeVisibleTextEditors`事件: 当打开的`editor` 发生变化, 更新所有打开的`TextEditor`上的装饰器
  */
-export function updateChangeVisibleTextEidtorsListener() {
+export function updateChangeVisibleTextEditorsListener() {
   onDidChangeVisibleTextEditors?.dispose();
   const sm = resolveServiceManager();
   onDidChangeVisibleTextEditors = window.onDidChangeVisibleTextEditors(
@@ -73,9 +73,9 @@ export function updateCursorChangeListener() {
   const configService = sm.configService;
   const enableLineBlame =
     (configService.configuration.lineBlame as boolean) || false;
-  const activedEditor = window.activeTextEditor;
-  if (activedEditor) {
-    updateLineBlame(activedEditor, enableLineBlame);
+  const activeEditor = window.activeTextEditor;
+  if (activeEditor) {
+    updateLineBlame(activeEditor, enableLineBlame);
   }
   onDidCursorChangeDisposable = window.onDidChangeTextEditorSelection(ev => {
     const editor = ev.textEditor;
@@ -236,7 +236,7 @@ export function updateTextEditorSelectionListener() {
   });
 }
 
-export function disablAllEvents() {
+export function disableAllEvents() {
   onDidChangeActiveTextEditor?.dispose();
   onDidChangeBreakpoints?.dispose();
   onDidCursorChangeDisposable?.dispose();

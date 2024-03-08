@@ -133,19 +133,19 @@ function changeUniversalBookmarkColor() {
           iconPath: (gutters[color] || gutters['default']).iconPath,
         } as QuickPickItem;
       });
-      const choosedColor = await window.showQuickPick(pickItems, {
+      const chosenColor = await window.showQuickPick(pickItems, {
         title: l10n.t(
-          "Select bookmark color. Press 'ENTER' to confirm, 'EAPSE' to cancel",
+          "Select bookmark color. Press 'Enter' to confirm, 'Escape' to cancel",
         ),
         placeHolder: l10n.t('Please select bookmark color'),
         canPickMany: false,
       });
-      if (!choosedColor) {
+      if (!chosenColor) {
         return;
       }
       const controller = resolveUniversalController();
       controller.update(meta.id, {
-        color: choosedColor.label,
+        color: chosenColor.label,
       });
     },
   );

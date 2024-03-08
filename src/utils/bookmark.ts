@@ -283,17 +283,17 @@ export async function toggleBookmark(
   const {type: bookmarkType, label, withColor = false} = extra;
 
   let range, selectionContent;
-  const activedLine = editor.document.lineAt(selection.active.line);
+  const activeLine = editor.document.lineAt(selection.active.line);
   if (bookmarkType === 'line') {
-    const startPos = activedLine.text.indexOf(activedLine.text.trim());
+    const startPos = activeLine.text.indexOf(activeLine.text.trim());
     range = new Selection(
-      activedLine.lineNumber,
+      activeLine.lineNumber,
       startPos,
-      activedLine.lineNumber,
-      activedLine.range.end.character,
+      activeLine.lineNumber,
+      activeLine.range.end.character,
     );
 
-    selectionContent = activedLine.text.trim();
+    selectionContent = activeLine.text.trim();
   } else {
     range = editor.selection;
     if (range.isEmpty) {
@@ -309,10 +309,10 @@ export async function toggleBookmark(
     return;
   }
 
-  let choosedColor: string | undefined = 'default';
+  let chosenColor: string | undefined = 'default';
   if (withColor) {
-    choosedColor = await chooseBookmarkColor();
-    if (!choosedColor) {
+    chosenColor = await chooseBookmarkColor();
+    if (!chosenColor) {
       return;
     }
   }
@@ -320,7 +320,7 @@ export async function toggleBookmark(
   const bookmark: Omit<BookmarkMeta, 'id'> = {
     type: bookmarkType,
     label,
-    color: choosedColor,
+    color: chosenColor,
     selection: range,
     fileUri: editor.document.uri,
     languageId: editor.document.languageId,
@@ -409,14 +409,14 @@ export async function chooseBookmarkColor() {
       ).iconPath,
     } as QuickPickItem;
   });
-  const choosedColor = await window.showQuickPick(pickItems, {
+  const chosenColor = await window.showQuickPick(pickItems, {
     title: l10n.t(
-      "Select bookmark color. Press 'ENTER' to confirm, 'EAPSE' to cancel",
+      "Select bookmark color. Press 'Enter' to confirm, 'Escape' to cancel",
     ),
     placeHolder: l10n.t('Please select bookmark color'),
     canPickMany: false,
   });
-  return choosedColor?.label;
+  return chosenColor?.label;
 }
 
 /**
@@ -448,7 +448,7 @@ export async function quicklyJumpToBookmark() {
       },
     };
   });
-  const choosedBookmarks = await window.showQuickPick(pickItems, {
+  const chosenBookmarks = await window.showQuickPick(pickItems, {
     title: l10n.t('Select a bookmark to jump to the corresponding location.'),
     placeHolder: l10n.t('Please select the bookmark you want to open'),
     canPickMany: false,
@@ -475,11 +475,11 @@ export async function quicklyJumpToBookmark() {
       }
     },
   });
-  if (!choosedBookmarks) {
+  if (!chosenBookmarks) {
     return;
   }
 
-  gotoSourceLocation(choosedBookmarks.meta);
+  gotoSourceLocation(chosenBookmarks.meta);
 }
 
 /**

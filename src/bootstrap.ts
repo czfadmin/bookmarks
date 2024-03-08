@@ -7,7 +7,7 @@ import {EXTENSION_ID} from './constants';
 import {
   updateCursorChangeListener,
   updateChangeActiveTextEditorListener,
-  updateChangeVisibleTextEidtorsListener,
+  updateChangeVisibleTextEditorsListener,
   updateBookmarkInfoWhenTextChangeListener,
   updateFilesRenameAndDeleteListeners,
   updateTextEditorSelectionListener,
@@ -51,7 +51,7 @@ function registerAllCommands() {
 function updateEverything() {
   updateCursorChangeListener();
   updateChangeActiveTextEditorListener();
-  updateChangeVisibleTextEidtorsListener();
+  updateChangeVisibleTextEditorsListener();
   updateBookmarkInfoWhenTextChangeListener();
   updateFilesRenameAndDeleteListeners();
   updateTextEditorSelectionListener();
@@ -61,9 +61,9 @@ function initialController(context: ExtensionContext) {
   controllerManager['bookmarks'] && controllerManager['bookmarks'].dispose();
   controllerManager['universal'] && controllerManager['universal'].dispose();
   const bookmarksController = new BookmarksController(context);
-  const universalControlelr = new UniversalBookmarkController(context);
+  const universalController = new UniversalBookmarkController(context);
   controllerManager['bookmarks'] = bookmarksController;
-  controllerManager['universal'] = universalControlelr;
+  controllerManager['universal'] = universalController;
 }
 
 export default function bootstrap(context: ExtensionContext) {

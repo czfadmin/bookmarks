@@ -299,13 +299,13 @@ function changeBookmarkColor() {
  */
 function clearAllBookmarksInCurrentFile() {
   registerCommand('clearAllBookmarksInCurrentFile', async args => {
-    const activedEditor = window.activeTextEditor;
+    const activeEditor = window.activeTextEditor;
     const controller = resolveBookmarkController();
-    if (!activedEditor || !controller) {
+    if (!activeEditor || !controller) {
       return;
     }
-    if (checkIfBookmarksIsInCurrentEditor(activedEditor)) {
-      controller.clearAllBookmarkInFile(activedEditor.document.uri);
+    if (checkIfBookmarksIsInCurrentEditor(activeEditor)) {
+      controller.clearAllBookmarkInFile(activeEditor.document.uri);
     }
   });
 }
@@ -384,7 +384,7 @@ export function listBookmarksInCurrentFile() {
         };
       });
 
-      const choosedBookmarks = await window.showQuickPick(pickItems, {
+      const chosenBookmarks = await window.showQuickPick(pickItems, {
         title: l10n.t(
           'Select a bookmark to jump to the corresponding location.',
         ),
@@ -413,7 +413,7 @@ export function listBookmarksInCurrentFile() {
           }
         },
       });
-      if (!choosedBookmarks) {
+      if (!chosenBookmarks) {
         return;
       }
     },

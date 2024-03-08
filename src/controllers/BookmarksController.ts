@@ -207,11 +207,11 @@ export default class BookmarksController implements IController {
   }
 
   /**
-   * 初始化文件监听器, 监听`bookmarks.json`的文件变化
+   * 初始化文件监听器, 监听`bookmark-manager.json`的文件变化
    */
   private async _initialWatcher() {
     const existedStoreFile = await workspace.findFiles(
-      '**/bookmarks.json',
+      '**/bookmark-manager.json',
       '**​/node_modules/**',
       10,
     );
@@ -220,7 +220,7 @@ export default class BookmarksController implements IController {
         this._watcher.dispose();
       }
       this._watcher = workspace.createFileSystemWatcher(
-        '**/.vscode/bookmarks.json',
+        '**/.vscode/bookmark-manager.json',
       );
       this._watcher.onDidDelete(uri => {
         this._datasource = {
@@ -250,7 +250,7 @@ export default class BookmarksController implements IController {
     for (ws of wsFolders) {
       const storeFilePath = path.join(
         ws.uri.fsPath,
-        './.vscode/bookmarks.json',
+        './.vscode/bookmark-manager.json',
       );
       if (fs.existsSync(storeFilePath)) {
         const _bookmarks = (
@@ -580,7 +580,7 @@ export default class BookmarksController implements IController {
         }
         const bookmarkFile = path.join(
           workspacePath,
-          './.vscode/bookmarks.json',
+          './.vscode/bookmark-manager.json',
         );
         if (!fs.existsSync(bookmarkFile)) {
           fs.writeFileSync(bookmarkFile, '');
