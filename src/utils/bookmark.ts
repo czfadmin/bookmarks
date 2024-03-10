@@ -401,7 +401,12 @@ export async function chooseBookmarkColor() {
     Object.keys(defaultColors).forEach(it => delete colors[it]);
   }
 
-  const pickItems = Object.keys(colors).map(color => {
+  const controller = resolveBookmarkController();
+  const userColors = controller.datastore?.bookmarks.map(i => i.color) ?? [];
+
+  const allUsedColors = Array.from(new Set([...Object.keys(colors), ...userColors]));
+
+  const pickItems = allUsedColors.map(color => {
     return {
       label: color,
       iconPath: (
@@ -427,11 +432,11 @@ export async function quicklyJumpToBookmark() {
   const sm = resolveServiceManager();
   const gutters = sm.gutterService.gutters;
   const tagGutters = sm.gutterService.tagGutters;
-  if (!controller || !controller.datasource) {
+  if (!controller || !controller.datastore) {
     return;
   }
 
-  const pickItems = controller.datasource.bookmarks.map(it => {
+  const pickItems = controller.datastore.bookmarks.map(it => {
     const iconPath = it.label
       ? (tagGutters[it.color] || tagGutters['default']).iconPath
       : (gutters[it.color] || (tagGutters['default'] as any)).iconPath;

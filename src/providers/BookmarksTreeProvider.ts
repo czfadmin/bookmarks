@@ -88,7 +88,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
   getChildrenByList(element?: BookmarksTreeItem | undefined) {
     if (!element) {
       const children = (
-        this.datasource as BookmarkStoreRootType
+        this.datastore as BookmarkStoreRootType
       )?.bookmarks.map((it: BookmarkMeta) => {
         const selection = new Selection(
           it.selection.anchor,

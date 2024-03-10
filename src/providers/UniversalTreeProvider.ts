@@ -18,7 +18,7 @@ export class UniversalTreeProvider extends BaseTreeProvider<
     element?: UniversalTreeItem | undefined,
   ): ProviderResult<UniversalTreeItem[]> {
     if (!element) {
-      const arr = (this.datasource as UniversalStoreType).bookmarks || [];
+      const arr = (this.datastore as UniversalStoreType).bookmarks || [];
 
       const children = arr.map(it => {
         let label = '';

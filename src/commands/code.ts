@@ -7,40 +7,41 @@ import {
   window,
   workspace,
 } from 'vscode';
-import {registerCommand} from '../utils';
 import {
-  CMD_TOGGLE_LINE_BOOKMARK,
-  CMD_TOGGLE_BOOKMARK_WITH_LABEL,
+  CMD_BOOKMARK_ADD_MORE_MEMO,
+  CMD_CHANGE_BOOKMARK_COLOR,
+  CMD_CHANGE_BOOKMARK_COLOR_NAME,
   CMD_CLEAR_ALL,
   CMD_DELETE_BOOKMARK,
   CMD_EDIT_LABEL,
   CMD_GO_TO_SOURCE_LOCATION,
-  CMD_TOGGLE_BOOKMARK_WITH_SECTIONS,
-  CMD_BOOKMARK_ADD_MORE_MEMO,
   CMD_JUMP_TO_BOOKMARK,
-  CMD_CHANGE_BOOKMARK_COLOR,
   CMD_OPEN_IN_EDITOR,
+  CMD_TOGGLE_BOOKMARK_WITH_LABEL,
+  CMD_TOGGLE_BOOKMARK_WITH_SECTIONS,
+  CMD_TOGGLE_LINE_BOOKMARK,
 } from '../constants';
+import { registerCommand } from '../utils';
 
-import {BookmarkMeta, LineBookmarkContext} from '../types';
+import { BookmarkMeta, LineBookmarkContext } from '../types';
 
+import { resolveBookmarkController } from '../bootstrap';
+import BookmarksTreeItem from '../providers/BookmarksTreeItem';
+import resolveServiceManager from '../services/ServiceManager';
 import {
   checkIfBookmarksIsInCurrentEditor,
   chooseBookmarkColor,
   deleteBookmark,
   editBookmarkDescription,
-  gotoSourceLocation,
-  quicklyJumpToBookmark,
-  toggleBookmarksWithSelections,
-  toggleBookmark,
   editBookmarkLabel,
   getBookmarkFromLineNumber,
   getBookmarksFromFileUri,
   getLineInfoStrFromBookmark,
+  gotoSourceLocation,
+  quicklyJumpToBookmark,
+  toggleBookmark,
+  toggleBookmarksWithSelections,
 } from '../utils/bookmark';
-import BookmarksTreeItem from '../providers/BookmarksTreeItem';
-import {resolveBookmarkController} from '../bootstrap';
-import resolveServiceManager from '../services/ServiceManager';
 
 /**
  * 从`context`获取书签数据
@@ -71,6 +72,32 @@ function getBookmarkFromCtx(
 }
 
 /**
+ * 从`context`获取书签数据
+
+ * @param cb
+ * @returns
+ */
+function getBookmarkColorFromCtx(
+  context: LineBookmarkContext | BookmarksTreeItem | undefined,
+  cb?: () => void,
+) {
+  let bookmark: BookmarkMeta | undefined;
+  if (
+    context &&
+    'contextValue' in context &&
+    context.contextValue === 'color'
+  ) {
+    bookmark = context.meta as BookmarkMeta;
+  }
+
+  if (!bookmark && cb) {
+    cb();
+    return;
+  }
+  return bookmark;
+}
+
+/**
  * 注册所需要的代码相关命令
  */
 export function registerCodeCommands() {
@@ -84,6 +111,7 @@ export function registerCodeCommands() {
   toggleSelectionBookmark();
   quickPreviewOrJumpToBookmark();
   changeBookmarkColor();
+  changeBookmarkColorName();
   clearAllBookmarksInCurrentFile();
   addMoreMemo();
   openInEditor();
@@ -294,6 +322,44 @@ function changeBookmarkColor() {
   );
 }
 
+
+function changeBookmarkColorName() {
+  // 改变书签颜色
+  registerCommand(
+    CMD_CHANGE_BOOKMARK_COLOR_NAME,
+    async (ctx: LineBookmarkContext | BookmarksTreeItem | undefined) => {
+      let bookmark: BookmarkMeta | undefined = getBookmarkColorFromCtx(ctx);
+      if (!bookmark) {
+        window.showInformationMessage(
+          l10n.t('Please select bookmark color'),
+          {},
+        );
+        return;
+      }
+
+      const newColorName = await window.showInputBox({
+        placeHolder: l10n.t('Type a name for your bookmarks color'),
+        title: l10n.t(
+          'Bookmark Color Name (Press `Enter` to confirm or press `Escape` to cancel)',
+        ),
+        value: bookmark.color
+      });
+
+      if (!newColorName) {
+        return;
+      }
+
+      const controller = resolveBookmarkController();
+      if (!controller) {
+        return;
+      }
+      controller.updateGroupColorName(bookmark.color, {
+        color: newColorName,
+      });
+    },
+  );
+}
+
 /**
  * 删除当前打开的文档中的已存在的书签
  */
@@ -354,7 +420,7 @@ export function listBookmarksInCurrentFile() {
       const controller = resolveBookmarkController();
       const sm = resolveServiceManager();
 
-      const bookmarkDS = controller.datasource;
+      const bookmarkDS = controller.datastore;
       if (!editor || !bookmarkDS) {
         return;
       }

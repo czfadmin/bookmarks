@@ -11,4 +11,6 @@ export const CMD_JUMP_TO_BOOKMARK = 'quickJumpTo';
 
 export const CMD_CHANGE_BOOKMARK_COLOR = 'changeBookmarkColor';
 
+export const CMD_CHANGE_BOOKMARK_COLOR_NAME = 'changeBookmarkColorName';
+
 export const CMD_OPEN_IN_EDITOR = 'openInEditor';

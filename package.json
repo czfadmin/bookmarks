@@ -76,6 +76,12 @@
         "category": "Bookmark Manager (BM)"
       },
       {
+        "command": "bookmark-manager.changeBookmarkColorName",
+        "title": "%bookmark-manager.changeBookmarkColorName%",
+        "icon": "$(bookmark)",
+        "category": "Bookmark Manager (BM)"
+      },
+      {
         "command": "bookmark-manager.clearAllBookmarks",
         "title": "%bookmark-manager.clearAllBookmarks%",
         "icon": "$(clear-all)",
@@ -473,6 +479,11 @@
           "command": "bookmark-manager.changeBookmarkColor",
           "when": "view==bookmark-manager && viewItem === bookmark",
           "group": "itemContextGroup@3"
+        },
+        {
+          "command": "bookmark-manager.changeBookmarkColorName",
+          "when": "view==bookmark-manager && viewItem === color",
+          "group": "itemContextGroup@1"
         },
         {
           "command": "bookmark-manager.copyUniversalBookmarkContent",
