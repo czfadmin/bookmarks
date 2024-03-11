@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.0.24
+
+### Patch Changes
+
+- 修改存储文件为 bookmark-manager.json,避免跟其他插件文件名冲突
+- 增加改变颜色名字功能
+
 ## 0.0.23
 
 ### Patch Changes
