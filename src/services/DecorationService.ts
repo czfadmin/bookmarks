@@ -43,7 +43,7 @@ export default class DecorationService implements IDisposable {
   }
 
   restoreDecorations() {
-    this.disposeAllDiscorations();
+    this.disposeAllDecorations();
     this.decorations = {};
     this.tagDecorations = {};
     const configService = this._serviceManager.configService;
@@ -71,7 +71,7 @@ export default class DecorationService implements IDisposable {
     let tagGutterIconPath = (tagGutters[colorLabel] || tagGutters['default'])
       .iconPath;
 
-    // 用户配置
+          // 用户配置
     const {
       fontWeight,
       showTextDecoration,
@@ -119,7 +119,7 @@ export default class DecorationService implements IDisposable {
         : gutterIconPath
       : undefined;
 
-    const decoration = window.createTextEditorDecorationType({
+        const decoration = window.createTextEditorDecorationType({
       isWholeLine: wholeLine,
       borderRadius: '2px',
       borderColor: color,
@@ -267,7 +267,7 @@ export default class DecorationService implements IDisposable {
   /**
    * dispose 所有的装饰器
    */
-  disposeAllDiscorations() {
+  disposeAllDecorations() {
     for (let decoration of [
       ...Object.values(this.decorations),
       ...Object.values(this.tagDecorations),
@@ -277,6 +277,6 @@ export default class DecorationService implements IDisposable {
   }
 
   dispose(): void {
-    this.disposeAllDiscorations();
+    this.disposeAllDecorations();
   }
 }

@@ -4,7 +4,7 @@ import DecorationService from './DecorationService';
 import {IDisposable} from '../utils';
 import StatusbarService from './StatusbarService';
 import GutterService from './GutterService';
-import WorkspaceService from './WorksapceService';
+import WorkspaceService from './WorkspaceService';
 
 export interface IServiceManager {
   readonly configService: ConfigService;
