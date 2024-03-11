@@ -52,5 +52,9 @@ export function initServiceManager(context: ExtensionContext) {
   _serviceManager = new ServiceManager(context);
 }
 
+export function postInitController(context: ExtensionContext) {
+  _serviceManager.decorationService.setupAllDecorations();
+}
+
 const resolveServiceManager = () => _serviceManager;
 export default resolveServiceManager;

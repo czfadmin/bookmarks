@@ -28,28 +28,31 @@ export default class DecorationService implements IDisposable {
   private _serviceManager: ServiceManager;
   constructor(sm: ServiceManager) {
     this._serviceManager = sm;
-    this._init();
   }
 
-  private _init() {
-    this.restoreDecorations();
+  setupAllDecorations() {
+    this.restoreAllDecorations();
     if (!this._serviceManager) {
       this._serviceManager = resolveServiceManager();
     }
     this._serviceManager.configService.onDidChangeConfiguration(() => {
-      this.restoreDecorations();
+      this.restoreAllDecorations();
       this.updateActiveEditorAllDecorations();
     });
   }
 
-  restoreDecorations() {
+  restoreAllDecorations() {
     this.disposeAllDecorations();
     this.decorations = {};
     this.tagDecorations = {};
     const configService = this._serviceManager.configService;
-    const colors = configService.colors;
+    const configColors = configService.colors;
 
-    Object.keys(colors).forEach(item => {
+    const controller = resolveBookmarkController();
+    const userColors = controller.datastore?.bookmarks.map(i => i.color) ?? [];
+    const allUsedColors = Array.from(new Set([...Object.keys(configColors), ...userColors]));
+
+    allUsedColors.forEach(item => {
       this.decorations[item] = this.createDecoration(item);
       this.tagDecorations[item] = this.createDecoration(item, true);
     });
@@ -237,7 +240,7 @@ export default class DecorationService implements IDisposable {
         decorationsGroupByLevel[color] = [] as any;
       }
       decorationsGroupByLevel[color].push(
-        ...bookmarks.filter(it => it.color == color),
+        ...bookmarks.filter(it => it.color === color),
       );
     });
 
