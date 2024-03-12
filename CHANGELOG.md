@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.0.25
+
+### Patch Changes
+
+- 修复修改颜色名字，编辑器没有图标的问题;
+- 增加Issue模板
+
 ## 0.0.24
 
 ### Patch Changes
