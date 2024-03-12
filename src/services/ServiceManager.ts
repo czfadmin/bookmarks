@@ -4,7 +4,7 @@ import DecorationService from './DecorationService';
 import {IDisposable} from '../utils';
 import StatusbarService from './StatusbarService';
 import GutterService from './GutterService';
-import WorkspaceService from './WorksapceService';
+import WorkspaceService from './WorkspaceService';
 
 export interface IServiceManager {
   readonly configService: ConfigService;
@@ -50,6 +50,10 @@ export class ServiceManager implements IServiceManager, IDisposable {
 
 export function initServiceManager(context: ExtensionContext) {
   _serviceManager = new ServiceManager(context);
+}
+
+export function postInitController(context: ExtensionContext) {
+  _serviceManager.decorationService.setupAllDecorations();
 }
 
 const resolveServiceManager = () => _serviceManager;

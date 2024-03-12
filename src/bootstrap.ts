@@ -19,6 +19,7 @@ import logger from './utils/logger';
 import resolveServiceManager, {
   ServiceManager,
   initServiceManager,
+  postInitController,
 } from './services/ServiceManager';
 
 let controllerManager: any = {};
@@ -76,6 +77,7 @@ export default function bootstrap(context: ExtensionContext) {
 
   initServiceManager(context);
   initialController(context);
+  postInitController(context);
 
   const serviceManager = resolveServiceManager();
   // 依赖bookmark controller 单独注册
