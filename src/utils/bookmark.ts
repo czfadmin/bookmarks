@@ -404,7 +404,9 @@ export async function chooseBookmarkColor() {
   const controller = resolveBookmarkController();
   const userColors = controller.datastore?.bookmarks.map(i => i.color) ?? [];
 
-  const allUsedColors = Array.from(new Set([...Object.keys(colors), ...userColors]));
+  const allUsedColors = Array.from(
+    new Set([...Object.keys(colors), ...userColors]),
+  );
 
   const pickItems = allUsedColors.map(color => {
     return {
@@ -572,7 +574,8 @@ export function updateBookmarksGroupByChangedLine(
   change: TextDocumentContentChangeEvent,
 ) {
   const {document} = event;
-
+  const serviceManager = resolveServiceManager();
+  const {configService} = serviceManager;
   const changeText = change.text;
   const isNewLine = REGEXP_NEWLINE.test(changeText);
 
@@ -634,7 +637,10 @@ export function updateBookmarksGroupByChangedLine(
         selectionContent = document.getText(selection);
         hasChanged = true;
       }
-    } else if (isNewLine) {
+    } else if (
+      isNewLine &&
+      configService.configuration.autoSwitchSingleToMultiWhenLineWrapping
+    ) {
       // 进行换行操作, 转换为区域标签
       let newLines = 1;
       const matches = change.text.match(REGEXP_NEWLINE);
@@ -654,6 +660,12 @@ export function updateBookmarksGroupByChangedLine(
       bookmarkType = 'selection';
       selectionContent = document.getText(selection);
       hasChanged = true;
+    } else if (
+      isNewLine &&
+      !configService.configuration.autoSwitchSingleToMultiWhenLineWrapping
+    ) {
+      // 这时候要刷新下打开的编辑器的装饰器样式, 要不然会被用户误认为还是将单行书签转换为多行书签显示
+      serviceManager.decorationService.updateActiveEditorAllDecorations();
     }
 
     if (!hasChanged) {

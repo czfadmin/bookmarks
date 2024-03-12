@@ -16,15 +16,12 @@ import {registerCodeCommands, registerUniversalCommands} from './commands';
 import {registerTelemetryLogger} from './utils';
 import logger from './utils/logger';
 
-import resolveServiceManager, {
-  ServiceManager,
+import {
   initServiceManager,
   postInitController,
 } from './services/ServiceManager';
 
 let controllerManager: any = {};
-
-let sm: ServiceManager;
 
 /**
  * 注册所有的视图
@@ -67,7 +64,7 @@ function initialController(context: ExtensionContext) {
   controllerManager['universal'] = universalController;
 }
 
-export default function bootstrap(context: ExtensionContext) {
+export default async function bootstrap(context: ExtensionContext) {
   if (!workspace.workspaceFolders) {
     return;
   }
@@ -75,28 +72,12 @@ export default function bootstrap(context: ExtensionContext) {
 
   logger.log(`${EXTENSION_ID} is now active!`);
 
-  initServiceManager(context);
+  await initServiceManager(context, updateEverything);
+
   initialController(context);
-  postInitController(context);
-
-  const serviceManager = resolveServiceManager();
-  // 依赖bookmark controller 单独注册
-  serviceManager.registerStatusbarService();
-
-  if (!sm) {
-    sm = resolveServiceManager();
-  }
-
-  sm.configService.onDidChangeConfiguration(() => {
-    updateEverything();
-  });
-
+  postInitController();
   registerAllTreeView(context);
-
-  // 注册命令
   registerAllCommands();
-
-  // 首次激活时更新全局的一些监听器和装饰器填充步骤
   updateEverything();
 }
 

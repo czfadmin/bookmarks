@@ -10,7 +10,7 @@ export type ViewType = 'tree' | 'list';
 /**
  * 视图排序方式
  */
-export type SortType = 'name' | 'time';
+export type TreeViewSortedByType = 'linenumber' | 'custom' | 'time';
 
 export type TreeGroupView = 'file' | 'color' | 'default' | 'workspace';
 
@@ -39,5 +39,5 @@ export default interface IController extends Disposable {
   refresh(): void;
   changeViewType(viewType: ViewType): void;
 
-  changeSortType(sortType: SortType): void;
+  changeSortType(sortType: TreeViewSortedByType): void;
 }

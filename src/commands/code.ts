@@ -21,11 +21,11 @@ import {
   CMD_TOGGLE_BOOKMARK_WITH_SECTIONS,
   CMD_TOGGLE_LINE_BOOKMARK,
 } from '../constants';
-import { registerCommand } from '../utils';
+import {registerCommand} from '../utils';
 
-import { BookmarkMeta, LineBookmarkContext } from '../types';
+import {BookmarkMeta, LineBookmarkContext} from '../types';
 
-import { resolveBookmarkController } from '../bootstrap';
+import {resolveBookmarkController} from '../bootstrap';
 import BookmarksTreeItem from '../providers/BookmarksTreeItem';
 import resolveServiceManager from '../services/ServiceManager';
 import {
@@ -175,23 +175,15 @@ function toggleLineBookmarkWithColor() {
 }
 
 /**
- * 清除书签
+ * 清除所有的书签
  */
 function clearAllBookmarks() {
   registerCommand(CMD_CLEAR_ALL, args => {
-    let fileUri,
-      clearAll = false;
     const controller = resolveBookmarkController();
     if (!controller) {
       return;
     }
-    if (args && args.meta) {
-      fileUri = args.meta.fileUri;
-      controller.clearAllBookmarkInFile(fileUri);
-    } else {
-      controller.clearAll();
-      clearAll = true;
-    }
+    controller.clearAll();
   });
 }
 /**
@@ -322,7 +314,6 @@ function changeBookmarkColor() {
   );
 }
 
-
 function changeBookmarkColorName() {
   // 改变书签颜色
   registerCommand(
@@ -342,7 +333,7 @@ function changeBookmarkColorName() {
         title: l10n.t(
           'Bookmark Color Name (Press `Enter` to confirm or press `Escape` to cancel)',
         ),
-        value: bookmark.color
+        value: bookmark.color,
       });
 
       if (!newColorName) {
@@ -365,13 +356,19 @@ function changeBookmarkColorName() {
  */
 function clearAllBookmarksInCurrentFile() {
   registerCommand('clearAllBookmarksInCurrentFile', async args => {
-    const activeEditor = window.activeTextEditor;
     const controller = resolveBookmarkController();
-    if (!activeEditor || !controller) {
+    if (!controller) {
       return;
     }
-    if (checkIfBookmarksIsInCurrentEditor(activeEditor)) {
-      controller.clearAllBookmarkInFile(activeEditor.document.uri);
+
+    if (args && args.meta) {
+      controller.clearAllBookmarkInFile(args.meta.fileUri);
+    } else {
+      const activeEditor = window.activeTextEditor;
+      if (!activeEditor) {return;}
+      if (checkIfBookmarksIsInCurrentEditor(activeEditor)) {
+        controller.clearAllBookmarkInFile(activeEditor.document.uri);
+      }
     }
   });
 }
