@@ -3,6 +3,7 @@ import {
   OverviewRulerLane,
   TextEditor,
   TextEditorDecorationType,
+  l10n,
   window,
 } from 'vscode';
 import {
@@ -11,7 +12,7 @@ import {
   BookmarkMeta,
   StringIndexType,
 } from '../types';
-import {IDisposable, translate} from '../utils';
+import {IDisposable} from '../utils';
 import resolveServiceManager, {ServiceManager} from './ServiceManager';
 import {resolveBookmarkController} from '../bootstrap';
 import BookmarksController from '../controllers/BookmarksController';
@@ -50,7 +51,9 @@ export default class DecorationService implements IDisposable {
 
     const controller = resolveBookmarkController();
     const userColors = controller.datastore?.bookmarks.map(i => i.color) ?? [];
-    const allUsedColors = Array.from(new Set([...Object.keys(configColors), ...userColors]));
+    const allUsedColors = Array.from(
+      new Set([...Object.keys(configColors), ...userColors]),
+    );
 
     allUsedColors.forEach(item => {
       this.decorations[item] = this.createDecoration(item);
@@ -73,8 +76,7 @@ export default class DecorationService implements IDisposable {
     let gutterIconPath = (gutters[colorLabel] || gutters['default']).iconPath;
     let tagGutterIconPath = (tagGutters[colorLabel] || tagGutters['default'])
       .iconPath;
-
-          // 用户配置
+    // 用户配置
     const {
       fontWeight,
       showTextDecoration,
@@ -105,7 +107,7 @@ export default class DecorationService implements IDisposable {
 
     if (!(showGutterIcon || showGutterInOverviewRuler || showTextDecoration)) {
       window.showInformationMessage(
-        translate(
+        l10n.t(
           `'showGutterIcon', 'showGutterInOverviewRuler', 'showTextDecoration' not available at the same time this is only 'false'`,
         ),
       );
@@ -122,7 +124,9 @@ export default class DecorationService implements IDisposable {
         : gutterIconPath
       : undefined;
 
-        const decoration = window.createTextEditorDecorationType({
+    let rangeBehavior = DecorationRangeBehavior.ClosedClosed;
+
+    const decoration = window.createTextEditorDecorationType({
       isWholeLine: wholeLine,
       borderRadius: '2px',
       borderColor: color,
@@ -130,7 +134,7 @@ export default class DecorationService implements IDisposable {
       fontWeight,
       overviewRulerLane,
       overviewRulerColor,
-      rangeBehavior: DecorationRangeBehavior.ClosedClosed,
+      rangeBehavior,
       gutterIconPath: decorationGutterIconPath,
       gutterIconSize: 'auto',
       border: showBorder ? border : '',

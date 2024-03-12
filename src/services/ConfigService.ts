@@ -5,7 +5,6 @@ import {
   EventEmitter,
   WorkspaceConfiguration,
   commands,
-  window,
   workspace,
 } from 'vscode';
 import {
@@ -152,6 +151,9 @@ export default class ConfigService implements Disposable {
       enableClick: configuration.get('enableClick') || false,
       createJsonFile: configuration.get('createJsonFile') || false,
       useBuiltInColors: configuration.get('useBuiltInColors') || false,
+      alwaysIgnore: configuration.get('alwaysIgnore') || false,
+      autoSwitchSingleToMultiWhenLineWrapping:
+        configuration.get('autoSwitchSingleToMultiWithLineWrap') || false,
     };
   }
 
@@ -238,10 +240,10 @@ export default class ConfigService implements Disposable {
   fire(ev: ConfigurationChangeEvent) {
     this._configuration = this._getExtensionConfiguration();
     this._decorationConfiguration = this._getCreateDecorationOptions();
-    this._registerContextKey();
     this._onDecorationConfigChangeEvent.fire(this._decorationConfiguration);
     this._onExtensionConfigChangeEvent.fire(this._configuration);
     this._onDidChangeConfigurationEvent.fire(ev);
+    this._registerContextKey();
   }
 
   dispose() {

@@ -13,23 +13,28 @@ import {EXTENSION_ID, EXTENSION_NAME} from '../constants';
 export default class StatusbarService implements Disposable {
   private _serviceManager: ServiceManager;
 
+  private _controller: BookmarksController;
   private statusbarItem: StatusBarItem | undefined;
   constructor(sm: ServiceManager) {
     this._serviceManager = sm;
+    this._controller = resolveBookmarkController();
     this.updateStatusBarItem();
     this._serviceManager.configService.onDidChangeConfiguration(() => {
       this.updateStatusBarItem();
     });
+    this._controller.onDidChangeEvent(() => {
+      this.updateStatusBarItem();
+    });
   }
 
-  resolveStatusBarItem(controller: BookmarksController) {
+  resolveStatusBarItem() {
     this.statusbarItem?.dispose();
     this.statusbarItem = window.createStatusBarItem(
       `${EXTENSION_ID}`,
       StatusBarAlignment.Left,
     );
-    const total = controller.totalCount;
-    const labeled = controller.labeledCount;
+    const total = this._controller.totalCount;
+    const labeled = this._controller.labeledCount;
     this.statusbarItem.name = EXTENSION_NAME;
     this.statusbarItem.text = `$(bookmark) ${total} $(tag-add) ${labeled}`;
     this.statusbarItem.command = {
@@ -44,11 +49,7 @@ export default class StatusbarService implements Disposable {
   }
 
   updateStatusBarItem() {
-    const controller = resolveBookmarkController();
-    this.resolveStatusBarItem(controller);
-    controller.onDidChangeEvent(() => {
-      this.resolveStatusBarItem(controller);
-    });
+    this.resolveStatusBarItem();
   }
 
   resolveBookmarkTooltip({total, labeled}: any): MarkdownString {

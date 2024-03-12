@@ -2,7 +2,7 @@
   "name": "bookmark-manager",
   "displayName": "Bookmark Manager (BM)",
   "description": "Simple and easy to use bookmark manager",
-  "version": "0.0.25",
+  "version": "0.0.26",
   "engines": {
     "vscode": "^1.82.0"
   },
@@ -21,10 +21,30 @@
   "repository": {
     "url": "https://github.com/czfadmin/bookmarks"
   },
-  "license": "MIT",
   "bugs": {
     "url": "https://github.com/czfadmin/bookmarks/issues"
   },
+  "scripts": {
+    "vscode:prepublish": "yarn run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "yarn run compile-tests && yarn run compile && yarn run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "version": "changeset version",
+    "change": "changeset",
+    "bump": "changeset publish",
+    "prettier": "prettier --fix  -w  ./src/**/*.{js,ts} ",
+    "postinstall": "husky install && husky set .husky/pre-commit \"yarn lint-staged\"",
+    "publish:beta": "vsce package --pre-release",
+    "publish": "vsce publish",
+    "lint-staged": "lint-staged",
+    "l10n": "node ./node_modules/@vscode/l10n-dev/dist/cli.js export -o ./l10n ./src"
+  },
+  "license": "MIT",
   "activationEvents": [
     "onStartupFinished"
   ],
@@ -54,7 +74,7 @@
       {
         "command": "bookmark-manager.toggleBookmarkWithSelection",
         "title": "%bookmark-manager.toggleBookmarkWithSelection%",
-        "icon": "$(clear-all)",
+        "icon": "$(bookmark)",
         "category": "Bookmark Manager (BM)"
       },
       {
@@ -66,7 +86,7 @@
       {
         "command": "bookmark-manager.clearAllBookmarksInCurrentFile",
         "title": "%bookmark-manager.clearAllBookmarksInCurrentFile%",
-        "icon": "$(bookmark)",
+        "icon": "$(clear-all)",
         "category": "Bookmark Manager (BM)"
       },
       {
@@ -341,6 +361,16 @@
           "type": "boolean",
           "default": true,
           "description": "%bookmark-manager.useBuiltInColors%"
+        },
+        "bookmark-manager.alwaysIgnore": {
+          "type": "boolean",
+          "default": true,
+          "description": "%bookmark-manager.alwaysIgnore%"
+        },
+        "bookmark-manager.autoSwitchSingleToMultiWithLineWrap": {
+          "type": "boolean",
+          "default": false,
+          "description": "%bookmark-manager.autoSwitchSingleToMultiWithLineWrap%"
         }
       }
     },
@@ -461,7 +491,7 @@
           "group": "inline@3"
         },
         {
-          "command": "bookmark-manager.clearAllBookmarks",
+          "command": "bookmark-manager.clearAllBookmarksInCurrentFile",
           "when": "view == bookmark-manager && viewItem === file",
           "group": "inline@2"
         },
@@ -557,26 +587,6 @@
       }
     }
   },
-  "scripts": {
-    "vscode:prepublish": "yarn run package",
-    "compile": "webpack",
-    "watch": "webpack --watch",
-    "package": "webpack --mode production --devtool hidden-source-map",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "yarn run compile-tests && yarn run compile && yarn run lint",
-    "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js",
-    "version": "changeset version",
-    "change": "changeset",
-    "bump": "changeset publish",
-    "prettier": "prettier --fix  -w  ./src/**/*.{js,ts} ",
-    "postinstall": "husky install && husky set .husky/pre-commit \"yarn lint-staged\"",
-    "publish:beta": "vsce package --pre-release",
-    "publish": "vsce publish",
-    "lint-staged": "lint-staged",
-    "l10n": "node ./node_modules/@vscode/l10n-dev/dist/cli.js export -o ./l10n ./src"
-  },
   "devDependencies": {
     "@changesets/cli": "^2.26.2",
     "@types/glob": "^8.1.0",
@@ -603,7 +613,6 @@
   "dependencies": {
     "@vscode/l10n": "^0.0.16",
     "@vscode/vsce": "^2.23.0",
-    "bootstrap-icons": "^1.11.2",
     "lodash": "^4.17.21",
     "uuid": "^9.0.1"
   },

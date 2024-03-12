@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.0.26
+
+### Patch Changes
+
+- c43f594: 增加`alwaysIgnore`选项配置是否将`bookmark-manager.json`文件添加到`.gitignore`文件中
+- c43f594: 修复清除所有书签时TreeView的Badge未更新BUG
+- c43f594: 增加在单行书签进行编辑是否开启自动转换为多行书签,配置项为`autoSwitchSingleToMultiWhenLineWrapping`,默认为 true`
+
 ## 0.0.25
 
 ### Patch Changes

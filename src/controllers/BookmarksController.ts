@@ -8,6 +8,8 @@ import {
   Uri,
   WorkspaceFolder,
   env,
+  l10n,
+  window,
   workspace,
 } from 'vscode';
 import path from 'node:path';
@@ -23,25 +25,33 @@ import {
   BookmarkStoreRootType,
   BookmarkStoreType,
 } from '../types';
-import {EXTENSION_ID} from '../constants';
+import {EXTENSION_ID, EXTENSION_STORE_FILE_NAME} from '../constants';
 
-import IController, {SortType, TreeGroupView, ViewType} from './IController';
+import IController, {
+  TreeViewSortedByType,
+  TreeGroupView,
+  ViewType,
+} from './IController';
 import {registerExtensionCustomContextByKey} from '../context';
 import ConfigService from '../services/ConfigService';
 import resolveServiceManager, {
   ServiceManager,
 } from '../services/ServiceManager';
 
-export type GroupedByFileType = BookmarkStoreType;
+export type GroupedByFileType = BookmarkStoreType & {
+  sortedIndex?: number;
+};
 
 export type GroupedByColorType = {
   color: BookmarkColor;
   bookmarks: BookmarkMeta[];
+  sortedIndex?: number;
 };
 
 export type GroupedByWorkspaceType = {
   workspace: WorkspaceFolder;
   bookmarks: BookmarkMeta[];
+  sortedIndex?: number;
 };
 
 export default class BookmarksController implements IController {
@@ -61,6 +71,8 @@ export default class BookmarksController implements IController {
 
   public groupView: TreeGroupView = 'default';
 
+  public sortedType: TreeViewSortedByType = 'linenumber';
+
   private _disposables: IDisposable[] = [];
 
   private _watcher: FileSystemWatcher | undefined;
@@ -70,6 +82,11 @@ export default class BookmarksController implements IController {
   private _configService: ConfigService;
 
   private _serviceManager: ServiceManager;
+
+  /**
+   * 表示第一次创建存储文件
+   */
+  private _needWarning: boolean = true;
 
   public onDidChangeEvent: Event<void> = this._onDidChangeEvent.event;
 
@@ -118,10 +135,15 @@ export default class BookmarksController implements IController {
     this._serviceManager = resolveServiceManager();
     this._configService = this._serviceManager.configService;
     this._configuration = this._configService.configuration;
+
     this._initial();
   }
 
   private async _initial() {
+    this._needWarning = this._configService.getGlobalValue(
+      '_needWarning',
+      true,
+    );
     this.viewType = this._configService.getGlobalValue('code.viewType', 'tree');
     this.groupView = this._configService.getGlobalValue(
       'code.groupView',
@@ -357,7 +379,10 @@ export default class BookmarksController implements IController {
     });
     return grouped;
   }
-  changeSortType(sortType: SortType): void {}
+
+  changeSortType(sortType: TreeViewSortedByType): void {
+    this.sortedType = sortType;
+  }
 
   /**
    * 将之前旧的数据转换成list
@@ -397,9 +422,7 @@ export default class BookmarksController implements IController {
   }
 
   remove(id: string) {
-    const bookmarkIdx = this._datastore.bookmarks.findIndex(
-      it => it.id === id,
-    );
+    const bookmarkIdx = this._datastore.bookmarks.findIndex(it => it.id === id);
     if (bookmarkIdx === -1) {
       return;
     }
@@ -425,8 +448,13 @@ export default class BookmarksController implements IController {
     this.save();
   }
 
-  updateGroupColorName(colorName: string, bookmarkDto: Partial<Omit<BookmarkMeta, 'id'>>) {
-    let sameColorBookmarks = this._datastore.bookmarks.filter(it => it.color === colorName);
+  updateGroupColorName(
+    colorName: string,
+    bookmarkDto: Partial<Omit<BookmarkMeta, 'id'>>,
+  ) {
+    let sameColorBookmarks = this._datastore.bookmarks.filter(
+      it => it.color === colorName,
+    );
     const {rangesOrOptions, ...rest} = bookmarkDto;
     for (const bookmark of sameColorBookmarks) {
       Object.assign(bookmark, {
@@ -444,9 +472,7 @@ export default class BookmarksController implements IController {
     if (!this._datastore) {
       return [];
     }
-    return this._datastore.bookmarks.filter(
-      it => it.fileId === fileUri.fsPath,
-    );
+    return this._datastore.bookmarks.filter(it => it.fileId === fileUri.fsPath);
   }
 
   /**
@@ -584,11 +610,21 @@ export default class BookmarksController implements IController {
       if (!workspaceFolders.length) {
         return;
       }
-      let ws;
+      let ws: WorkspaceFolder;
       for (ws of workspaceFolders) {
         const workspacePath = ws.uri.fsPath.startsWith('file://')
           ? fileURLToPath(ws.uri.fsPath)
           : ws.uri.fsPath;
+
+        // 判断在对应的workspace文件夹中是否存在书签, 如果不存在, 不自动创建`bookmark-manager.json`文件
+        if (
+          !this._datastore.bookmarks.every(
+            it => it.workspaceFolder?.uri.fsPath === ws.uri.fsPath,
+          )
+        ) {
+          continue;
+        }
+
         const dotVscodeDir = path.join(workspacePath, '.vscode');
         if (!fs.existsSync(dotVscodeDir)) {
           fs.mkdirSync(dotVscodeDir);
@@ -601,6 +637,9 @@ export default class BookmarksController implements IController {
           fs.writeFileSync(bookmarkFile, '');
         }
         fs.writeFileSync(bookmarkFile, this._buildBookmarksContent(ws));
+
+        this._showCreateStoreWarning(ws);
+
         if (!this._watcher) {
           this._initialWatcher();
         }
@@ -618,6 +657,52 @@ export default class BookmarksController implements IController {
       ),
     };
     return JSON.stringify(content);
+  }
+
+  /**
+   * 当创建`bookmark-manager.json` 文件时, 根据`alwasIgnore`选项是否要将`bookmark-manger.json`的追加到`.gitignore` 文件中,同时弹出提示
+   * @param ws
+   * @returns
+   */
+  private _showCreateStoreWarning(ws: WorkspaceFolder) {
+    const ignoreFilePath = path.resolve(ws.uri.fsPath, '.gitignore');
+    const {alwaysIgnore} = this._configuration;
+
+    if (!fs.existsSync(ignoreFilePath)) {
+      return;
+    }
+
+    const ignoreContent = fs.readFileSync(ignoreFilePath, 'utf-8');
+    const needWarning = this._needWarning && this.datastore?.bookmarks.length;
+
+    if (
+      !alwaysIgnore &&
+      !ignoreContent.includes(EXTENSION_STORE_FILE_NAME) &&
+      needWarning
+    ) {
+      window.showInformationMessage(
+        l10n.t(
+          '`bookmark-manager.json` will be tracked by the version tool. Please try to avoid submitting this file to the source code repository. You can manually add it to `.gitignore` or automatically complete this step by turning on the `alwaysIgnore` option .',
+        ),
+      );
+
+      this._configService.updateGlobalValue('needWarning', false);
+      this._needWarning = false;
+
+      return;
+    }
+
+    if (!this._needWarning && this.datastore?.bookmarks.length) {
+      this._configService.updateGlobalValue('needWarning', true);
+      this._needWarning = true;
+    }
+
+    if (!ignoreContent.includes(EXTENSION_STORE_FILE_NAME) && alwaysIgnore) {
+      fs.writeFileSync(
+        ignoreFilePath,
+        `${ignoreContent}\n${EXTENSION_STORE_FILE_NAME}`,
+      );
+    }
   }
   dispose(): void {
     this._disposables.filter(it => it).forEach(it => it.dispose());

@@ -12,26 +12,33 @@ export class BookmarksTreeView extends BaseTreeView<
   constructor() {
     super(EXTENSION_VIEW_ID, new BookmarksTreeProvider());
     this._buildViewBadge();
-    this.disposables.push(
-      this.controller.onDidChangeEvent(() => {
-        this._buildViewBadge();
-      }),
-    );
+    this.controller.onDidChangeEvent(() => {
+      this._buildViewBadge();
+    });
   }
 
   /**
    * 构建treeView中的 Badge
    */
   private _buildViewBadge() {
-    if (this.type !== TreeViewEnum.CODE) {return;}
+    if (this.type !== TreeViewEnum.CODE) {
+      return;
+    }
     const totalBookmarksNum = this.controller.totalCount;
-    this.bookmarkTreeView.badge =
-      totalBookmarksNum === 0
-        ? undefined
-        : {
-            tooltip: this._createTooltip(),
-            value: totalBookmarksNum,
-          };
+    // 设置 为 undefined 会出现保留之前的badge状态, 需要设置成下面的数据才可以将badge隐藏
+    let badge = {
+      tooltip: '',
+      value: 0,
+    };
+
+    if (totalBookmarksNum !== 0) {
+      badge = {
+        tooltip: this._createTooltip(),
+        value: totalBookmarksNum,
+      };
+    }
+
+    this.bookmarkTreeView.badge = badge;
   }
 
   private _createTooltip() {

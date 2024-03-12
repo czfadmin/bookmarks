@@ -1,7 +1,11 @@
 import {Event, EventEmitter, ExtensionContext, Uri} from 'vscode';
 import {BaseMeta, BookmarkColor} from '../types';
 import {generateUUID} from '../utils';
-import IController, {SortType, TreeGroupView, ViewType} from './IController';
+import IController, {
+  TreeViewSortedByType,
+  TreeGroupView,
+  ViewType,
+} from './IController';
 import resolveServiceManager, {
   ServiceManager,
 } from '../services/ServiceManager';
@@ -59,7 +63,7 @@ export default class UniversalBookmarkController implements IController {
   private _onDidChangeEvent: EventEmitter<void> = new EventEmitter<void>();
 
   private _serviceManager: ServiceManager;
-  public sortType: SortType = 'time';
+  public sortedType: Omit<TreeViewSortedByType, 'linenumber'> = 'linenumber';
   public onDidChangeEvent: Event<void> = this._onDidChangeEvent.event;
 
   get globalState() {
@@ -105,7 +109,7 @@ export default class UniversalBookmarkController implements IController {
    * 初始化内部配置
    */
   private _initial() {
-    this.sortType = this._serviceManager.configService.getGlobalValue(
+    this.sortedType = this._serviceManager.configService.getGlobalValue(
       'universal.sorttype',
       'time',
     );
@@ -173,7 +177,8 @@ export default class UniversalBookmarkController implements IController {
     this._onDidChangeEvent.fire();
   }
   changeViewType(viewType: ViewType): void {}
-  changeSortType(sortType: SortType): void {
-    this.sortType = sortType;
+
+  changeSortType(sortType: TreeViewSortedByType): void {
+    this.sortedType = sortType;
   }
 }

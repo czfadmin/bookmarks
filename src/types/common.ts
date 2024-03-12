@@ -7,6 +7,8 @@ export interface BaseMeta {
   id: string;
   label?: string;
   color: BookmarkColor;
+
+  sortedIndex?: number;
 }
 
 export type LineBookmarkContext =
