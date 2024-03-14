@@ -616,15 +616,6 @@ export default class BookmarksController implements IController {
           ? fileURLToPath(ws.uri.fsPath)
           : ws.uri.fsPath;
 
-        // 判断在对应的workspace文件夹中是否存在书签, 如果不存在, 不自动创建`bookmark-manager.json`文件
-        if (
-          !this._datastore.bookmarks.every(
-            it => it.workspaceFolder?.uri.fsPath === ws.uri.fsPath,
-          )
-        ) {
-          continue;
-        }
-
         const dotVscodeDir = path.join(workspacePath, '.vscode');
         if (!fs.existsSync(dotVscodeDir)) {
           fs.mkdirSync(dotVscodeDir);
