@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.0.27
+
+### Patch Changes
+
+- fix:修复多个工作区间书签保存到bookmark-manager.json失败问题
+
 ## 0.0.26
 
 ### Patch Changes
