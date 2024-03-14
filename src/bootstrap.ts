@@ -17,11 +17,15 @@ import {registerTelemetryLogger} from './utils';
 import logger from './utils/logger';
 
 import {
+  ServiceManager,
   initServiceManager,
   postInitController,
 } from './services/ServiceManager';
 
-let controllerManager: any = {};
+let controllerManager: {
+  bookmarks?: BookmarksController;
+  universal?: UniversalBookmarkController;
+} = {};
 
 /**
  * 注册所有的视图
@@ -55,13 +59,17 @@ function updateEverything() {
   updateTextEditorSelectionListener();
 }
 
-function initialController(context: ExtensionContext) {
-  controllerManager['bookmarks'] && controllerManager['bookmarks'].dispose();
-  controllerManager['universal'] && controllerManager['universal'].dispose();
-  const bookmarksController = new BookmarksController(context);
-  const universalController = new UniversalBookmarkController(context);
-  controllerManager['bookmarks'] = bookmarksController;
-  controllerManager['universal'] = universalController;
+function initialController(
+  context: ExtensionContext,
+  serviceManager: ServiceManager,
+) {
+  const bookmarksController = new BookmarksController(context, serviceManager);
+  const universalController = new UniversalBookmarkController(
+    context,
+    serviceManager,
+  );
+  controllerManager.bookmarks = bookmarksController;
+  controllerManager.universal = universalController;
 }
 
 export default async function bootstrap(context: ExtensionContext) {
@@ -72,9 +80,8 @@ export default async function bootstrap(context: ExtensionContext) {
 
   logger.log(`${EXTENSION_ID} is now active!`);
 
-  await initServiceManager(context, updateEverything);
-
-  initialController(context);
+  const sm = await initServiceManager(context, updateEverything);
+  initialController(context, sm);
   postInitController();
   registerAllTreeView(context);
   registerAllCommands();
@@ -82,9 +89,9 @@ export default async function bootstrap(context: ExtensionContext) {
 }
 
 export function resolveBookmarkController(): BookmarksController {
-  return controllerManager['bookmarks'];
+  return controllerManager.bookmarks!;
 }
 
 export function resolveUniversalController(): UniversalBookmarkController {
-  return controllerManager['universal'];
+  return controllerManager.universal!;
 }

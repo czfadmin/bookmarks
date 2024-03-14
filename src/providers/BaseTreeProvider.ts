@@ -27,7 +27,7 @@ export default class BaseTreeProvider<
   private _serviceManager: ServiceManager;
 
   get datastore() {
-    return this._controller.datastore;
+    return this._controller.store;
   }
 
   get controller(): C {
@@ -65,8 +65,10 @@ export default class BaseTreeProvider<
     // 当书签的数据发生变化时, 刷新 provider
     this._controller.onDidChangeEvent(() => {
       this.refresh();
-      if (!this.controller.datastore) {return;}
-      const needClear = this.controller.datastore.bookmarks.length === 0;
+      if (!this.controller.store) {
+        return;
+      }
+      const needClear = this.controller.store.bookmarks.length === 0;
       this._serviceManager.decorationService.updateActiveEditorAllDecorations(
         needClear,
       );

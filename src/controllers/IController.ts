@@ -1,6 +1,7 @@
 import {Event, Disposable} from 'vscode';
 import {BaseMeta, BookmarkStoreRootType} from '../types';
 import {UniversalStoreType} from './UniversalBookmarkController';
+import {IBookmarksStore} from '../stores/bookmark';
 
 /**
  * 视图查看方式
@@ -15,7 +16,7 @@ export type TreeViewSortedByType = 'linenumber' | 'custom' | 'time';
 export type TreeGroupView = 'file' | 'color' | 'default' | 'workspace';
 
 export default interface IController extends Disposable {
-  get datastore(): BookmarkStoreRootType | UniversalStoreType | undefined;
+  get store(): IBookmarksStore | UniversalStoreType | undefined;
 
   get totalCount(): number;
 

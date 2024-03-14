@@ -6,7 +6,7 @@ import {
 } from 'vscode';
 
 import BaseTreeItem from './BaseTreeItem';
-import {BookmarkMeta, BookmarkStoreType} from '../types';
+import {BookmarkStoreType} from '../types';
 import {getLineInfoStrFromBookmark} from '../utils';
 import {CMD_GO_TO_SOURCE_LOCATION} from '../constants';
 import {
@@ -14,11 +14,12 @@ import {
   GroupedByWorkspaceType,
 } from '../controllers/BookmarksController';
 import {ServiceManager} from '../services/ServiceManager';
+import {IBookmark} from '../stores/bookmark';
 
-export default class BookmarksTreeItem extends BaseTreeItem {
+export default class BookmarkTreeItem extends BaseTreeItem {
   public meta:
     | BookmarkStoreType
-    | BookmarkMeta
+    | IBookmark
     | GroupedByColorType
     | GroupedByWorkspaceType;
 
@@ -30,7 +31,7 @@ export default class BookmarksTreeItem extends BaseTreeItem {
     contextValue: string,
     meta:
       | BookmarkStoreType
-      | BookmarkMeta
+      | IBookmark
       | GroupedByColorType
       | GroupedByWorkspaceType,
     sm: ServiceManager,
@@ -46,7 +47,7 @@ export default class BookmarksTreeItem extends BaseTreeItem {
       this.iconPath = ThemeIcon.Folder;
       this.resourceUri = (this.meta as GroupedByWorkspaceType).workspace.uri;
     } else if (this.contextValue === 'file') {
-      const _meta = this.meta as BookmarkMeta;
+      const _meta = this.meta as IBookmark;
       this._resolveFileOverview();
       const filenameArr = _meta.fileName.split('\\');
       this.label = filenameArr[filenameArr.length - 1];
@@ -74,7 +75,7 @@ export default class BookmarksTreeItem extends BaseTreeItem {
       const _meta = this.meta as GroupedByColorType;
       this.iconPath = (gutters[_meta.color] || gutters['default']).iconPath;
     } else if (this.contextValue === 'bookmark') {
-      const meta = this.meta as BookmarkMeta;
+      const meta = this.meta as IBookmark;
       this.iconPath = meta.label
         ? (tagGutters[meta.color] || tagGutters['default']).iconPath
         : (gutters[meta.color] || gutters['default']).iconPath;
@@ -85,7 +86,7 @@ export default class BookmarksTreeItem extends BaseTreeItem {
    * 为书签创建 提示信息
    */
   private _createTooltips() {
-    const meta = this.meta as BookmarkMeta;
+    const meta = this.meta as IBookmark;
     const hoverMessage = meta.rangesOrOptions.hoverMessage as
       | MarkdownString
       | MarkdownString[]

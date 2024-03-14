@@ -11,10 +11,10 @@ import {
   getBookmarkFromLineNumber,
   updateBookmarksGroupByChangedLine,
 } from './utils/bookmark';
-import {BookmarkMeta} from './types';
 import {registerExtensionCustomContextByKey} from './context';
 import {resolveBookmarkController} from './bootstrap';
 import resolveServiceManager from './services/ServiceManager';
+import {IBookmark} from './stores/bookmark';
 
 let onDidChangeActiveTextEditor: Disposable | undefined;
 let onDidChangeVisibleTextEditors: Disposable | undefined;
@@ -135,7 +135,7 @@ function updateLineBlame(editor: TextEditor, enableLineBlame: boolean) {
   }
 }
 
-function buildLineBlameInfo(bookmark: BookmarkMeta) {
+function buildLineBlameInfo(bookmark: IBookmark) {
   if (bookmark.label && bookmark.description) {
     return `${bookmark.label} - ${bookmark.description}`;
   }

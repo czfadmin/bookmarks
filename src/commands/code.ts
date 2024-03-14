@@ -23,17 +23,15 @@ import {
 } from '../constants';
 import {registerCommand} from '../utils';
 
-import {BookmarkMeta, LineBookmarkContext} from '../types';
+import {LineBookmarkContext} from '../types';
 
 import {resolveBookmarkController} from '../bootstrap';
-import BookmarksTreeItem from '../providers/BookmarksTreeItem';
+import BookmarkTreeItem from '../providers/BookmarksTreeItem';
 import resolveServiceManager from '../services/ServiceManager';
 import {
   checkIfBookmarksIsInCurrentEditor,
   chooseBookmarkColor,
   deleteBookmark,
-  editBookmarkDescription,
-  editBookmarkLabel,
   getBookmarkFromLineNumber,
   getBookmarksFromFileUri,
   getLineInfoStrFromBookmark,
@@ -42,6 +40,7 @@ import {
   toggleBookmark,
   toggleBookmarksWithSelections,
 } from '../utils/bookmark';
+import {IBookmark} from '../stores/bookmark';
 
 /**
  * 从`context`获取书签数据
@@ -49,17 +48,14 @@ import {
  * @param cb
  * @returns
  */
-function getBookmarkFromCtx(
-  context: LineBookmarkContext | BookmarksTreeItem | undefined,
-  cb?: () => void,
-) {
-  let bookmark: BookmarkMeta | undefined;
+function getBookmarkFromCtx(context: LineBookmarkContext, cb?: () => void) {
+  let bookmark: IBookmark | undefined;
   if (
     context &&
     'contextValue' in context &&
     context.contextValue === 'bookmark'
   ) {
-    bookmark = context.meta as BookmarkMeta;
+    bookmark = context.meta as IBookmark;
   } else {
     bookmark = getBookmarkFromLineNumber();
   }
@@ -78,16 +74,16 @@ function getBookmarkFromCtx(
  * @returns
  */
 function getBookmarkColorFromCtx(
-  context: LineBookmarkContext | BookmarksTreeItem | undefined,
+  context: LineBookmarkContext | BookmarkTreeItem | undefined,
   cb?: () => void,
 ) {
-  let bookmark: BookmarkMeta | undefined;
+  let bookmark: IBookmark | undefined;
   if (
     context &&
     'contextValue' in context &&
     context.contextValue === 'color'
   ) {
-    bookmark = context.meta as BookmarkMeta;
+    bookmark = context.meta as IBookmark;
   }
 
   if (!bookmark && cb) {
@@ -188,27 +184,20 @@ function clearAllBookmarks() {
 }
 /**
  * 通过命令行删除书签
+ * - 从`command palette` 上调用删除操作, context 为undefined
+ * - 从 左侧通过gutter的菜单上下文调用删除操作, context 类型为 LineBookmarkContext
+ * - 从 文本编辑器中的菜单上下文调用删除操作, context 类型为 当前打开的文件的uri
+ * - 从树视图中调用删除操作, context 类型为 BookmarkTreeItem
  */
 function deleteBookmarkCMD() {
-  registerCommand(
-    CMD_DELETE_BOOKMARK,
-    (context: LineBookmarkContext | BookmarksTreeItem) => {
-      const controller = resolveBookmarkController();
-      if (!context || !controller) {
-        return;
-      }
-      // 从treeView中执行此命令
-      if ('meta' in context && 'color' in context.meta) {
-        const _meta = context.meta as BookmarkMeta;
-        controller.remove(_meta.id);
-        return;
-      }
-      // 从`decoration`或者`command palette`那边删除调用此命令
-      if (!('bookmarks' in context)) {
-        deleteBookmark(context as LineBookmarkContext);
-      }
-    },
-  );
+  registerCommand(CMD_DELETE_BOOKMARK, (context: LineBookmarkContext) => {
+    const controller = resolveBookmarkController();
+    if (!controller) {
+      return;
+    }
+
+    deleteBookmark(context);
+  });
 }
 
 /**
@@ -218,31 +207,29 @@ function deleteBookmarkCMD() {
  *  - 如果不存在, 创建书签并追加label
  */
 function editBookmark() {
-  registerCommand(
-    CMD_EDIT_LABEL,
-    async (context: LineBookmarkContext | BookmarksTreeItem | undefined) => {
-      let bookmark: BookmarkMeta | undefined = getBookmarkFromCtx(context);
+  registerCommand(CMD_EDIT_LABEL, async (context: LineBookmarkContext) => {
+    let bookmark: IBookmark | undefined = getBookmarkFromCtx(context);
 
-      const label = await window.showInputBox({
-        placeHolder: l10n.t('Type a label for your bookmarks'),
-        title: l10n.t(
-          'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
-        ),
-        value: bookmark?.label || '',
+    const label = await window.showInputBox({
+      placeHolder: l10n.t('Type a label for your bookmarks'),
+      title: l10n.t(
+        'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
+      ),
+      value: bookmark?.label || '',
+    });
+
+    if (!label) {
+      return;
+    }
+    if (!bookmark) {
+      toggleBookmark(context as LineBookmarkContext, {
+        label,
+        type: 'line',
       });
-      if (!label) {
-        return;
-      }
-      if (!bookmark) {
-        toggleBookmark(context as LineBookmarkContext | undefined, {
-          label,
-          type: 'line',
-        });
-      } else {
-        editBookmarkLabel(bookmark, label);
-      }
-    },
-  );
+    } else {
+      bookmark.updateLabel(label);
+    }
+  });
 }
 
 /**
@@ -289,8 +276,8 @@ function changeBookmarkColor() {
   // 改变书签颜色
   registerCommand(
     CMD_CHANGE_BOOKMARK_COLOR,
-    async (ctx: LineBookmarkContext | BookmarksTreeItem | undefined) => {
-      let bookmark: BookmarkMeta | undefined = getBookmarkFromCtx(ctx);
+    async (ctx: LineBookmarkContext) => {
+      let bookmark: IBookmark | undefined = getBookmarkFromCtx(ctx);
       if (!bookmark) {
         window.showInformationMessage(
           l10n.t('Please select bookmark color'),
@@ -307,8 +294,9 @@ function changeBookmarkColor() {
       if (!controller) {
         return;
       }
-      controller.update(bookmark.id, {
-        color: newColor,
+      bookmark.updateColor({
+        ...bookmark.customColor,
+        name: newColor,
       });
     },
   );
@@ -318,8 +306,8 @@ function changeBookmarkColorName() {
   // 改变书签颜色
   registerCommand(
     CMD_CHANGE_BOOKMARK_COLOR_NAME,
-    async (ctx: LineBookmarkContext | BookmarksTreeItem | undefined) => {
-      let bookmark: BookmarkMeta | undefined = getBookmarkColorFromCtx(ctx);
+    async (ctx: LineBookmarkContext) => {
+      let bookmark: IBookmark | undefined = getBookmarkColorFromCtx(ctx);
       if (!bookmark) {
         window.showInformationMessage(
           l10n.t('Please select bookmark color'),
@@ -344,8 +332,9 @@ function changeBookmarkColorName() {
       if (!controller) {
         return;
       }
-      controller.updateGroupColorName(bookmark.color, {
-        color: newColorName,
+      bookmark.updateColor({
+        ...bookmark.customColor,
+        name: newColorName,
       });
     },
   );
@@ -365,7 +354,9 @@ function clearAllBookmarksInCurrentFile() {
       controller.clearAllBookmarkInFile(args.meta.fileUri);
     } else {
       const activeEditor = window.activeTextEditor;
-      if (!activeEditor) {return;}
+      if (!activeEditor) {
+        return;
+      }
       if (checkIfBookmarksIsInCurrentEditor(activeEditor)) {
         controller.clearAllBookmarkInFile(activeEditor.document.uri);
       }
@@ -377,33 +368,30 @@ function clearAllBookmarksInCurrentFile() {
  * 为书签增加备注信息
  */
 function addMoreMemo() {
-  registerCommand(
-    CMD_BOOKMARK_ADD_MORE_MEMO,
-    (ctx: LineBookmarkContext | BookmarksTreeItem | undefined) => {
-      let bookmark: BookmarkMeta | undefined = getBookmarkFromCtx(ctx);
-      if (!bookmark) {
-        window.showInformationMessage(
-          l10n.t('Please select the bookmark before proceeding.'),
-          {},
-        );
-        return;
-      }
-      window
-        .showInputBox({
-          placeHolder: l10n.t('Type more info for your bookmarks'),
-          title: l10n.t(
-            'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
-          ),
-        })
-        .then(description => {
-          if (!description) {
-            return;
-          }
+  registerCommand(CMD_BOOKMARK_ADD_MORE_MEMO, (ctx: LineBookmarkContext) => {
+    let bookmark: IBookmark | undefined = getBookmarkFromCtx(ctx);
+    if (!bookmark) {
+      window.showInformationMessage(
+        l10n.t('Please select the bookmark before proceeding.'),
+        {},
+      );
+      return;
+    }
+    window
+      .showInputBox({
+        placeHolder: l10n.t('Type more info for your bookmarks'),
+        title: l10n.t(
+          'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
+        ),
+      })
+      .then(description => {
+        if (!description) {
+          return;
+        }
 
-          editBookmarkDescription(bookmark!, description);
-        });
-    },
-  );
+        bookmark!.updateDescription(description);
+      });
+  });
 }
 
 /**
@@ -412,12 +400,12 @@ function addMoreMemo() {
 export function listBookmarksInCurrentFile() {
   registerCommand(
     'listBookmarksInCurrentFile',
-    async (ctx: LineBookmarkContext | BookmarksTreeItem | undefined) => {
+    async (ctx: LineBookmarkContext) => {
       const editor = window.activeTextEditor;
       const controller = resolveBookmarkController();
       const sm = resolveServiceManager();
 
-      const bookmarkDS = controller.datastore;
+      const bookmarkDS = controller.store;
       if (!editor || !bookmarkDS) {
         return;
       }
@@ -454,7 +442,7 @@ export function listBookmarksInCurrentFile() {
         placeHolder: l10n.t('Please select the bookmark you want to open'),
         canPickMany: false,
         ignoreFocusOut: false,
-        async onDidSelectItem(item: QuickPickItem & {meta: BookmarkMeta}) {
+        async onDidSelectItem(item: QuickPickItem & {meta: IBookmark}) {
           // @ts-ignore
           let bookmark = typeof item === 'object' ? item.meta : undefined;
           if (bookmark) {

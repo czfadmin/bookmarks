@@ -6,17 +6,13 @@ import {
   l10n,
   window,
 } from 'vscode';
-import {
-  BookmarkColor,
-  BookmarkDecorationKey,
-  BookmarkMeta,
-  StringIndexType,
-} from '../types';
+import {BookmarkColor, BookmarkDecorationKey, StringIndexType} from '../types';
 import {IDisposable} from '../utils';
 import resolveServiceManager, {ServiceManager} from './ServiceManager';
 import {resolveBookmarkController} from '../bootstrap';
 import BookmarksController from '../controllers/BookmarksController';
 import logger from '../utils/logger';
+import {IBookmark} from '../stores/bookmark';
 
 /**
  * 装饰器服务类
@@ -50,7 +46,7 @@ export default class DecorationService implements IDisposable {
     const configColors = configService.colors;
 
     const controller = resolveBookmarkController();
-    const userColors = controller.datastore?.bookmarks.map(i => i.color) ?? [];
+    const userColors = controller.store?.bookmarks.map(i => i.color) ?? [];
     const allUsedColors = Array.from(
       new Set([...Object.keys(configColors), ...userColors]),
     );
@@ -178,7 +174,7 @@ export default class DecorationService implements IDisposable {
    * @param bookmarks
    * @returns
    */
-  createRangeOrOptions(bookmarks: BookmarkMeta[]) {
+  createRangeOrOptions(bookmarks: IBookmark[]) {
     return bookmarks.map(bookmark => bookmark.rangesOrOptions);
   }
 
@@ -191,7 +187,7 @@ export default class DecorationService implements IDisposable {
     editor: TextEditor,
     options: {
       color: BookmarkColor;
-      bookmarks: BookmarkMeta[];
+      bookmarks: IBookmark[];
     },
   ) {
     try {
