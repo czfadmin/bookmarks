@@ -19,7 +19,6 @@ import {resolveBookmarkController} from '../bootstrap';
 import resolveServiceManager from '../services/ServiceManager';
 import {defaultColors} from '../constants/colors';
 import {IBookmark} from '../stores/bookmark';
-import logger from './logger';
 
 const REGEXP_NEWLINE = /(\r\n)|(\n)/g;
 /**
@@ -349,7 +348,9 @@ export function deleteBookmark(context?: LineBookmarkContext) {
 
   // 从 `command palette` 中调用删除操作
   if (!context) {
-    if (!editor) {return;}
+    if (!editor) {
+      return;
+    }
     _lineNumber = editor.selection.active.line;
   } else {
     // 从打开的文本编辑器的菜单中调用
@@ -371,7 +372,9 @@ export function deleteBookmark(context?: LineBookmarkContext) {
   if (_lineNumber !== -1) {
     bookmark = getBookmarkFromLineNumber(_lineNumber);
   }
-  if (!bookmark) {return;}
+  if (!bookmark) {
+    return;
+  }
 
   controller.remove(bookmark.id);
 }

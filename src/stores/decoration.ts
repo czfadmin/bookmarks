@@ -1,8 +1,8 @@
-import {Instance, types} from 'mobx-state-tree';
 import {workspace} from 'vscode';
+import {Instance, types} from 'mobx-state-tree';
 import {EXTENSION_ID} from '../constants';
 
-const CreateDecorationOptionsModel = types
+export const CreateDecorationOptionsModel = types
   .model('CreateDecorationOptionsModel', {
     /**
      * 是否在行号出现时指示图标
@@ -23,7 +23,10 @@ const CreateDecorationOptionsModel = types
     /**
      * 书签装饰器的字体样式
      */
-    fontWeight: types.enumeration(['normal', 'bold', 'bolder', 'unset']),
+    fontWeight: types.optional(
+      types.enumeration(['normal', 'bold', 'bolder', 'unset']),
+      'bold',
+    ),
     /**
      * 是否选择整行, 否则仅为存在文本字段的区域选择
      */
@@ -65,12 +68,36 @@ const CreateDecorationOptionsModel = types
     return {};
   })
   .actions(self => {
-    function afterCreate() {
-      const wsConfiguration = workspace.getConfiguration(EXTENSION_ID);
+    function resolveDecorationOptions() {
+      const configuration = workspace.getConfiguration(EXTENSION_ID);
+      self.showGutterIcon = configuration.get('showGutterIcon') || false;
+      self.showGutterInOverviewRuler =
+        configuration.get('showGutterInOverviewRuler') || false;
+      self.alwaysUseDefaultColor =
+        configuration.get('alwaysUseDefaultColor') || false;
+      self.showTextDecoration = configuration.get('showTextDecoration') || true;
+      self.fontWeight = configuration.get('fontWeight') || 'bold';
+      self.wholeLine = configuration.get('wholeLine') || false;
+      self.textDecorationLine =
+        configuration.get('textDecorationLine') || 'underline';
+      self.textDecorationStyle =
+        configuration.get('textDecorationStyle') || 'wavy';
+      self.textDecorationThickness =
+        configuration.get('textDecorationThickness') || 'auto';
+      self.highlightBackground =
+        configuration.get('highlightBackground') || false;
+      self.showBorder = configuration.get('showBorder') || false;
+      self.border = configuration.get('border') || '1px solid';
+      self.showOutline = configuration.get('showOutline') || false;
+      self.outline = configuration.get('outline') || '1px solid';
     }
-    return {afterCreate};
+
+    function afterCreate() {
+      resolveDecorationOptions();
+    }
+    return {afterCreate, resolveDecorationOptions};
   });
 
-export type CreateDecorationOptions = Instance<
+export type ICreateDecorationOptions = Instance<
   typeof CreateDecorationOptionsModel
 >;

@@ -1,7 +1,7 @@
 import {Event, Disposable} from 'vscode';
-import {BaseMeta, BookmarkStoreRootType} from '../types';
+import {BaseMeta} from '../types';
 import {UniversalStoreType} from './UniversalBookmarkController';
-import {IBookmarksStore} from '../stores/bookmark';
+import {IBookmarksStore} from '../stores';
 
 /**
  * 视图查看方式

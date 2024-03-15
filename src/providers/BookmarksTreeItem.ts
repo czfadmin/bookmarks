@@ -8,22 +8,22 @@ import {
 } from 'vscode';
 
 import BaseTreeItem from './BaseTreeItem';
-import {BookmarkStoreType} from '../types';
+import {BookmarksGroupedByFileType} from '../types';
 import {getLineInfoStrFromBookmark} from '../utils';
 import {CMD_GO_TO_SOURCE_LOCATION} from '../constants';
 import {ServiceManager} from '../services/ServiceManager';
 import {
-  GroupedByColorType,
-  GroupedByWorkspaceType,
+  BookmarksGroupedByColorType,
+  BookmarksGroupedByWorkspaceType,
   IBookmark,
-} from '../stores/bookmark';
+} from '../stores';
 
 export default class BookmarkTreeItem extends BaseTreeItem {
   public meta:
-    | BookmarkStoreType
     | IBookmark
-    | GroupedByColorType
-    | GroupedByWorkspaceType;
+    | BookmarksGroupedByFileType
+    | BookmarksGroupedByColorType
+    | BookmarksGroupedByWorkspaceType;
 
   private _sm: ServiceManager;
 
@@ -33,9 +33,9 @@ export default class BookmarkTreeItem extends BaseTreeItem {
     contextValue: string,
     meta:
       | IBookmark
-      | BookmarkStoreType
-      | GroupedByColorType
-      | GroupedByWorkspaceType,
+      | BookmarksGroupedByFileType
+      | BookmarksGroupedByColorType
+      | BookmarksGroupedByWorkspaceType,
     sm: ServiceManager,
   ) {
     super(label, collapsibleState, contextValue);
@@ -45,26 +45,23 @@ export default class BookmarkTreeItem extends BaseTreeItem {
     if (this.contextValue === 'color') {
       this.label = label;
     } else if (this.contextValue === 'workspace') {
-      const meta = this.meta as GroupedByWorkspaceType;
+      const meta = this.meta as BookmarksGroupedByWorkspaceType;
       this.label = label;
       this.iconPath = ThemeIcon.Folder;
       if (workspace.workspaceFolders) {
         this.resourceUri = meta.workspace.uri;
       }
     } else if (this.contextValue === 'file') {
-      const _meta = this.meta as BookmarkStoreType;
+      const _meta = this.meta as BookmarksGroupedByFileType;
       this._resolveFileOverview();
-
       this.label = _meta.fileName;
       this.description = workspace.asRelativePath(_meta.fileId);
     } else {
-      if (this._sm.configService.configuration.enableClick) {
-        this.command = {
-          title: l10n.t('Jump to bookmark position'),
-          command: `bookmark-manager.${CMD_GO_TO_SOURCE_LOCATION}`,
-          arguments: [this.meta],
-        };
-      }
+      this.command = {
+        title: l10n.t('Jump to bookmark position'),
+        command: `bookmark-manager.${CMD_GO_TO_SOURCE_LOCATION}`,
+        arguments: [this.meta],
+      };
       this._createTooltips();
     }
     this._resolveIconPath();
@@ -74,11 +71,11 @@ export default class BookmarkTreeItem extends BaseTreeItem {
     const tagGutters = this._sm.gutterService.tagGutters;
     const gutters = this._sm.gutterService.gutters;
     if (this.contextValue === 'file') {
-      const meta = this.meta as BookmarkStoreType;
+      const meta = this.meta as BookmarksGroupedByFileType;
       this.iconPath = ThemeIcon.File;
       this.resourceUri = Uri.parse(meta.fileName);
     } else if (this.contextValue === 'color') {
-      const _meta = this.meta as GroupedByColorType;
+      const _meta = this.meta as BookmarksGroupedByColorType;
       this.iconPath = (gutters[_meta.color] || gutters['default']).iconPath;
     } else if (this.contextValue === 'bookmark') {
       const meta = this.meta as IBookmark;
@@ -111,7 +108,7 @@ export default class BookmarkTreeItem extends BaseTreeItem {
     const hoverMessage = new MarkdownString(`### ${this.label}`, true);
     hoverMessage.supportHtml = true;
     hoverMessage.supportThemeIcons = true;
-    const {bookmarks} = this.meta as BookmarkStoreType;
+    const {bookmarks} = this.meta as BookmarksGroupedByFileType;
     let item, markdownStr;
     let idx = 0;
     for (item of bookmarks) {

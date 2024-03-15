@@ -1,4 +1,4 @@
-import {IBookmark, IMyUriType} from '../stores/bookmark';
+import {IBookmark, IMyUriType} from '../stores';
 export type BookmarkDecorationKey = string | 'default';
 
 /**
@@ -12,9 +12,9 @@ export type BookmarkDecorationKey = string | 'default';
  * }
  * ```
  */
-export type BookmarkStoreType = {
+export type BookmarksGroupedByFileType = {
   /**
-   * fileUri.fsPath
+   * 文件路径名
    */
   fileId: string;
   fileUri: IMyUriType;
@@ -31,6 +31,6 @@ export type BookmarkStoreType = {
  * }
  * ```
  */
-export type BookmarkStoreRootType = {
+export type BookmarkGroupByListType = {
   bookmarks: IBookmark[];
 };

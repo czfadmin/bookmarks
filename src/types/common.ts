@@ -12,7 +12,7 @@ export interface BaseMeta {
 }
 
 export type LineBookmarkContext =
-  | BookmarkTreeItem
   | Uri
   | {uri: Uri; lineNumber: number}
+  | BookmarkTreeItem
   | undefined;

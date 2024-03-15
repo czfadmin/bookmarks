@@ -36,6 +36,12 @@ export function updateChangeActiveTextEditorListener() {
       sm.decorationService.updateDecorationsByEditor(editor);
     });
   }
+  // onDidChangeActiveTextEditor = window.onDidChangeActiveTextEditor(ev => {
+  //   if (!ev) {
+  //     return;
+  //   }
+  //   sm.decorationService.updateDecorationsByEditor(ev);
+  // });
 }
 
 /**

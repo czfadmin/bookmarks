@@ -79,13 +79,17 @@ export default async function bootstrap(context: ExtensionContext) {
   context.subscriptions.push(registerTelemetryLogger());
 
   logger.log(`${EXTENSION_ID} is now active!`);
-
-  const sm = await initServiceManager(context, updateEverything);
-  initialController(context, sm);
-  postInitController();
-  registerAllTreeView(context);
-  registerAllCommands();
-  updateEverything();
+  try {
+    const sm = await initServiceManager(context, updateEverything);
+    initialController(context, sm);
+    postInitController();
+    registerAllTreeView(context);
+    registerAllCommands();
+    updateEverything();
+  } catch (error) {
+    console.error(error);
+    logger.error(error);
+  }
 }
 
 export function resolveBookmarkController(): BookmarksController {

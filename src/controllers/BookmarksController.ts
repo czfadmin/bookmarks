@@ -1,3 +1,5 @@
+import path from 'node:path';
+import fs from 'node:fs';
 import {
   Event,
   EventEmitter,
@@ -11,13 +13,10 @@ import {
   window,
   workspace,
 } from 'vscode';
-import path from 'node:path';
-import fs from 'node:fs';
+import {IDisposer, destroy, onSnapshot} from 'mobx-state-tree';
 import {fileURLToPath} from 'node:url';
 
 import {IDisposable} from '../utils';
-import {sortBookmarksByLineNumber} from '../utils/bookmark';
-import {BookmarkManagerConfigure} from '../types';
 import {EXTENSION_ID, EXTENSION_STORE_FILE_NAME} from '../constants';
 
 import IController, {
@@ -30,13 +29,14 @@ import ConfigService from '../services/ConfigService';
 import {ServiceManager} from '../services/ServiceManager';
 import {
   BookmarksStore,
-  GroupedByColorType,
-  GroupedByFileType,
-  GroupedByWorkspaceType,
+  BookmarksGroupedByColorType,
+  BookmarksGroupedByFileWithSortType,
+  BookmarksGroupedByWorkspaceType,
   IBookmark,
   IBookmarksStore,
 } from '../stores/bookmark';
-import {IDisposer, onSnapshot} from 'mobx-state-tree';
+
+import {IBookmarkManagerConfigure} from '../stores/configure';
 
 export default class BookmarksController implements IController {
   private _context: ExtensionContext;
@@ -45,11 +45,11 @@ export default class BookmarksController implements IController {
 
   private _store!: IBookmarksStore;
 
-  private _groupedByFile: GroupedByFileType[] = [];
+  private _groupedByFile: BookmarksGroupedByFileWithSortType[] = [];
 
-  private _groupedByColor: GroupedByColorType[] = [];
+  private _groupedByColor: BookmarksGroupedByColorType[] = [];
 
-  private _groupedByWorkspaceFolders: GroupedByWorkspaceType[] = [];
+  private _groupedByWorkspaceFolders: BookmarksGroupedByWorkspaceType[] = [];
 
   public viewType: ViewType = 'tree';
 
@@ -61,7 +61,7 @@ export default class BookmarksController implements IController {
 
   private _watcher: FileSystemWatcher | undefined;
 
-  private _configuration: BookmarkManagerConfigure;
+  private _configuration: IBookmarkManagerConfigure;
 
   private _configService: ConfigService;
 
@@ -76,15 +76,15 @@ export default class BookmarksController implements IController {
 
   public onDidChangeEvent: Event<void> = this._onDidChangeEvent.event;
 
-  public get groupedByFileBookmarks(): GroupedByFileType[] {
+  public get groupedByFileBookmarks(): BookmarksGroupedByFileWithSortType[] {
     return this._groupedByFile;
   }
 
-  public get groupedByColorBookmarks(): GroupedByColorType[] {
+  public get groupedByColorBookmarks(): BookmarksGroupedByColorType[] {
     return this._groupedByColor;
   }
 
-  public get groupedByWorkspaceFolders(): GroupedByWorkspaceType[] {
+  public get groupedByWorkspaceFolders(): BookmarksGroupedByWorkspaceType[] {
     return this._groupedByWorkspaceFolders;
   }
 
@@ -121,7 +121,6 @@ export default class BookmarksController implements IController {
     this._serviceManager = serviceManager;
     this._configService = this._serviceManager.configService;
     this._configuration = this._configService.configuration;
-
     this._initial();
   }
 
@@ -356,7 +355,9 @@ export default class BookmarksController implements IController {
    * ]
    */
   private _getBookmarksGroupedByFile() {
-    if (!this._store) {return [];}
+    if (!this._store) {
+      return [];
+    }
     return this._store.bookmarksGroupedByFile;
   }
 
@@ -518,6 +519,7 @@ export default class BookmarksController implements IController {
   dispose(): void {
     this._disposables.filter(it => it).forEach(it => it.dispose());
     this._storeDisposer?.();
+    destroy(this._store);
   }
 
   private _fire() {

@@ -1,201 +1,36 @@
 import {Instance, types} from 'mobx-state-tree';
 import {DEFAULT_BOOKMARK_COLOR} from '../constants';
-import {
-  DecorationOptions,
-  Range,
-  Selection,
-  Uri,
-  WorkspaceFolder,
-  workspace,
-} from 'vscode';
+import {Selection, Uri, WorkspaceFolder, workspace} from 'vscode';
 import {
   createHoverMessage,
   generateUUID,
   sortBookmarksByLineNumber,
 } from '../utils';
-import {BookmarkColor, BookmarkStoreType} from '../types';
+import {BookmarkColor, BookmarksGroupedByFileType} from '../types';
+import {
+  SortedType,
+  MyColorType,
+  MyUriType,
+  MyWorkspaceFolderType,
+  DecorationOptionsType,
+  TagType,
+  IDecorationOptionsType,
+  IMyColorType,
+} from './custom';
 
-type SortedType = {
-  /**
-   * 表示文件/工作区间的排序索引
-   */
-  sortedIndex?: number;
-  /**
-   * 当按照文件/工作区分组的时, 书签的顺序索引
-   */
-  bookmarkSortedIndex?: number;
-};
+export type BookmarksGroupedByFileWithSortType = BookmarksGroupedByFileType &
+  SortedType;
 
-type MyUri = {
-  /**
-   * 文件的相对路径
-   */
-  fsPath: string;
-} & SortedType;
-
-type MyWorkspaceFolder = {
-  /**
-   * 公共文件夹名称
-   */
-  name: string;
-
-  /**
-   * workspace index
-   */
-  index: number;
-} & SortedType;
-
-type MyColor = {
-  name: string;
-} & SortedType;
-
-type MyTag = SortedType & {
-  name: string;
-};
-
-export type GroupedByFileType = BookmarkStoreType & {
-  sortedIndex?: number;
-};
-
-export type GroupedByColorType = {
+export type BookmarksGroupedByColorType = {
   color: BookmarkColor;
   bookmarks: IBookmark[];
   sortedIndex?: number;
 };
 
-export type GroupedByWorkspaceType = {
+export type BookmarksGroupedByWorkspaceType = {
   workspace: Partial<WorkspaceFolder> & SortedType;
-  files: BookmarkStoreType[];
+  files: BookmarksGroupedByFileType[];
 };
-const TagType = types.custom<MyTag, MyTag>({
-  name: 'MyTag',
-  fromSnapshot(snapshot, env) {
-    return snapshot;
-  },
-  toSnapshot(value: MyTag) {
-    return value;
-  },
-  isTargetType(value: MyTag | any): boolean {
-    return true;
-  },
-  getValidationMessage(value: MyTag): string {
-    return '';
-  },
-});
-
-const MyUriType = types.custom<MyUri, MyUri>({
-  name: 'MyUri',
-  fromSnapshot(snapshot, env) {
-    return snapshot;
-  },
-  toSnapshot(value: Uri) {
-    return value;
-  },
-  isTargetType(value: Uri | any): boolean {
-    return true;
-  },
-  getValidationMessage(value: Uri): string {
-    return '';
-  },
-});
-
-export type IMyUriType = Instance<typeof MyUriType>;
-
-const MyWorkspaceFolderType = types.custom<
-  MyWorkspaceFolder,
-  MyWorkspaceFolder
->({
-  name: 'MyWorkspaceFolder',
-  fromSnapshot(snapshot, env) {
-    return snapshot;
-  },
-  toSnapshot(value) {
-    return value;
-  },
-  isTargetType(value) {
-    return true;
-  },
-  getValidationMessage(snapshot) {
-    return '';
-  },
-});
-
-export type IMyWorkspaceFolderType = Instance<typeof MyWorkspaceFolderType>;
-
-const RangType = types.custom<Range, Range>({
-  name: 'RangeType',
-  fromSnapshot(snapshot, env) {
-    return snapshot;
-  },
-  toSnapshot(value) {
-    return value;
-  },
-  isTargetType(value) {
-    return true;
-  },
-  getValidationMessage(snapshot) {
-    if (!snapshot) {return 'Invalid rangesOrOptions';}
-    return '';
-  },
-});
-
-export type IRangeType = Instance<typeof RangType>;
-
-const DecorationOptionsType = types.custom<
-  DecorationOptions,
-  DecorationOptions
->({
-  name: 'DecorationOptions',
-  fromSnapshot(snapshot, env) {
-    return snapshot;
-  },
-  toSnapshot(value) {
-    return value;
-  },
-  isTargetType(value) {
-    return true;
-  },
-  getValidationMessage(snapshot) {
-    return '';
-  },
-});
-export type IDecorationOptionsType = Instance<typeof DecorationOptionsType>;
-
-const MyColorType = types.custom<MyColor, MyColor>({
-  name: 'MyColor',
-  fromSnapshot(snapshot, env) {
-    return snapshot;
-  },
-  toSnapshot(value) {
-    return value;
-  },
-  isTargetType(value) {
-    return true;
-  },
-  getValidationMessage(snapshot) {
-    return '';
-  },
-});
-
-export type IMyColorType = Instance<typeof MyColorType>;
-
-const MySelectionType = types.custom<Selection, Selection>({
-  name: 'Selection',
-  fromSnapshot(snapshot, env) {
-    return snapshot;
-  },
-  toSnapshot(value) {
-    return value;
-  },
-  isTargetType(value) {
-    return true;
-  },
-  getValidationMessage(snapshot) {
-    return '';
-  },
-});
-
-export type IMySelectionType = Instance<typeof MySelectionType>;
 
 export const Bookmark = types
   .model('Boomkmark', {
@@ -335,8 +170,10 @@ export const BookmarksStore = types
         return self.bookmarks.filter(it => it.fileId === fileUri.fsPath);
       },
       get bookmarksGroupedByFile() {
-        if (!self.bookmarks.length) {return [];}
-        const grouped: GroupedByFileType[] = [];
+        if (!self.bookmarks.length) {
+          return [];
+        }
+        const grouped: BookmarksGroupedByFileWithSortType[] = [];
         self.bookmarks.forEach(it => {
           const existed = grouped.find(item => item.fileId === it.fileId);
           if (existed) {
@@ -357,7 +194,7 @@ export const BookmarksStore = types
         }));
       },
       get bookmarksGroupedByColor() {
-        const grouped: GroupedByColorType[] = [];
+        const grouped: BookmarksGroupedByColorType[] = [];
         self.bookmarks.forEach(it => {
           const existed = grouped.find(item => item.color === it.color);
           if (!existed) {
@@ -390,7 +227,7 @@ export const BookmarksStore = types
        * }
        */
       get bookmakrsGroupedByWorkspace() {
-        const grouped: GroupedByWorkspaceType[] = [];
+        const grouped: BookmarksGroupedByWorkspaceType[] = [];
         self.bookmarks.forEach(it => {
           const existed = grouped.find(
             item => item.workspace.name === it.workspaceFolder?.name,
@@ -512,7 +349,9 @@ export const BookmarksStore = types
       createBookmark,
       delete(id: string) {
         const idx = self.bookmarks.findIndex(it => it.id === id);
-        if (idx === -1) {return false;}
+        if (idx === -1) {
+          return false;
+        }
         self.bookmarks.splice(idx, 1);
         return true;
       },

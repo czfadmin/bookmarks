@@ -235,7 +235,13 @@ function editBookmark() {
  */
 function goToBookmark() {
   registerCommand(CMD_GO_TO_SOURCE_LOCATION, args => {
-    gotoSourceLocation(args.meta || args);
+    const sm = resolveServiceManager();
+    const {enableClick} = sm.configService.configuration;
+
+    // 表示点击TreeView中的定位图标进入此方法, 反之为单击书签跳转到书签位置
+    if (args.meta || (args && enableClick)) {
+      gotoSourceLocation(args.meta || args);
+    }
   });
 }
 
@@ -270,8 +276,10 @@ function quickPreviewOrJumpToBookmark() {
   });
 }
 
+/**
+ *  改变书签颜色
+ */
 function changeBookmarkColor() {
-  // 改变书签颜色
   registerCommand(
     CMD_CHANGE_BOOKMARK_COLOR,
     async (ctx: LineBookmarkContext) => {
@@ -301,7 +309,6 @@ function changeBookmarkColor() {
 }
 
 function changeBookmarkColorName() {
-  // 改变书签颜色
   registerCommand(
     CMD_CHANGE_BOOKMARK_COLOR_NAME,
     async (ctx: LineBookmarkContext) => {

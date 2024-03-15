@@ -6,12 +6,12 @@ import {
   TreeItem,
 } from 'vscode';
 import BaseTreeItem from './BaseTreeItem';
-import {BookmarkManagerConfigure} from '../types';
 import {getRelativePath} from '../utils';
 import IController from '../controllers/IController';
 import resolveServiceManager, {
   ServiceManager,
 } from '../services/ServiceManager';
+import {IBookmarkManagerConfigure} from '../stores';
 
 export default class BaseTreeProvider<
   T extends BaseTreeItem,
@@ -20,7 +20,7 @@ export default class BaseTreeProvider<
 {
   private _onDidChangeEvent = new EventEmitter<T>();
 
-  private _extensionConfiguration: BookmarkManagerConfigure | undefined;
+  private _extensionConfiguration: IBookmarkManagerConfigure | undefined;
 
   private _controller: C;
 
@@ -55,10 +55,11 @@ export default class BaseTreeProvider<
     this._serviceManager = resolveServiceManager();
     this._extensionConfiguration = this.configService.configuration;
 
-    // 监听插件的配置变化
+    // 监听插件的配置变化, 同时刷新TreeView
     this.configService?.onExtensionConfigChange(
-      (config: BookmarkManagerConfigure) => {
+      (config: IBookmarkManagerConfigure) => {
         this._extensionConfiguration = config;
+        this.refresh();
       },
     );
 

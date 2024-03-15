@@ -62,28 +62,28 @@ export function resolveLoggerChannel() {
   return logger;
 }
 
-export function info(msg: string) {
+export function info(msg: any) {
   logger.output.info('>', msg);
   logger.telemetry.logUsage('info', {
     info: msg,
   });
 }
 
-export function warn(msg: string) {
+export function warn(msg: any) {
   logger.output.warn('>', msg);
   logger.telemetry.logUsage('warn', {
     info: msg,
   });
 }
 
-export function error(msg: string) {
+export function error(msg: any) {
   logger.output.error('>', msg);
   logger.telemetry.logError('error', {
     info: msg,
   });
 }
 
-export function log(msg: string) {
+export function log(msg: any) {
   logger.output.info('>', msg);
   logger.telemetry.logUsage('log', {
     info: msg,

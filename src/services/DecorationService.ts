@@ -13,6 +13,7 @@ import {resolveBookmarkController} from '../bootstrap';
 import BookmarksController from '../controllers/BookmarksController';
 import logger from '../utils/logger';
 import {IBookmark} from '../stores/bookmark';
+import {DEFAULT_BOOKMARK_COLOR} from '../constants';
 
 /**
  * 装饰器服务类
@@ -111,7 +112,7 @@ export default class DecorationService implements IDisposable {
     }
 
     if (alwaysUseDefaultColor) {
-      color = colors.default;
+      color = colors['default'];
     }
 
     const decorationGutterIconPath = _showGutterIcon
@@ -138,7 +139,7 @@ export default class DecorationService implements IDisposable {
       backgroundColor: highlightBackground ? color : '',
       textDecoration: showTextDecoration
         ? this.buildTextDecoration({
-            color,
+            color: color || DEFAULT_BOOKMARK_COLOR,
             textDecorationLine,
             textDecorationStyle,
             textDecorationThickness,
