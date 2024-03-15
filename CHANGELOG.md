@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.0.27
+
+### Patch Changes
+
+- 954e0ef: 增加mst, 使用mobx改造BookmarkController
+- 2db8f88: feat:使用mst改造插件配置
+- feat:优化BookmarkController代码,同时修复上次提交产生的BUG
+
 ## 0.0.26
 
 ### Patch Changes
