@@ -209,7 +209,6 @@ function deleteBookmarkCMD() {
 function editBookmark() {
   registerCommand(CMD_EDIT_LABEL, async (context: LineBookmarkContext) => {
     let bookmark: IBookmark | undefined = getBookmarkFromCtx(context);
-
     const label = await window.showInputBox({
       placeHolder: l10n.t('Type a label for your bookmarks'),
       title: l10n.t(
@@ -217,12 +216,11 @@ function editBookmark() {
       ),
       value: bookmark?.label || '',
     });
-
     if (!label) {
       return;
     }
     if (!bookmark) {
-      toggleBookmark(context as LineBookmarkContext, {
+      toggleBookmark(context as LineBookmarkContext | undefined, {
         label,
         type: 'line',
       });
@@ -447,7 +445,7 @@ export function listBookmarksInCurrentFile() {
           let bookmark = typeof item === 'object' ? item.meta : undefined;
           if (bookmark) {
             const doc = await workspace.openTextDocument(
-              Uri.parse(bookmark.fileUri.path),
+              Uri.parse(bookmark.fileName),
             );
             const editor = await window.showTextDocument(doc, {
               preview: true,

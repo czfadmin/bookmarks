@@ -19,6 +19,7 @@ import {resolveBookmarkController} from '../bootstrap';
 import resolveServiceManager from '../services/ServiceManager';
 import {defaultColors} from '../constants/colors';
 import {IBookmark} from '../stores/bookmark';
+import logger from './logger';
 
 const REGEXP_NEWLINE = /(\r\n)|(\n)/g;
 /**
@@ -156,11 +157,16 @@ export async function gotoSourceLocation(bookmark?: IBookmark) {
     return;
   }
   const activeEditor = window.activeTextEditor;
-  const {fileUri, rangesOrOptions, selection} = bookmark;
+  const {fileId, rangesOrOptions, selection} = bookmark;
 
   const range = selection || rangesOrOptions?.range;
+  const openedUri = Uri.from({
+    scheme: 'file',
+    path: fileId,
+  });
+
   if (!range) {
-    const doc = await workspace.openTextDocument(Uri.parse(fileUri.path));
+    const doc = await workspace.openTextDocument(openedUri);
 
     if (!doc) {
       return;
@@ -170,7 +176,7 @@ export async function gotoSourceLocation(bookmark?: IBookmark) {
   }
 
   if (activeEditor) {
-    if (activeEditor.document.uri.fsPath === fileUri.fsPath) {
+    if (activeEditor.document.uri.fsPath === fileId) {
       activeEditor.revealRange(range);
       const {start, end} = range;
       highlightSelection(
@@ -180,10 +186,10 @@ export async function gotoSourceLocation(bookmark?: IBookmark) {
         new Position(end.line, end.character),
       );
     } else {
-      openDocumentAndGotoLocation(fileUri, range);
+      openDocumentAndGotoLocation(openedUri, range);
     }
   } else {
-    openDocumentAndGotoLocation(fileUri, range);
+    openDocumentAndGotoLocation(openedUri, range);
   }
 }
 
@@ -194,7 +200,7 @@ export async function gotoSourceLocation(bookmark?: IBookmark) {
  * @returns
  */
 export async function openDocumentAndGotoLocation(fileUri: Uri, range: Range) {
-  const doc = await workspace.openTextDocument(Uri.parse(fileUri.path));
+  const doc = await workspace.openTextDocument(fileUri);
 
   if (!doc) {
     return;
@@ -210,28 +216,6 @@ export async function openDocumentAndGotoLocation(fileUri: Uri, range: Range) {
     new Position(start.line, start.character),
     new Position(end.line, end.character),
   );
-}
-
-/**
- * 编辑对应书签的描述
- * @param bookmark
- * @param memo
- */
-export function editBookmarkDescription(bookmark: IBookmark, memo: string) {
-  bookmark.description = memo;
-  const controller = resolveBookmarkController();
-  controller.update(bookmark.id, {
-    description: memo,
-    rangesOrOptions: {
-      ...bookmark.rangesOrOptions,
-      hoverMessage: createHoverMessage(bookmark, true, true),
-    },
-  });
-}
-
-export function editBookmarkLabel(bookmark: IBookmark, label: string) {
-  const controller = resolveBookmarkController();
-  controller.editLabel(bookmark, label);
 }
 
 /**
@@ -317,6 +301,7 @@ export async function toggleBookmark(
       return;
     }
   }
+
   const fileUri = editor.document.uri;
 
   const bookmark: any = {
@@ -348,6 +333,7 @@ export async function toggleBookmark(
     true,
     true,
   );
+
   controller.add(bookmark);
 }
 /**
@@ -472,11 +458,7 @@ export async function quicklyJumpToBookmark() {
       description: getLineInfoStrFromBookmark(it),
       detail: it.fileName,
       iconPath: iconPath as any,
-      meta: {
-        ...it,
-        // TODO:delete
-        // selection: new Selection(it.selection.anchor, it.selection.active),
-      },
+      meta: it,
     };
   });
   const chosenBookmarks = await window.showQuickPick(pickItems, {
@@ -489,7 +471,10 @@ export async function quicklyJumpToBookmark() {
       let bookmark = typeof item === 'object' ? item.meta : undefined;
       if (bookmark) {
         const doc = await workspace.openTextDocument(
-          Uri.parse(bookmark.fileUri.path),
+          Uri.from({
+            scheme: 'file',
+            path: item.meta.fileId,
+          }),
         );
         const editor = await window.showTextDocument(doc, {
           preview: true,
@@ -760,22 +745,16 @@ export function updateBookmarksGroupByChangedLine(
  * @param dto
  */
 export function updateLineBookmarkRangeWhenDocumentChange(
-  bookmark: any,
-  dto: any,
+  bookmark: IBookmark,
+  dto: Partial<IBookmark>,
 ) {
-  const controller = resolveBookmarkController();
   const {selection, selectionContent, ...rest} = dto;
-  if (selectionContent) {
-    bookmark.selectionContent = selectionContent;
-  }
-  // 更新当前行的书签信息
-  controller.update(bookmark.id, {
-    selection,
+  bookmark.update({
     selectionContent,
-    ...(rest || {}),
+    type: rest.type,
     rangesOrOptions: {
       ...bookmark.rangesOrOptions,
-      range: selection,
+      range: selection as Range,
       hoverMessage: createHoverMessage(bookmark, true, true),
     },
   });

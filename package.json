@@ -492,7 +492,7 @@
         },
         {
           "command": "bookmark-manager.clearAllBookmarksInCurrentFile",
-          "when": "view == bookmark-manager && viewItem === file",
+          "when": "view == bookmark-manager && (viewItem === file || viewItem === workspace)",
           "group": "inline@2"
         },
         {

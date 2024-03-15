@@ -1,4 +1,4 @@
-import {Instance, destroy, onSnapshot, types} from 'mobx-state-tree';
+import {Instance, types} from 'mobx-state-tree';
 import {DEFAULT_BOOKMARK_COLOR} from '../constants';
 import {
   DecorationOptions,
@@ -6,9 +6,14 @@ import {
   Selection,
   Uri,
   WorkspaceFolder,
+  workspace,
 } from 'vscode';
-import {createHoverMessage, generateUUID} from '../utils';
-import {resolveBookmarkController} from '../bootstrap';
+import {
+  createHoverMessage,
+  generateUUID,
+  sortBookmarksByLineNumber,
+} from '../utils';
+import {BookmarkColor, BookmarkStoreType} from '../types';
 
 type SortedType = {
   /**
@@ -21,9 +26,24 @@ type SortedType = {
   bookmarkSortedIndex?: number;
 };
 
-type MyUri = Uri & SortedType;
+type MyUri = {
+  /**
+   * 文件的相对路径
+   */
+  fsPath: string;
+} & SortedType;
 
-type MyWorkspaceFolder = WorkspaceFolder & SortedType;
+type MyWorkspaceFolder = {
+  /**
+   * 公共文件夹名称
+   */
+  name: string;
+
+  /**
+   * workspace index
+   */
+  index: number;
+} & SortedType;
 
 type MyColor = {
   name: string;
@@ -33,6 +53,20 @@ type MyTag = SortedType & {
   name: string;
 };
 
+export type GroupedByFileType = BookmarkStoreType & {
+  sortedIndex?: number;
+};
+
+export type GroupedByColorType = {
+  color: BookmarkColor;
+  bookmarks: IBookmark[];
+  sortedIndex?: number;
+};
+
+export type GroupedByWorkspaceType = {
+  workspace: Partial<WorkspaceFolder> & SortedType;
+  files: BookmarkStoreType[];
+};
 const TagType = types.custom<MyTag, MyTag>({
   name: 'MyTag',
   fromSnapshot(snapshot, env) {
@@ -177,11 +211,11 @@ export const Bookmark = types
     type: types.optional(types.enumeration(['line', 'selection']), 'line'),
     selectionContent: types.optional(types.string, ''),
     languageId: types.optional(types.string, 'javascript'),
-    workspaceFolder: types.maybeNull(MyWorkspaceFolderType),
+    workspaceFolder: MyWorkspaceFolderType,
     rangesOrOptions: DecorationOptionsType,
     createdAt: types.optional(types.Date, () => new Date()),
     tag: types.optional(TagType, {
-      name: 'defaul',
+      name: 'default',
       sortedIndex: -1,
       bookmarkSortedIndex: -1,
     }),
@@ -189,13 +223,26 @@ export const Bookmark = types
   .views(self => {
     return {
       get fileId() {
-        return self.fileUri.fsPath;
+        const ws = workspace.workspaceFolders?.find(
+          it => it.name === self.workspaceFolder.name,
+        );
+        if (!ws) {
+          return self.fileUri.fsPath;
+        }
+
+        return Uri.joinPath(ws.uri, self.fileUri.fsPath).fsPath;
       },
       get fileName() {
-        return self.fileUri.fsPath;
+        const arr = self.fileUri.fsPath.split('/');
+        return arr[arr.length - 1];
       },
       get color() {
         return self.customColor.name;
+      },
+      get wsFolder() {
+        return workspace.workspaceFolders?.find(
+          it => it.name === self.workspaceFolder.name,
+        );
       },
       get selection() {
         const {start, end} = self.rangesOrOptions.range;
@@ -218,25 +265,53 @@ export const Bookmark = types
         }
       });
     }
+    function updateRangesOrOptionsHoverMessage() {
+      const rangesOrOptions = {...self.rangesOrOptions};
+      rangesOrOptions.hoverMessage = createHoverMessage(
+        self as IBookmark,
+        true,
+        true,
+      );
+      self.rangesOrOptions = rangesOrOptions;
+    }
     function updateLabel(label: string) {
       self.label = label;
+      updateRangesOrOptionsHoverMessage();
     }
     function updateDescription(desc: string) {
       self.description = desc;
+      updateRangesOrOptionsHoverMessage();
     }
 
     function updateRangesOrOptions(rangesOrOptions: IDecorationOptionsType) {
       self.rangesOrOptions = rangesOrOptions;
+      updateRangesOrOptionsHoverMessage();
     }
 
     function updateColor(newColor: IMyColorType) {
       self.customColor = newColor;
     }
+
+    function updateSelectionContent(content: string) {
+      self.selectionContent = content;
+    }
+
+    function updateFileUri(uri: Uri) {
+      self.fileUri = {
+        fsPath: uri.fsPath,
+        sortedIndex: self.fileUri.sortedIndex,
+        bookmarkSortedIndex: self.fileUri.bookmarkSortedIndex,
+      };
+    }
+
     return {
       update,
       updateLabel,
       updateDescription,
       updateRangesOrOptions,
+      updateRangesOrOptionsHoverMessage,
+      updateSelectionContent,
+      updateFileUri,
       updateColor,
     };
   });
@@ -256,14 +331,108 @@ export const BookmarksStore = types
   })
   .views(self => {
     return {
-      groupedByFile(fileUri: Uri) {
-        const arr = [];
-        return self.bookmarks.filter(
-          it => it.fileUri.fsPath === fileUri.fsPath,
-        );
+      getBookmarksByFileUri(fileUri: Uri) {
+        return self.bookmarks.filter(it => it.fileId === fileUri.fsPath);
       },
-      groupedByColor(color: IMyColorType) {
-        return self.bookmarks.filter(it => it.color === color.name);
+      get bookmarksGroupedByFile() {
+        if (!self.bookmarks.length) {return [];}
+        const grouped: GroupedByFileType[] = [];
+        self.bookmarks.forEach(it => {
+          const existed = grouped.find(item => item.fileId === it.fileId);
+          if (existed) {
+            existed.bookmarks.push(it);
+          } else {
+            grouped.push({
+              fileId: it.fileId,
+              // @ts-ignore
+              fileName: it.fileName || it['filename'],
+              fileUri: it.fileUri,
+              bookmarks: [it],
+            });
+          }
+        });
+        return grouped.map(it => ({
+          ...it,
+          bookmarks: sortBookmarksByLineNumber(it.bookmarks),
+        }));
+      },
+      get bookmarksGroupedByColor() {
+        const grouped: GroupedByColorType[] = [];
+        self.bookmarks.forEach(it => {
+          const existed = grouped.find(item => item.color === it.color);
+          if (!existed) {
+            grouped.push({
+              color: it.color,
+              bookmarks: [it],
+            });
+            return;
+          }
+          existed.bookmarks.push(it);
+        });
+        return grouped.map(it => ({
+          ...it,
+          bookmarks: sortBookmarksByLineNumber(it.bookmarks),
+        }));
+      },
+
+      /**
+       * {
+       *  workspace: MyWorkspaceFolder
+       *  files:[
+       *    {
+       *        fileId: string,
+       *        bookmarks: [
+       *
+       *        ]
+       *    }
+       *  ]
+       *
+       * }
+       */
+      get bookmakrsGroupedByWorkspace() {
+        const grouped: GroupedByWorkspaceType[] = [];
+        self.bookmarks.forEach(it => {
+          const existed = grouped.find(
+            item => item.workspace.name === it.workspaceFolder?.name,
+          );
+
+          if (!existed) {
+            grouped.push({
+              workspace: {...it.workspaceFolder, ...it.wsFolder},
+              files: [
+                {
+                  bookmarks: [it],
+                  fileId: it.fileId,
+                  fileName: it.fileName,
+                  fileUri: it.fileUri,
+                },
+              ],
+            });
+            return;
+          }
+          const existedFile = existed.files.find(
+            file => file.fileId === it.fileId,
+          );
+          if (!existedFile) {
+            existed.files.push({
+              fileId: it.fileId,
+              fileName: it.fileName,
+              fileUri: it.fileUri,
+              bookmarks: [it],
+            });
+            return;
+          }
+          existedFile.bookmarks.push(it);
+        });
+        return grouped.map(it => {
+          it.files = it.files.map(file => {
+            return {
+              ...file,
+              bookmarks: sortBookmarksByLineNumber(file.bookmarks),
+            };
+          });
+          return it;
+        });
       },
       get totalCount() {
         return self.bookmarks.length;
@@ -272,7 +441,7 @@ export const BookmarksStore = types
         return self.bookmarks.filter(it => it.label.length).length;
       },
       get colors() {
-        return self.bookmarks.map(it => it.color);
+        return self.bookmarks.map(it => it.color || it.customColor.name);
       },
     };
   })
@@ -293,27 +462,33 @@ export const BookmarksStore = types
       } = bookmark;
 
       const customColor = bookmark.customColor
-        ? MyColorType.create({...bookmark.customColor})
-        : MyColorType.create({
-            name: bookmark.color,
+        ? bookmark.customColor
+        : {
+            name: bookmark.color || 'default',
             sortedIndex: -1,
             bookmarkSortedIndex: -1,
-          });
+          };
       rangesOrOptions.hoverMessage = createHoverMessage(bookmark, true, true);
       _bookmark = Bookmark.create({
         id: id || generateUUID(),
         label,
         description,
         customColor,
-        fileUri: MyUriType.create(fileUri),
+        fileUri: {
+          sortedIndex: fileUri.sortedIndex || -1,
+          bookmarkSortedIndex: fileUri.bookmarkSortedIndex || -1,
+          fsPath: workspace.asRelativePath(fileUri.fsPath, false),
+        },
         type,
         selectionContent,
         languageId,
-        workspaceFolder: MyWorkspaceFolderType.create({...workspaceFolder}),
-        rangesOrOptions: DecorationOptionsType.create({
-          ...rangesOrOptions,
-        }),
-
+        workspaceFolder: {
+          sortedIndex: workspaceFolder.sortedIndex || -1,
+          bookmarkSortedIndex: workspaceFolder.bookmarkSortedIndex || -1,
+          name: workspaceFolder.name,
+          index: workspaceFolder.index,
+        },
+        rangesOrOptions: rangesOrOptions,
         createdAt,
       });
       return _bookmark;
@@ -325,6 +500,7 @@ export const BookmarksStore = types
       self.bookmarks.push(bookmark);
     }
     return {
+      afterCreate() {},
       add,
       addBookmarks(bookmarks: any[]) {
         let _bookmark;
@@ -353,9 +529,9 @@ export const BookmarksStore = types
           }
         });
       },
-      clearBookmarksByFile(fileName: string) {
+      clearBookmarksByFile(fileUri: Uri) {
         const deleteItems = self.bookmarks.filter(
-          it => it.fileUri.fsPath === fileName,
+          it => it.fileId === fileUri.fsPath,
         );
         for (let item of deleteItems) {
           self.bookmarks.remove(item);

@@ -2,19 +2,21 @@ import {
   MarkdownString,
   ThemeIcon,
   TreeItemCollapsibleState,
+  Uri,
   l10n,
+  workspace,
 } from 'vscode';
 
 import BaseTreeItem from './BaseTreeItem';
 import {BookmarkStoreType} from '../types';
 import {getLineInfoStrFromBookmark} from '../utils';
 import {CMD_GO_TO_SOURCE_LOCATION} from '../constants';
+import {ServiceManager} from '../services/ServiceManager';
 import {
   GroupedByColorType,
   GroupedByWorkspaceType,
-} from '../controllers/BookmarksController';
-import {ServiceManager} from '../services/ServiceManager';
-import {IBookmark} from '../stores/bookmark';
+  IBookmark,
+} from '../stores/bookmark';
 
 export default class BookmarkTreeItem extends BaseTreeItem {
   public meta:
@@ -30,8 +32,8 @@ export default class BookmarkTreeItem extends BaseTreeItem {
     collapsibleState: TreeItemCollapsibleState,
     contextValue: string,
     meta:
-      | BookmarkStoreType
       | IBookmark
+      | BookmarkStoreType
       | GroupedByColorType
       | GroupedByWorkspaceType,
     sm: ServiceManager,
@@ -43,15 +45,18 @@ export default class BookmarkTreeItem extends BaseTreeItem {
     if (this.contextValue === 'color') {
       this.label = label;
     } else if (this.contextValue === 'workspace') {
+      const meta = this.meta as GroupedByWorkspaceType;
       this.label = label;
       this.iconPath = ThemeIcon.Folder;
-      this.resourceUri = (this.meta as GroupedByWorkspaceType).workspace.uri;
+      if (workspace.workspaceFolders) {
+        this.resourceUri = meta.workspace.uri;
+      }
     } else if (this.contextValue === 'file') {
-      const _meta = this.meta as IBookmark;
+      const _meta = this.meta as BookmarkStoreType;
       this._resolveFileOverview();
-      const filenameArr = _meta.fileName.split('\\');
-      this.label = filenameArr[filenameArr.length - 1];
-      this.description = label;
+
+      this.label = _meta.fileName;
+      this.description = workspace.asRelativePath(_meta.fileId);
     } else {
       if (this._sm.configService.configuration.enableClick) {
         this.command = {
@@ -69,16 +74,18 @@ export default class BookmarkTreeItem extends BaseTreeItem {
     const tagGutters = this._sm.gutterService.tagGutters;
     const gutters = this._sm.gutterService.gutters;
     if (this.contextValue === 'file') {
+      const meta = this.meta as BookmarkStoreType;
       this.iconPath = ThemeIcon.File;
-      this.resourceUri = (this.meta as BookmarkStoreType).fileUri;
+      this.resourceUri = Uri.parse(meta.fileName);
     } else if (this.contextValue === 'color') {
       const _meta = this.meta as GroupedByColorType;
       this.iconPath = (gutters[_meta.color] || gutters['default']).iconPath;
     } else if (this.contextValue === 'bookmark') {
       const meta = this.meta as IBookmark;
+      const color = meta.color || meta.customColor.name;
       this.iconPath = meta.label
-        ? (tagGutters[meta.color] || tagGutters['default']).iconPath
-        : (gutters[meta.color] || gutters['default']).iconPath;
+        ? (tagGutters[color] || tagGutters['default']).iconPath
+        : (gutters[color] || gutters['default']).iconPath;
     }
   }
 

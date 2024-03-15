@@ -1,6 +1,4 @@
-import {DecorationOptions, Selection, Uri, WorkspaceFolder} from 'vscode';
-import {BaseMeta, BookmarkColor} from './common';
-import {IBookmark} from '../stores/bookmark';
+import {IBookmark, IMyUriType} from '../stores/bookmark';
 export type BookmarkDecorationKey = string | 'default';
 
 /**
@@ -19,7 +17,7 @@ export type BookmarkStoreType = {
    * fileUri.fsPath
    */
   fileId: string;
-  fileUri: Uri;
+  fileUri: IMyUriType;
   fileName: string;
   bookmarks: IBookmark[];
 };
