@@ -3,42 +3,40 @@ import {
   Disposable,
   Event,
   EventEmitter,
-  WorkspaceConfiguration,
   commands,
   workspace,
 } from 'vscode';
-import {
-  BookmarkManagerConfigure,
-  CreateDecorationOptions,
-  StringIndexType,
-} from '../types';
-import {DEFAULT_BOOKMARK_COLOR, EXTENSION_ID} from '../constants';
+import {EXTENSION_ID} from '../constants';
 import {registerExtensionCustomContextByKey} from '../context';
 import {ServiceManager} from './ServiceManager';
-import {defaultColors} from '../constants/colors';
+import {
+  IBookmarkManagerConfigure,
+  IRootConfigureModel,
+  RootConfigureModel,
+} from '../stores/configure';
+import {ICreateDecorationOptions} from '../stores/decoration';
+import {StringIndexType} from '../types';
+import {destroy} from 'mobx-state-tree';
 
 /**
  * 插件的用户配置,以及全局配置, 并监听配置的改动
  */
 export default class ConfigService implements Disposable {
   private _onDecorationConfigChangeEvent =
-    new EventEmitter<CreateDecorationOptions>();
+    new EventEmitter<ICreateDecorationOptions>();
 
   private _onExtensionConfigChangeEvent =
-    new EventEmitter<BookmarkManagerConfigure>();
+    new EventEmitter<IBookmarkManagerConfigure>();
 
   private _onDidChangeConfigurationEvent: EventEmitter<ConfigurationChangeEvent> =
     new EventEmitter<ConfigurationChangeEvent>();
-  private _configuration: BookmarkManagerConfigure | undefined;
+  private _configuration: IBookmarkManagerConfigure | undefined;
 
-  private _wsConfiguration: WorkspaceConfiguration | undefined;
-  private _decorationConfiguration: CreateDecorationOptions | undefined;
-
-  private _colors: StringIndexType<string> = {};
-
-  private _customColors: StringIndexType<string> = {};
+  private _decorationConfiguration: ICreateDecorationOptions | undefined;
 
   private _serviceManager: ServiceManager;
+
+  private _store!: IRootConfigureModel;
   onDidChangeConfiguration: Event<ConfigurationChangeEvent> =
     this._onDidChangeConfigurationEvent.event;
 
@@ -47,11 +45,16 @@ export default class ConfigService implements Disposable {
   onExtensionConfigChange = this._onExtensionConfigChangeEvent.event;
 
   get colors() {
-    return this._colors;
+    const _colors = {} as StringIndexType<string>;
+    this._store.configure!.colors.forEach((value, key) => {
+      // @ts-ignore
+      _colors[key as string] = value;
+    });
+    return _colors;
   }
 
   get customColors() {
-    return this._customColors;
+    return this._store.configure!.customColor;
   }
 
   get configuration() {
@@ -61,9 +64,6 @@ export default class ConfigService implements Disposable {
     return this._configuration;
   }
 
-  get workspaceConfiguration() {
-    return this._wsConfiguration;
-  }
   get decorationConfiguration() {
     if (!this._decorationConfiguration) {
       this._decorationConfiguration = this._getCreateDecorationOptions();
@@ -73,13 +73,15 @@ export default class ConfigService implements Disposable {
 
   constructor(sm: ServiceManager) {
     this._serviceManager = sm;
-    this._resolveWorkspaceConfiguration();
+
+    this._initStore();
 
     workspace.onDidChangeConfiguration(ev => {
       if (!ev.affectsConfiguration(EXTENSION_ID)) {
         return;
       }
-      this._resolveWorkspaceConfiguration();
+      // 需要手动刷新配置中的数据
+      this._store.refresh();
       this._init();
       this.fire(ev);
     });
@@ -87,16 +89,14 @@ export default class ConfigService implements Disposable {
     this._init();
   }
 
-  private _resolveWorkspaceConfiguration() {
-    this._wsConfiguration = workspace.getConfiguration(EXTENSION_ID);
-  }
-
   private _init() {
     this._configuration = this._getExtensionConfiguration();
     this._registerContextKey();
-    this.resolveAllColors(true);
   }
 
+  private _initStore() {
+    this._store = RootConfigureModel.create();
+  }
   /**
    * 将用户配置的内容注册到`context`中
    */
@@ -109,28 +109,8 @@ export default class ConfigService implements Disposable {
    * 获取用户自定义的书签装饰器配置
    * @returns 返回一个书签装饰的配置
    */
-  private _getCreateDecorationOptions(): CreateDecorationOptions {
-    const configuration = this._wsConfiguration!;
-    return {
-      showGutterIcon: configuration.get('showGutterIcon') || false,
-      showGutterInOverviewRuler:
-        configuration.get('showGutterInOverviewRuler') || false,
-      alwaysUseDefaultColor:
-        configuration.get('alwaysUseDefaultColor') || false,
-      showTextDecoration: configuration.get('showTextDecoration'),
-      fontWeight: configuration.get('fontWeight') || 'bold',
-      wholeLine: configuration.get('wholeLine') || false,
-      textDecorationLine:
-        configuration.get('textDecorationLine') || 'underline',
-      textDecorationStyle: configuration.get('textDecorationStyle') || 'wavy',
-      textDecorationThickness:
-        configuration.get('textDecorationThickness') || 'auto',
-      highlightBackground: configuration.get('highlightBackground') || false,
-      showBorder: configuration.get('showBorder') || false,
-      border: configuration.get('border') || '1px solid',
-      showOutline: configuration.get('showOutline') || false,
-      outline: configuration.get('outline') || '1px solid',
-    } as CreateDecorationOptions;
+  private _getCreateDecorationOptions(): ICreateDecorationOptions {
+    return this._store.decoration!;
   }
 
   /**
@@ -139,30 +119,15 @@ export default class ConfigService implements Disposable {
    *  - 额外配置
    * @returns
    */
-  private _getExtensionConfiguration(): BookmarkManagerConfigure {
-    const configuration = this._wsConfiguration!;
-    const createDecoration = this._getCreateDecorationOptions();
-    return {
-      ...createDecoration,
-      colors: this._colors,
-      lineBlame: configuration.get('lineBlame') || false,
-      relativePath: configuration.get('relativePath') || false,
-      defaultBookmarkIconColor: configuration.get('defaultBookmarkIconColor'),
-      enableClick: configuration.get('enableClick') || false,
-      createJsonFile: configuration.get('createJsonFile') || false,
-      useBuiltInColors: configuration.get('useBuiltInColors') || false,
-      alwaysIgnore: configuration.get('alwaysIgnore') || false,
-      autoSwitchSingleToMultiWhenLineWrapping:
-        configuration.get('autoSwitchSingleToMultiWithLineWrap') || false,
-    };
+  private _getExtensionConfiguration(): IBookmarkManagerConfigure {
+    return this._store.configure!;
   }
 
   /**
    * 注册插件自定义上下文
    */
   private _registerExtensionCustomContext() {
-    const _configuration =
-      this._configuration || this._getExtensionConfiguration();
+    const _configuration = this._getExtensionConfiguration();
     Object.entries(_configuration).forEach(([key, value]) => {
       if (typeof value !== 'boolean') {
         return;
@@ -170,45 +135,6 @@ export default class ConfigService implements Disposable {
       commands.executeCommand('setContext', `${EXTENSION_ID}.${key}`, value);
     });
     registerExtensionCustomContextByKey('toggleBookmarkWithSelection', false);
-  }
-
-  resolveAllColors(isRestore: boolean = false) {
-    if (!isRestore && Object.keys(this._colors).length) {
-      return this._colors;
-    }
-
-    this._colors = {} as StringIndexType<string>;
-    const config = this._wsConfiguration!;
-
-    this.resolveCustomColors();
-
-    Object.entries(this._customColors).forEach(([key, value]) => {
-      if (typeof value === 'string') {
-        this._colors[key] = value;
-      }
-    });
-
-    Object.entries(defaultColors).filter(([key, color]) => {
-      this._colors[key] = color;
-    });
-
-    this._colors['default'] =
-      config.get('defaultBookmarkIconColor') || DEFAULT_BOOKMARK_COLOR;
-
-    return this._colors;
-  }
-
-  /**
-   * 处理用户自定义的颜色(标签)配置
-   */
-  resolveCustomColors() {
-    const config = this._wsConfiguration!;
-    this._customColors = {} as StringIndexType<string>;
-    Object.entries(config.get('colors') as object).filter(([key, value]) => {
-      if (typeof value === 'string') {
-        this._customColors[key] = value;
-      }
-    });
   }
 
   /**
@@ -250,5 +176,6 @@ export default class ConfigService implements Disposable {
     this._onDidChangeConfigurationEvent.dispose();
     this._onDecorationConfigChangeEvent.dispose();
     this._onExtensionConfigChangeEvent.dispose();
+    destroy(this._store);
   }
 }

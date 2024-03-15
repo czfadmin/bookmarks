@@ -1,12 +1,13 @@
-import BookmarksTreeItem from './BookmarksTreeItem';
+import BookmarkTreeItem from './BookmarksTreeItem';
 import BaseTreeProvider from './BaseTreeProvider';
-import {ProviderResult, Selection, TreeItemCollapsibleState} from 'vscode';
-import {BookmarkMeta, BookmarkStoreRootType, BookmarkStoreType} from '../types';
+import {ProviderResult, TreeItemCollapsibleState} from 'vscode';
+import {BookmarkGroupByListType, BookmarksGroupedByFileType} from '../types';
 import {resolveBookmarkController} from '../bootstrap';
 import BookmarksController from '../controllers/BookmarksController';
+import {BookmarksGroupedByWorkspaceType, IBookmark} from '../stores/bookmark';
 
 export class BookmarksTreeProvider extends BaseTreeProvider<
-  BookmarksTreeItem,
+  BookmarkTreeItem,
   BookmarksController
 > {
   constructor() {
@@ -21,8 +22,8 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
    *    显示列表数据展示格式
    */
   getChildren(
-    element?: BookmarksTreeItem | undefined,
-  ): ProviderResult<BookmarksTreeItem[]> {
+    element?: BookmarkTreeItem | undefined,
+  ): ProviderResult<BookmarkTreeItem[]> {
     if (this.controller.viewType === 'list') {
       return this.getChildrenByList(element);
     }
@@ -42,14 +43,14 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
     }
   }
 
-  getChildrenByFile(element?: BookmarksTreeItem | undefined) {
+  getChildrenByFile(element?: BookmarkTreeItem | undefined) {
     if (!element) {
       const bookmarkRootStoreArr = this.controller.groupedByFileBookmarks;
       const children = bookmarkRootStoreArr.map(it => {
         let label = this.isRelativePath
           ? this.getRelativePath(it.fileName)
           : it.fileName;
-        return new BookmarksTreeItem(
+        return new BookmarkTreeItem(
           label,
           TreeItemCollapsibleState.Collapsed,
           'file',
@@ -60,49 +61,35 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
 
       return Promise.resolve(children);
     }
-    let children: BookmarksTreeItem[] = [];
+    let children: BookmarkTreeItem[] = [];
     try {
-      children = (element.meta as BookmarkStoreType).bookmarks.map(it => {
-        const selection = new Selection(
-          it.selection.anchor,
-          it.selection.active,
-        );
-
-        return new BookmarksTreeItem(
-          it.label || it.selectionContent || it.id,
-          TreeItemCollapsibleState.None,
-          'bookmark',
-          {
-            ...it,
-            selection,
-          },
-          this.serviceManager,
-        );
-      });
+      children = (element.meta as BookmarksGroupedByFileType).bookmarks.map(
+        it => {
+          return new BookmarkTreeItem(
+            it.label || it.selectionContent || it.id,
+            TreeItemCollapsibleState.None,
+            'bookmark',
+            it,
+            this.serviceManager,
+          );
+        },
+      );
       return Promise.resolve(children);
     } catch (error) {
       return Promise.resolve([]);
     }
   }
 
-  getChildrenByList(element?: BookmarksTreeItem | undefined) {
+  getChildrenByList(element?: BookmarkTreeItem | undefined) {
     if (!element) {
       const children = (
-        this.datastore as BookmarkStoreRootType
-      )?.bookmarks.map((it: BookmarkMeta) => {
-        const selection = new Selection(
-          it.selection.anchor,
-          it.selection.active,
-        );
-
-        return new BookmarksTreeItem(
+        this.datastore as BookmarkGroupByListType
+      )?.bookmarks.map((it: IBookmark) => {
+        return new BookmarkTreeItem(
           it.label || it.selectionContent || it.id,
           TreeItemCollapsibleState.None,
           'bookmark',
-          {
-            ...it,
-            selection,
-          },
+          it,
           this.serviceManager,
         );
       });
@@ -110,11 +97,11 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
     }
     return Promise.resolve([]);
   }
-  getChildrenByColor(element?: BookmarksTreeItem | undefined) {
+  getChildrenByColor(element?: BookmarkTreeItem | undefined) {
     if (!element) {
       const store = this.controller.groupedByColorBookmarks;
       const children = store.map(it => {
-        return new BookmarksTreeItem(
+        return new BookmarkTreeItem(
           it.color,
           TreeItemCollapsibleState.Collapsed,
           'color',
@@ -125,37 +112,31 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
 
       return Promise.resolve(children);
     }
-    let children: BookmarksTreeItem[] = [];
+    let children: BookmarkTreeItem[] = [];
     try {
-      children = (element.meta as BookmarkStoreType).bookmarks.map(it => {
-        const selection = new Selection(
-          it.selection.anchor,
-          it.selection.active,
-        );
-
-        return new BookmarksTreeItem(
-          it.label || it.selectionContent || it.id,
-          TreeItemCollapsibleState.None,
-          'bookmark',
-          {
-            ...it,
-            selection,
-          },
-          this.serviceManager,
-        );
-      });
+      children = (element.meta as BookmarksGroupedByFileType).bookmarks.map(
+        it => {
+          return new BookmarkTreeItem(
+            it.label || it.selectionContent || it.id,
+            TreeItemCollapsibleState.None,
+            'bookmark',
+            it,
+            this.serviceManager,
+          );
+        },
+      );
       return Promise.resolve(children);
     } catch (error) {
       return Promise.resolve([]);
     }
   }
 
-  getChildrenByWorkspace(element?: BookmarksTreeItem | undefined) {
+  getChildrenByWorkspace(element?: BookmarkTreeItem | undefined) {
     if (!element) {
       const store = this.controller.groupedByWorkspaceFolders;
       const children = store.map(it => {
-        return new BookmarksTreeItem(
-          it.workspace.name,
+        return new BookmarkTreeItem(
+          it.workspace.name!,
           TreeItemCollapsibleState.Collapsed,
           'workspace',
           it,
@@ -165,26 +146,35 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
 
       return Promise.resolve(children);
     }
-    let children: BookmarksTreeItem[] = [];
+    let children: BookmarkTreeItem[] = [];
     try {
-      children = (element.meta as BookmarkStoreType).bookmarks.map(it => {
-        const selection = new Selection(
-          it.selection.anchor,
-          it.selection.active,
-        );
-
-        return new BookmarksTreeItem(
-          it.label || it.selectionContent || it.id,
-          TreeItemCollapsibleState.None,
-          'bookmark',
-          {
-            ...it,
-            selection,
+      if ('files' in element.meta) {
+        children = (element.meta as BookmarksGroupedByWorkspaceType).files.map(
+          it => {
+            return new BookmarkTreeItem(
+              it.fileId,
+              TreeItemCollapsibleState.Collapsed,
+              'file',
+              it,
+              this.serviceManager,
+            );
           },
-          this.serviceManager,
         );
-      });
-      return Promise.resolve(children);
+        return Promise.resolve(children);
+      } else {
+        children = (element.meta as BookmarksGroupedByFileType).bookmarks.map(
+          it => {
+            return new BookmarkTreeItem(
+              it.label || it.selectionContent || it.id,
+              TreeItemCollapsibleState.None,
+              'bookmark',
+              it,
+              this.serviceManager,
+            );
+          },
+        );
+        return Promise.resolve(children);
+      }
     } catch (error) {
       return Promise.resolve([]);
     }

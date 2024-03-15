@@ -11,10 +11,10 @@ import {
   getBookmarkFromLineNumber,
   updateBookmarksGroupByChangedLine,
 } from './utils/bookmark';
-import {BookmarkMeta} from './types';
 import {registerExtensionCustomContextByKey} from './context';
 import {resolveBookmarkController} from './bootstrap';
 import resolveServiceManager from './services/ServiceManager';
+import {IBookmark} from './stores/bookmark';
 
 let onDidChangeActiveTextEditor: Disposable | undefined;
 let onDidChangeVisibleTextEditors: Disposable | undefined;
@@ -30,18 +30,18 @@ export function updateChangeActiveTextEditorListener() {
   onDidChangeActiveTextEditor?.dispose();
   const sm = resolveServiceManager();
   // 当打开多个editor group时,更新每个editor的中的decorations
-  const visibleTextEditors = window.visibleTextEditors;
+  let visibleTextEditors = window.visibleTextEditors;
   if (visibleTextEditors.length) {
     visibleTextEditors.forEach(editor => {
       sm.decorationService.updateDecorationsByEditor(editor);
     });
   }
-  onDidChangeActiveTextEditor = window.onDidChangeActiveTextEditor(ev => {
-    if (!ev) {
-      return;
-    }
-    sm.decorationService.updateDecorationsByEditor(ev);
-  });
+  // onDidChangeActiveTextEditor = window.onDidChangeActiveTextEditor(ev => {
+  //   if (!ev) {
+  //     return;
+  //   }
+  //   sm.decorationService.updateDecorationsByEditor(ev);
+  // });
 }
 
 /**
@@ -135,7 +135,7 @@ function updateLineBlame(editor: TextEditor, enableLineBlame: boolean) {
   }
 }
 
-function buildLineBlameInfo(bookmark: BookmarkMeta) {
+function buildLineBlameInfo(bookmark: IBookmark) {
   if (bookmark.label && bookmark.description) {
     return `${bookmark.label} - ${bookmark.description}`;
   }
@@ -151,7 +151,6 @@ function buildLineBlameInfo(bookmark: BookmarkMeta) {
 export function updateBookmarkInfoWhenTextChangeListener() {
   onDidChangeTextDocumentDisposable?.dispose();
   const controller = resolveBookmarkController();
-  const sm = resolveServiceManager();
   onDidChangeTextDocumentDisposable = workspace.onDidChangeTextDocument(e => {
     const {contentChanges, document} = e;
     // 代表存在文档发生变化
@@ -174,7 +173,6 @@ export function updateFilesRenameAndDeleteListeners() {
   onDidRenameFilesDisposable?.dispose();
   onDidDeleteFilesDisposable?.dispose();
   const controller = resolveBookmarkController();
-  const sm = resolveServiceManager();
   // 监听文件重命名, 同步修改书签的对应的文件信息
   onDidRenameFilesDisposable = workspace.onDidRenameFiles(e => {
     const {files} = e;
@@ -187,17 +185,10 @@ export function updateFilesRenameAndDeleteListeners() {
       if (!bookmarks.length) {
         continue;
       }
-      const filePathArr = file.newUri.path.split('/');
-      bookmarks.map(it => {
-        return {
-          ...it,
-          fileId: file.newUri.fsPath,
-          fileUri: file.newUri,
-          fileName: filePathArr[filePathArr.length - 1],
-        };
+      bookmarks.forEach(it => {
+        it.updateFileUri(file.newUri);
       });
     }
-    controller.save();
   });
 
   // 监听文件删除

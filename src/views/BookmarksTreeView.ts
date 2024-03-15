@@ -1,11 +1,11 @@
 import {EXTENSION_VIEW_ID} from '../constants';
-import BookmarksTreeItem from '../providers/BookmarksTreeItem';
+import BookmarkTreeItem from '../providers/BookmarksTreeItem';
 import BaseTreeView, {TreeViewEnum} from './BaseTreeView';
 import {BookmarksTreeProvider} from '../providers/BookmarksTreeProvider';
 import BookmarksController from '../controllers/BookmarksController';
 
 export class BookmarksTreeView extends BaseTreeView<
-  BookmarksTreeItem,
+  BookmarkTreeItem,
   BookmarksController
 > {
   type: TreeViewEnum = TreeViewEnum.CODE;

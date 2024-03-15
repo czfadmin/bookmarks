@@ -6,6 +6,7 @@ import IController from '../controllers/IController';
 import resolveServiceManager, {
   ServiceManager,
 } from '../services/ServiceManager';
+import {IBookmark} from '../stores';
 export enum TreeViewEnum {
   BASE = 0,
   UNIVERSAL,
@@ -82,9 +83,10 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
             draggedSource.meta.bookmarks.length &&
             draggedSource.meta.color !== target.meta.color
           ) {
-            for (let item of draggedSource.meta.bookmarks) {
-              self._controller.update(item.id, {
-                color: target.meta.color,
+            for (let bookmark of draggedSource.meta.bookmarks) {
+              (bookmark as IBookmark).updateColor({
+                ...bookmark.customColor,
+                name: target.meta.color,
               });
             }
             return;
@@ -92,8 +94,10 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
 
           // 不同树的之间拖拽
           if (draggedSource.meta.color !== target.meta.color) {
-            self._controller.update(draggedSource.meta.id, {
-              color: target.meta.color,
+            const bookmark = draggedSource.meta as IBookmark;
+            bookmark.updateColor({
+              ...bookmark.customColor,
+              name: target.meta.color,
             });
             return;
           }
@@ -105,7 +109,9 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
           // groupView 为default, workspace 以及 file情况下, 第二级 支持拖拽排序, 第一级支持拖拽排序
           const sourceContextValue = draggedSource.contextValue;
           const targetContextValue = target.contextValue;
-          if (!sourceContextValue || !targetContextValue) {return;}
+          if (!sourceContextValue || !targetContextValue) {
+            return;
+          }
 
           if (
             targetContextValue === 'bookmark' &&
@@ -115,7 +121,7 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
           }
 
           // 1. 对于顶层级进行拖拽, 顶层进行排序
-          //2. 第二层级中 进行排序
+          // 2. 第二层级中 进行排序
           console.log(draggedSource, target);
         }
       },

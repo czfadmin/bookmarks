@@ -1,10 +1,11 @@
+import path from 'node:path';
+import fs from 'node:fs';
 import {
   Event,
   EventEmitter,
   ExtensionContext,
   FileSystemWatcher,
   Memento,
-  Selection,
   Uri,
   WorkspaceFolder,
   env,
@@ -12,72 +13,55 @@ import {
   window,
   workspace,
 } from 'vscode';
-import path from 'node:path';
-import fs from 'node:fs';
+import {IDisposer, destroy, onSnapshot} from 'mobx-state-tree';
 import {fileURLToPath} from 'node:url';
 
-import {IDisposable, generateUUID} from '../utils';
-import {createHoverMessage, sortBookmarksByLineNumber} from '../utils/bookmark';
+import {IDisposable} from '../utils';
 import {
-  BookmarkColor,
-  BookmarkManagerConfigure,
-  BookmarkMeta,
-  BookmarkStoreRootType,
-  BookmarkStoreType,
-} from '../types';
-import {EXTENSION_ID, EXTENSION_STORE_FILE_NAME} from '../constants';
+  EXTENSION_ID,
+  EXTENSION_STORE_FILE_NAME,
+  EXTENSION_STORE_PATH,
+} from '../constants';
 
-import IController, {
-  TreeViewSortedByType,
-  TreeGroupView,
-  ViewType,
-} from './IController';
-import {registerExtensionCustomContextByKey} from '../context';
 import ConfigService from '../services/ConfigService';
-import resolveServiceManager, {
-  ServiceManager,
-} from '../services/ServiceManager';
+import {ServiceManager} from '../services/ServiceManager';
+import {
+  BookmarksStore,
+  BookmarksGroupedByColorType,
+  BookmarksGroupedByFileWithSortType,
+  BookmarksGroupedByWorkspaceType,
+  IBookmark,
+  IBookmarksStore,
+} from '../stores/bookmark';
 
-export type GroupedByFileType = BookmarkStoreType & {
-  sortedIndex?: number;
-};
-
-export type GroupedByColorType = {
-  color: BookmarkColor;
-  bookmarks: BookmarkMeta[];
-  sortedIndex?: number;
-};
-
-export type GroupedByWorkspaceType = {
-  workspace: WorkspaceFolder;
-  bookmarks: BookmarkMeta[];
-  sortedIndex?: number;
-};
+import {IBookmarkManagerConfigure} from '../stores/configure';
+import {TreeViewType, TreeViewGroupType, TreeViewSortedType} from '../types';
+import IController from './IController';
 
 export default class BookmarksController implements IController {
   private _context: ExtensionContext;
 
   private _onDidChangeEvent = new EventEmitter<void>();
 
-  private _datastore!: BookmarkStoreRootType;
+  private _store!: IBookmarksStore;
 
-  private _groupedByFile: GroupedByFileType[] = [];
+  private _groupedByFile: BookmarksGroupedByFileWithSortType[] = [];
 
-  private _groupedByColor: GroupedByColorType[] = [];
+  private _groupedByColor: BookmarksGroupedByColorType[] = [];
 
-  private _groupedByWorkspaceFolders: GroupedByWorkspaceType[] = [];
+  private _groupedByWorkspaceFolders: BookmarksGroupedByWorkspaceType[] = [];
 
-  public viewType: ViewType = 'tree';
+  public viewType: TreeViewType = 'tree';
 
-  public groupView: TreeGroupView = 'default';
+  public groupView: TreeViewGroupType = 'default';
 
-  public sortedType: TreeViewSortedByType = 'linenumber';
+  public sortedType: TreeViewSortedType = 'linenumber';
 
   private _disposables: IDisposable[] = [];
 
   private _watcher: FileSystemWatcher | undefined;
 
-  private _configuration: BookmarkManagerConfigure;
+  private _configuration: IBookmarkManagerConfigure;
 
   private _configService: ConfigService;
 
@@ -88,17 +72,19 @@ export default class BookmarksController implements IController {
    */
   private _needWarning: boolean = true;
 
+  private _storeDisposer: IDisposer | undefined;
+
   public onDidChangeEvent: Event<void> = this._onDidChangeEvent.event;
 
-  public get groupedByFileBookmarks(): GroupedByFileType[] {
+  public get groupedByFileBookmarks(): BookmarksGroupedByFileWithSortType[] {
     return this._groupedByFile;
   }
 
-  public get groupedByColorBookmarks(): GroupedByColorType[] {
+  public get groupedByColorBookmarks(): BookmarksGroupedByColorType[] {
     return this._groupedByColor;
   }
 
-  public get groupedByWorkspaceFolders(): GroupedByWorkspaceType[] {
+  public get groupedByWorkspaceFolders(): BookmarksGroupedByWorkspaceType[] {
     return this._groupedByWorkspaceFolders;
   }
 
@@ -106,36 +92,35 @@ export default class BookmarksController implements IController {
     return this._context.workspaceState;
   }
 
-  public get datastore(): BookmarkStoreRootType | undefined {
-    return this._datastore;
+  public get store(): IBookmarksStore | undefined {
+    return this._store;
   }
 
   /**
    * 返回书签的总个数
    */
   public get totalCount(): number {
-    if (!this._datastore) {
+    if (!this._store) {
       return 0;
     }
-    return this._datastore.bookmarks.length;
+    return this._store.totalCount;
   }
 
   /**
    * 获取带有标签的书签
    */
   public get labeledCount(): number {
-    if (!this._datastore) {
+    if (!this._store) {
       return 0;
     }
-    return this._datastore.bookmarks.filter(it => it.label).length;
+    return this._store.labeledCount;
   }
 
-  constructor(context: ExtensionContext) {
+  constructor(context: ExtensionContext, serviceManager: ServiceManager) {
     this._context = context;
-    this._serviceManager = resolveServiceManager();
+    this._serviceManager = serviceManager;
     this._configService = this._serviceManager.configService;
     this._configuration = this._configService.configuration;
-
     this._initial();
   }
 
@@ -144,15 +129,6 @@ export default class BookmarksController implements IController {
       '_needWarning',
       true,
     );
-    this.viewType = this._configService.getGlobalValue('code.viewType', 'tree');
-    this.groupView = this._configService.getGlobalValue(
-      'code.groupView',
-      'file',
-    );
-
-    if (!workspace.workspaceFolders || workspace.workspaceFolders!.length < 2) {
-      this.groupView = 'default';
-    }
 
     this._configService.onExtensionConfigChange(configuration => {
       this._configuration = configuration;
@@ -162,69 +138,54 @@ export default class BookmarksController implements IController {
       if (!ev.affectsConfiguration(`${EXTENSION_ID}.createJsonFile`)) {
         return;
       }
-      this._initialDatastore();
+      this._initStore();
       if (!this._configuration.createJsonFile) {
         this._watcher?.dispose();
       }
     });
 
-    registerExtensionCustomContextByKey(
-      'code.viewAsTree',
-      this.viewType === 'tree',
-    );
+    this._initStore();
 
-    registerExtensionCustomContextByKey('code.view.groupView', this.groupView);
-
-    this._initialDatastore();
     this._initialWatcher();
   }
 
-  private async _initialDatastore() {
-    let _datastore, _datastoreFromFile;
-    _datastoreFromFile = this._resolveDatastoreFromStoreFile() || {
-      bookmarks: [],
-    };
-    if (this._configuration.createJsonFile) {
-      _datastore = _datastoreFromFile;
-      this._datastore = _datastore!;
-      this.refresh();
-    } else {
-      _datastore =
-        _datastoreFromFile.bookmarks.length !== 0
-          ? _datastoreFromFile
-          : this.workspaceState.get<any>(EXTENSION_ID);
-      if (!_datastore) {
-        this._datastore = _datastoreFromFile;
-        this.save(this._datastore);
-      } else {
-        // 针对以前存在的书签, 进行扁平化成列表
-        let _newDatastore: BookmarkStoreRootType = {
-          bookmarks: [],
-        };
-        if (_datastore.data && _datastore.data.length) {
-          _newDatastore.bookmarks = this._flatToList(_datastore.data);
-        } else {
-          _newDatastore.bookmarks = (
-            _datastore.data ||
-            _datastore.bookmarks ||
-            []
-          ).map((it: any) => {
-            it.selection = new Selection(
-              it.selection.anchor,
-              it.selection.active,
-            );
-            it.rangesOrOptions.hoverMessage = createHoverMessage(
-              it,
-              true,
-              true,
-            );
-            return it;
-          });
+  private async _initStore() {
+    this._store = BookmarksStore.create();
+
+    this.viewType = this._store.viewType as TreeViewType;
+    this.groupView = this._store.groupView as TreeViewGroupType;
+    this.sortedType = this._store.sortedType as TreeViewSortedType;
+
+    if (
+      (!workspace.workspaceFolders || workspace.workspaceFolders!.length < 2) &&
+      this.groupView !== 'default'
+    ) {
+      this._store.updateGroupView('default');
+    }
+
+    let store;
+    this._resolveDatastoreFromStoreFile();
+    // 当从 `bookmark-manager.json`文件中读取, 直接刷新返回
+    if (!this._configuration.createJsonFile) {
+      // 从state中读取数据
+      store = this.workspaceState.get<any>(EXTENSION_ID);
+      if (!store) {
+        store = this._store;
+      } else if (store.bookmarks && store.bookmarks.length) {
+        for (let bookmark of store.bookmarks) {
+          const _bookmark = this._store.createBookmark(bookmark);
+          this._store.add(_bookmark);
         }
-        this._datastore = _newDatastore;
-        this.save();
       }
     }
+
+    this._storeDisposer = onSnapshot(this._store, snapshot => {
+      // 更新对应的配置数据
+      this.viewType = this._store.viewType as TreeViewType;
+      this.groupView = this._store.groupView as TreeViewGroupType;
+      this.sortedType = this._store.sortedType as TreeViewSortedType;
+      this.save();
+    });
     this._changeView();
   }
 
@@ -245,13 +206,10 @@ export default class BookmarksController implements IController {
         '**/.vscode/bookmark-manager.json',
       );
       this._watcher.onDidDelete(uri => {
-        this._datastore = {
-          bookmarks: [],
-        };
-        this.save();
+        this._store.clearAll();
       });
       this._watcher.onDidChange(uri => {
-        this._datastore = this._resolveDatastoreFromStoreFile();
+        this._resolveDatastoreFromStoreFile();
         this._changeView();
         this.refresh();
       });
@@ -266,37 +224,20 @@ export default class BookmarksController implements IController {
   private _resolveDatastoreFromStoreFile() {
     let ws;
     const wsFolders = workspace.workspaceFolders || [];
-    const _datastore: BookmarkStoreRootType = {
-      bookmarks: [],
-    };
     for (ws of wsFolders) {
       const storeFilePath = path.join(
         ws.uri.fsPath,
-        './.vscode/bookmark-manager.json',
+        `./${EXTENSION_STORE_PATH}`,
       );
       if (fs.existsSync(storeFilePath)) {
         const _bookmarks = (
           JSON.parse(fs.readFileSync(storeFilePath).toString()) || {content: []}
         ).content;
         if (_bookmarks && _bookmarks.length) {
-          _datastore.bookmarks.push(
-            ..._bookmarks.map((it: any) => {
-              it.selection = new Selection(
-                it.selection.anchor,
-                it.selection.active,
-              );
-              it.rangesOrOptions.hoverMessage = createHoverMessage(
-                it,
-                true,
-                true,
-              );
-              return it;
-            }),
-          );
+          this._store.addBookmarks(_bookmarks);
         }
       }
     }
-    return _datastore;
   }
 
   /**
@@ -305,28 +246,14 @@ export default class BookmarksController implements IController {
   private _changeView() {
     if (this.viewType === 'tree') {
       if (this.groupView === 'color') {
-        this._groupedByColor = (this._getBookmarksGroupedByColor() || []).map(
-          it => {
-            sortBookmarksByLineNumber(it.bookmarks);
-            return it;
-          },
-        );
+        this._groupedByColor = this._getBookmarksGroupedByColor();
       }
       if (this.groupView === 'default') {
-        this._groupedByFile = (this._getBookmarksGroupedByFile() || []).map(
-          it => {
-            sortBookmarksByLineNumber(it.bookmarks);
-            return it;
-          },
-        );
+        this._groupedByFile = this._getBookmarksGroupedByFile();
       }
       if (this.groupView === 'workspace') {
-        this._groupedByWorkspaceFolders = (
-          this._getBookmarksGroupedByWorkspace() || []
-        ).map(it => {
-          sortBookmarksByLineNumber(it.bookmarks);
-          return it;
-        });
+        this._groupedByWorkspaceFolders =
+          this._getBookmarksGroupedByWorkspace();
       }
     }
   }
@@ -336,22 +263,10 @@ export default class BookmarksController implements IController {
    * @returns
    */
   private _getBookmarksGroupedByColor() {
-    if (!this._datastore || !this._datastore.bookmarks.length) {
-      return;
+    if (!this._store) {
+      return [];
     }
-    const groupedList: GroupedByColorType[] = [];
-    this._datastore.bookmarks.forEach(it => {
-      const existed = groupedList.find(item => item.color === it.color);
-      if (!existed) {
-        groupedList.push({
-          color: it.color,
-          bookmarks: [it],
-        });
-        return;
-      }
-      existed.bookmarks.push(it);
-    });
-    return groupedList;
+    return this._store.bookmarksGroupedByColor;
   }
 
   /**
@@ -359,100 +274,44 @@ export default class BookmarksController implements IController {
    * @returns
    */
   private _getBookmarksGroupedByWorkspace() {
-    if (!this._datastore || !this._datastore.bookmarks.length) {
-      return;
+    if (!this._store) {
+      return [];
     }
 
-    const grouped: GroupedByWorkspaceType[] = [];
-    this._datastore.bookmarks.forEach(it => {
-      const existed = grouped.find(
-        item => item.workspace.name === it.workspaceFolder?.name,
-      );
-      if (!existed) {
-        grouped.push({
-          workspace: it.workspaceFolder!,
-          bookmarks: [it],
-        });
-        return;
-      }
-      existed.bookmarks.push(it);
-    });
-    return grouped;
+    return this._store.bookmakrsGroupedByWorkspace;
   }
 
-  changeSortType(sortType: TreeViewSortedByType): void {
-    this.sortedType = sortType;
-  }
-
-  /**
-   * 将之前旧的数据转换成list
-   * @param arr
-   * @returns
-   */
-  private _flatToList(arr: any[]) {
-    const newArr: any[] = [];
-    arr.forEach(store => {
-      const bookmarks = store.bookmarks.map((bookmark: any) => ({
-        ...bookmark,
-        filename: store.filename,
-        fileId: store.id,
-        selection: new Selection(
-          bookmark.selection.anchor,
-          bookmark.selection.active,
-        ),
-        rangesOrOptions: {
-          ...bookmark.rangesOrOptions,
-          hoverMessage: createHoverMessage(bookmark, true, true),
-        },
-        workspaceFolder: workspace.getWorkspaceFolder(store.fileUri),
-      }));
-      newArr.push(...bookmarks);
-    });
-    return newArr;
-  }
-
-  add(bookmark: Partial<Omit<BookmarkMeta, 'id'>>) {
-    // @ts-ignore
-    this._datastore.bookmarks.push({
-      ...bookmark,
-      workspaceFolder: workspace.getWorkspaceFolder(bookmark.fileUri!),
-      id: generateUUID(),
-    });
-    this.save();
+  add(bookmark: Partial<Omit<IBookmark, 'id'>>) {
+    const newBookmark = this._store.createBookmark(bookmark);
+    this._store.add(newBookmark);
   }
 
   remove(id: string) {
-    const bookmarkIdx = this._datastore.bookmarks.findIndex(it => it.id === id);
-    if (bookmarkIdx === -1) {
-      return;
-    }
-    this._datastore.bookmarks.splice(bookmarkIdx, 1);
-    this.save();
+    this._store.delete(id);
   }
 
-  update(id: string, bookmarkDto: Partial<Omit<BookmarkMeta, 'id'>>) {
-    let idx = this._datastore.bookmarks.findIndex(it => it.id === id);
-    if (idx === -1) {
+  update(id: string, bookmarkDto: Partial<Omit<IBookmark, 'id'>>) {
+    let existed = this._store.bookmarks.find(it => it.id === id);
+    if (!existed) {
       return;
     }
-    const existed = this._datastore.bookmarks[idx];
+
     const {rangesOrOptions, ...rest} = bookmarkDto;
-    this._datastore.bookmarks[idx] = {
+    existed.update({
       ...existed,
       ...rest,
       rangesOrOptions: {
-        ...(existed.rangesOrOptions || {}),
+        ...existed.rangesOrOptions,
         ...rangesOrOptions,
       },
-    } as BookmarkMeta;
-    this.save();
+    });
   }
 
   updateGroupColorName(
     colorName: string,
-    bookmarkDto: Partial<Omit<BookmarkMeta, 'id'>>,
+    bookmarkDto: Partial<Omit<IBookmark, 'id'>>,
   ) {
-    let sameColorBookmarks = this._datastore.bookmarks.filter(
+    let sameColorBookmarks = this._store.bookmarks.filter(
       it => it.color === colorName,
     );
     const {rangesOrOptions, ...rest} = bookmarkDto;
@@ -465,14 +324,13 @@ export default class BookmarksController implements IController {
         },
       });
     }
-    this.save();
   }
 
-  getBookmarkStoreByFileUri(fileUri: Uri): BookmarkMeta[] {
-    if (!this._datastore) {
+  getBookmarkStoreByFileUri(fileUri: Uri): IBookmark[] {
+    if (!this._store) {
       return [];
     }
-    return this._datastore.bookmarks.filter(it => it.fileId === fileUri.fsPath);
+    return this._store.getBookmarksByFileUri(fileUri);
   }
 
   /**
@@ -492,32 +350,14 @@ export default class BookmarksController implements IController {
    * ]
    */
   private _getBookmarksGroupedByFile() {
-    if (!this._datastore.bookmarks.length) {
-      return;
+    if (!this._store) {
+      return [];
     }
-    const groupedList: GroupedByFileType[] = [];
-    this._datastore.bookmarks.forEach(it => {
-      const existed = groupedList.find(item => item.fileId === it.fileId);
-      if (existed) {
-        existed.bookmarks.push(it);
-        sortBookmarksByLineNumber(existed.bookmarks);
-      } else {
-        groupedList.push({
-          fileId: it.fileId,
-          // @ts-ignore
-          fileName: it.fileName || it['filename'],
-          fileUri: it.fileUri,
-          bookmarks: [it],
-        });
-      }
-    });
-    return groupedList;
+    return this._store.bookmarksGroupedByFile;
   }
 
   restore() {
-    this.save({
-      bookmarks: [],
-    });
+    this._store.clearAll();
   }
 
   /**
@@ -525,7 +365,7 @@ export default class BookmarksController implements IController {
    * 清除所有标签
    */
   clearAll() {
-    if (!this._datastore.bookmarks.length) {
+    if (!this._store.bookmarks.length) {
       return;
     }
     this.restore();
@@ -537,65 +377,38 @@ export default class BookmarksController implements IController {
    * @returns
    */
   clearAllBookmarkInFile(fileUri: Uri) {
-    if (!this._datastore.bookmarks.length) {
+    if (!this._store.bookmarks.length) {
       return;
     }
-    this._datastore.bookmarks = this._datastore.bookmarks.filter(
-      it => it.fileId !== fileUri.fsPath,
-    );
-    this.save();
+    this._store.clearBookmarksByFile(fileUri);
   }
 
-  save(store?: BookmarkStoreRootType) {
-    if (store) {
-      this._datastore = store;
-    }
-
+  save() {
     if (this._configuration.createJsonFile) {
       this._saveToDisk();
     } else {
-      this.workspaceState.update(EXTENSION_ID, store || this._datastore);
+      this.workspaceState.update(EXTENSION_ID, this._store);
     }
     this._changeView();
     this._fire();
-  }
-
-  /**
-   *
-   * @param bookmark
-   * @param label
-   */
-  editLabel(bookmark: BookmarkMeta, label: string) {
-    bookmark.label = label;
-
-    this.update(bookmark.id, {
-      label,
-      rangesOrOptions: {
-        ...bookmark.rangesOrOptions,
-        hoverMessage: createHoverMessage(bookmark, true, true),
-      },
-    });
   }
 
   refresh() {
     this._fire();
   }
 
-  changeViewType(viewType: ViewType) {
-    this.viewType = viewType;
-    this._configService.updateGlobalValue('code.viewType', viewType);
+  changeSortType(sortType: TreeViewSortedType): void {
+    this._store.updateSortedType(sortType);
+  }
 
-    registerExtensionCustomContextByKey(
-      'code.viewAsTree',
-      this.viewType === 'tree',
-    );
+  changeViewType(viewType: TreeViewType) {
+    this._store.udpateViewType(viewType);
     this._changeView();
     this._fire();
   }
 
-  changeGroupView(groupType: TreeGroupView) {
-    this.groupView = groupType;
-    this._configService.updateGlobalValue('code.groupView', groupType);
+  changeGroupView(groupType: TreeViewGroupType) {
+    this._store.updateGroupView(groupType);
     this._changeView();
     this._fire();
   }
@@ -643,8 +456,8 @@ export default class BookmarksController implements IController {
       version: process.env.version,
       workspace: workspace.name,
       updatedDate: new Date().toLocaleDateString(),
-      content: this._datastore.bookmarks.filter(
-        it => it.workspaceFolder?.uri.fsPath === workspace.uri.fsPath,
+      content: this._store.bookmarks.filter(
+        it => it.wsFolder?.uri.fsPath === workspace.uri.fsPath,
       ),
     };
     return JSON.stringify(content);
@@ -664,7 +477,7 @@ export default class BookmarksController implements IController {
     }
 
     const ignoreContent = fs.readFileSync(ignoreFilePath, 'utf-8');
-    const needWarning = this._needWarning && this.datastore?.bookmarks.length;
+    const needWarning = this._needWarning && this.store?.bookmarks.length;
 
     if (
       !alwaysIgnore &&
@@ -683,7 +496,7 @@ export default class BookmarksController implements IController {
       return;
     }
 
-    if (!this._needWarning && this.datastore?.bookmarks.length) {
+    if (!this._needWarning && this.store?.bookmarks.length) {
       this._configService.updateGlobalValue('needWarning', true);
       this._needWarning = true;
     }
@@ -697,10 +510,12 @@ export default class BookmarksController implements IController {
   }
   dispose(): void {
     this._disposables.filter(it => it).forEach(it => it.dispose());
+    this._storeDisposer?.();
+    destroy(this._store);
   }
 
   private _fire() {
-    if (!this._datastore) {
+    if (!this._store) {
       return;
     }
     this._onDidChangeEvent.fire();

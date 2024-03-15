@@ -1,23 +1,5 @@
-import {DecorationOptions, Selection, Uri, WorkspaceFolder} from 'vscode';
-import {BaseMeta, BookmarkColor} from './common';
+import {IBookmark, IMyUriType} from '../stores';
 export type BookmarkDecorationKey = string | 'default';
-
-export interface BookmarkMeta extends BaseMeta {
-  id: string;
-  fileId: string;
-  fileName: string;
-  fileUri: Uri;
-  type: 'line' | 'selection';
-  color: BookmarkColor;
-  selection: Selection;
-  label?: string;
-  selectionContent?: string;
-  description?: string;
-  languageId?: string;
-  tag?: string;
-  workspaceFolder?: WorkspaceFolder;
-  rangesOrOptions: DecorationOptions;
-}
 
 /**
  * 根据文件名来分组
@@ -30,14 +12,14 @@ export interface BookmarkMeta extends BaseMeta {
  * }
  * ```
  */
-export type BookmarkStoreType = {
+export type BookmarksGroupedByFileType = {
   /**
-   * fileUri.fsPath
+   * 文件路径名
    */
   fileId: string;
-  fileUri: Uri;
+  fileUri: IMyUriType;
   fileName: string;
-  bookmarks: BookmarkMeta[];
+  bookmarks: IBookmark[];
 };
 
 /**
@@ -49,6 +31,6 @@ export type BookmarkStoreType = {
  * }
  * ```
  */
-export type BookmarkStoreRootType = {
-  bookmarks: BookmarkMeta[];
+export type BookmarkGroupByListType = {
+  bookmarks: IBookmark[];
 };

@@ -1,14 +1,14 @@
 import {Event, EventEmitter, ExtensionContext, Uri} from 'vscode';
-import {BaseMeta, BookmarkColor} from '../types';
+import {
+  BaseMeta,
+  BookmarkColor,
+  TreeViewGroupType,
+  TreeViewSortedType,
+  TreeViewType,
+} from '../types';
 import {generateUUID} from '../utils';
-import IController, {
-  TreeViewSortedByType,
-  TreeGroupView,
-  ViewType,
-} from './IController';
-import resolveServiceManager, {
-  ServiceManager,
-} from '../services/ServiceManager';
+import IController from './IController';
+import {ServiceManager} from '../services/ServiceManager';
 export const UNIVERSAL_STORE_KEY = 'bookmark-manager.universal';
 export type UniversalBookmarkType = 'file' | 'link' | 'command' | 'code';
 
@@ -63,27 +63,27 @@ export default class UniversalBookmarkController implements IController {
   private _onDidChangeEvent: EventEmitter<void> = new EventEmitter<void>();
 
   private _serviceManager: ServiceManager;
-  public sortedType: Omit<TreeViewSortedByType, 'linenumber'> = 'linenumber';
+  public sortedType: Omit<TreeViewSortedType, 'linenumber'> = 'linenumber';
   public onDidChangeEvent: Event<void> = this._onDidChangeEvent.event;
 
   get globalState() {
     return this._context.globalState;
   }
 
-  get datastore(): UniversalStoreType | undefined {
+  get store(): UniversalStoreType | undefined {
     return this._datastore;
   }
 
   get totalCount(): number {
-    return this.datastore?.bookmarks.length || 0;
+    return this.store?.bookmarks.length || 0;
   }
   get labeledCount(): number {
     return 0;
   }
 
-  constructor(context: ExtensionContext) {
+  constructor(context: ExtensionContext, serviceManager: ServiceManager) {
     this._context = context;
-    this._serviceManager = resolveServiceManager();
+    this._serviceManager = serviceManager;
     this._datastore =
       this._context.globalState.get<UniversalStoreType>(UNIVERSAL_STORE_KEY);
     if (!this._datastore) {
@@ -96,10 +96,10 @@ export default class UniversalBookmarkController implements IController {
     }
     this._initial();
   }
-  get viewType(): ViewType {
+  get viewType(): TreeViewType {
     return 'list';
   }
-  get groupView(): TreeGroupView {
+  get groupView(): TreeViewGroupType {
     return 'default';
   }
 
@@ -117,43 +117,41 @@ export default class UniversalBookmarkController implements IController {
 
   add(bookmark: Omit<UniversalBookmarkMeta, 'id'>) {
     const id = generateUUID();
-    this.datastore!.bookmarks.push({
+    this.store!.bookmarks.push({
       id,
       ...bookmark,
     } as UniversalBookmarkMeta);
     this._save();
   }
   remove(id: string) {
-    const idx = this.datastore?.bookmarks.findIndex(it => it.id === id);
+    const idx = this.store?.bookmarks.findIndex(it => it.id === id);
     if (idx === -1) {
       return;
     }
-    this.datastore!.bookmarks = this.datastore!.bookmarks.filter(
-      it => it.id !== id,
-    );
+    this.store!.bookmarks = this.store!.bookmarks.filter(it => it.id !== id);
     this._save();
   }
   update(id: string, bookmarkDto: Partial<Omit<UniversalBookmarkMeta, 'id'>>) {
-    if (!this.datastore) {
+    if (!this.store) {
       return;
     }
-    const idx = this.datastore.bookmarks.findIndex(it => it.id === id);
+    const idx = this.store.bookmarks.findIndex(it => it.id === id);
     if (idx === -1) {
       return;
     }
 
-    const existed = this.datastore.bookmarks[idx];
-    this.datastore.bookmarks[idx] = {
+    const existed = this.store.bookmarks[idx];
+    this.store.bookmarks[idx] = {
       ...existed,
       ...bookmarkDto,
     } as UniversalBookmarkMeta;
     this._save();
   }
   clearAll() {
-    if (!this.datastore) {
+    if (!this.store) {
       return;
     }
-    this.datastore.bookmarks = [];
+    this.store.bookmarks = [];
     this._save();
   }
   save() {
@@ -176,9 +174,9 @@ export default class UniversalBookmarkController implements IController {
   refresh() {
     this._onDidChangeEvent.fire();
   }
-  changeViewType(viewType: ViewType): void {}
+  changeViewType(viewType: TreeViewType): void {}
 
-  changeSortType(sortType: TreeViewSortedByType): void {
+  changeSortType(sortType: TreeViewSortedType): void {
     this.sortedType = sortType;
   }
 }

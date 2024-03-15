@@ -1,4 +1,4 @@
-import {ProviderResult, Selection, TreeItemCollapsibleState} from 'vscode';
+import {ProviderResult, TreeItemCollapsibleState} from 'vscode';
 import {resolveUniversalController} from '../bootstrap';
 import BaseTreeProvider from './BaseTreeProvider';
 import {UniversalTreeItem} from './UniversalTreeItem';

@@ -2,7 +2,7 @@
   "name": "bookmark-manager",
   "displayName": "Bookmark Manager (BM)",
   "description": "Simple and easy to use bookmark manager",
-  "version": "0.0.27",
+  "version": "0.0.28",
   "engines": {
     "vscode": "^1.82.0"
   },
@@ -492,7 +492,7 @@
         },
         {
           "command": "bookmark-manager.clearAllBookmarksInCurrentFile",
-          "when": "view == bookmark-manager && viewItem === file",
+          "when": "view == bookmark-manager && (viewItem === file || viewItem === workspace)",
           "group": "inline@2"
         },
         {
@@ -614,6 +614,8 @@
     "@vscode/l10n": "^0.0.16",
     "@vscode/vsce": "^2.23.0",
     "lodash": "^4.17.21",
+    "mobx": "^6.12.0",
+    "mobx-state-tree": "^5.4.1",
     "uuid": "^9.0.1"
   },
   "lint-staged": {

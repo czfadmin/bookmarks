@@ -41,7 +41,7 @@ export default class GutterService implements Disposable {
   private _initial() {
     const configService = this._sm.configService;
     const colors = configService.colors;
-    Object.entries(colors).forEach(([key, value]) => {
+    Object.entries(colors).forEach(([key, value]: [string, string]) => {
       this._gutters[key] = {
         color: value,
         iconPath: svgToUri(createBookmarkIcon(value || DEFAULT_BOOKMARK_COLOR)),
