@@ -6,7 +6,13 @@ import {
   generateUUID,
   sortBookmarksByLineNumber,
 } from '../utils';
-import {BookmarkColor, BookmarksGroupedByFileType} from '../types';
+import {
+  BookmarkColor,
+  BookmarksGroupedByFileType,
+  TreeViewGroupType,
+  TreeViewSortedType,
+  TreeViewType,
+} from '../types';
 import {
   SortedType,
   MyColorType,
@@ -17,6 +23,8 @@ import {
   IDecorationOptionsType,
   IMyColorType,
 } from './custom';
+import resolveServiceManager from '../services/ServiceManager';
+import {registerExtensionCustomContextByKey} from '../context';
 
 export type BookmarksGroupedByFileWithSortType = BookmarksGroupedByFileType &
   SortedType;
@@ -160,7 +168,7 @@ export const BookmarksStore = types
       'file',
     ),
     sortedType: types.optional(
-      types.enumeration(['linenumber', 'custom', 'time']),
+      types.enumeration(['linenumber', 'custom', 'createdTime', 'updatedTime']),
       'linenumber',
     ),
   })
@@ -336,8 +344,39 @@ export const BookmarksStore = types
       }
       self.bookmarks.push(bookmark);
     }
+
     return {
-      afterCreate() {},
+      afterCreate() {
+        const sm = resolveServiceManager();
+        self.viewType = sm.configService.getGlobalValue(
+          'code.viewType',
+          'tree',
+        );
+        self.groupView = sm.configService.getGlobalValue(
+          'code.groupView',
+          'file',
+        );
+        self.sortedType = sm.configService.getGlobalValue(
+          'code.sortedType',
+          'createdTime',
+        );
+
+        // 注册对应的上下文
+        registerExtensionCustomContextByKey(
+          'code.viewAsTree',
+          self.viewType === 'tree',
+        );
+
+        registerExtensionCustomContextByKey(
+          'code.view.groupView',
+          self.groupView,
+        );
+
+        registerExtensionCustomContextByKey(
+          'code.view.sortedType',
+          self.sortedType,
+        );
+      },
       add,
       addBookmarks(bookmarks: any[]) {
         let _bookmark;
@@ -367,6 +406,36 @@ export const BookmarksStore = types
             bookmark[key] = dto[key];
           }
         });
+      },
+      udpateViewType(viewType: TreeViewType) {
+        if (self.viewType === viewType) {
+          return;
+        }
+        const sm = resolveServiceManager();
+        sm.configService.updateGlobalValue('code.viewType', viewType);
+        registerExtensionCustomContextByKey(
+          'code.viewAsTree',
+          viewType === 'tree',
+        );
+        self.viewType = viewType;
+      },
+      updateGroupView(groupView: TreeViewGroupType) {
+        if (self.groupView === groupView) {
+          return;
+        }
+        const sm = resolveServiceManager();
+        sm.configService.updateGlobalValue('code.groupView', groupView);
+        registerExtensionCustomContextByKey('code.view.groupView', groupView);
+        self.groupView = groupView;
+      },
+      updateSortedType(sortedType: TreeViewSortedType) {
+        if (self.sortedType === sortedType) {
+          return;
+        }
+        const sm = resolveServiceManager();
+        sm.configService.updateGlobalValue('code.sortedType', sortedType);
+        registerExtensionCustomContextByKey('code.view.sortedType', sortedType);
+        self.sortedType = sortedType;
       },
       clearBookmarksByFile(fileUri: Uri) {
         const deleteItems = self.bookmarks.filter(

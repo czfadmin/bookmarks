@@ -1,11 +1,13 @@
 import {Event, EventEmitter, ExtensionContext, Uri} from 'vscode';
-import {BaseMeta, BookmarkColor} from '../types';
+import {
+  BaseMeta,
+  BookmarkColor,
+  TreeViewGroupType,
+  TreeViewSortedType,
+  TreeViewType,
+} from '../types';
 import {generateUUID} from '../utils';
-import IController, {
-  TreeViewSortedByType,
-  TreeGroupView,
-  ViewType,
-} from './IController';
+import IController from './IController';
 import {ServiceManager} from '../services/ServiceManager';
 export const UNIVERSAL_STORE_KEY = 'bookmark-manager.universal';
 export type UniversalBookmarkType = 'file' | 'link' | 'command' | 'code';
@@ -61,7 +63,7 @@ export default class UniversalBookmarkController implements IController {
   private _onDidChangeEvent: EventEmitter<void> = new EventEmitter<void>();
 
   private _serviceManager: ServiceManager;
-  public sortedType: Omit<TreeViewSortedByType, 'linenumber'> = 'linenumber';
+  public sortedType: Omit<TreeViewSortedType, 'linenumber'> = 'linenumber';
   public onDidChangeEvent: Event<void> = this._onDidChangeEvent.event;
 
   get globalState() {
@@ -94,10 +96,10 @@ export default class UniversalBookmarkController implements IController {
     }
     this._initial();
   }
-  get viewType(): ViewType {
+  get viewType(): TreeViewType {
     return 'list';
   }
-  get groupView(): TreeGroupView {
+  get groupView(): TreeViewGroupType {
     return 'default';
   }
 
@@ -172,9 +174,9 @@ export default class UniversalBookmarkController implements IController {
   refresh() {
     this._onDidChangeEvent.fire();
   }
-  changeViewType(viewType: ViewType): void {}
+  changeViewType(viewType: TreeViewType): void {}
 
-  changeSortType(sortType: TreeViewSortedByType): void {
+  changeSortType(sortType: TreeViewSortedType): void {
     this.sortedType = sortType;
   }
 }

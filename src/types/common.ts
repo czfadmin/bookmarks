@@ -16,3 +16,22 @@ export type LineBookmarkContext =
   | {uri: Uri; lineNumber: number}
   | BookmarkTreeItem
   | undefined;
+
+/**
+ * 视图查看方式
+ */
+export type TreeViewType = 'tree' | 'list';
+
+/**
+ * 视图排序方式
+ */
+export type TreeViewSortedType =
+  | 'linenumber'
+  | 'custom'
+  | 'createdTime'
+  | 'updatedTime';
+
+/**
+ * 视图分组方式
+ */
+export type TreeViewGroupType = 'file' | 'color' | 'default' | 'workspace';

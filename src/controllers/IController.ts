@@ -1,19 +1,12 @@
 import {Event, Disposable} from 'vscode';
-import {BaseMeta} from '../types';
+import {
+  BaseMeta,
+  TreeViewGroupType,
+  TreeViewSortedType,
+  TreeViewType,
+} from '../types';
 import {UniversalStoreType} from './UniversalBookmarkController';
 import {IBookmarksStore} from '../stores';
-
-/**
- * 视图查看方式
- */
-export type ViewType = 'tree' | 'list';
-
-/**
- * 视图排序方式
- */
-export type TreeViewSortedByType = 'linenumber' | 'custom' | 'time';
-
-export type TreeGroupView = 'file' | 'color' | 'default' | 'workspace';
 
 export default interface IController extends Disposable {
   get store(): IBookmarksStore | UniversalStoreType | undefined;
@@ -22,9 +15,9 @@ export default interface IController extends Disposable {
 
   get labeledCount(): number;
 
-  get viewType(): ViewType;
+  get viewType(): TreeViewType;
 
-  get groupView(): TreeGroupView;
+  get groupView(): TreeViewGroupType;
 
   onDidChangeEvent: Event<void>;
 
@@ -38,7 +31,7 @@ export default interface IController extends Disposable {
   clearAll(): void;
 
   refresh(): void;
-  changeViewType(viewType: ViewType): void;
+  changeViewType(viewType: TreeViewType): void;
 
-  changeSortType(sortType: TreeViewSortedByType): void;
+  changeSortType(sortType: TreeViewSortedType): void;
 }

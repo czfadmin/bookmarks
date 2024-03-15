@@ -17,14 +17,12 @@ import {IDisposer, destroy, onSnapshot} from 'mobx-state-tree';
 import {fileURLToPath} from 'node:url';
 
 import {IDisposable} from '../utils';
-import {EXTENSION_ID, EXTENSION_STORE_FILE_NAME} from '../constants';
+import {
+  EXTENSION_ID,
+  EXTENSION_STORE_FILE_NAME,
+  EXTENSION_STORE_PATH,
+} from '../constants';
 
-import IController, {
-  TreeViewSortedByType,
-  TreeGroupView,
-  ViewType,
-} from './IController';
-import {registerExtensionCustomContextByKey} from '../context';
 import ConfigService from '../services/ConfigService';
 import {ServiceManager} from '../services/ServiceManager';
 import {
@@ -37,6 +35,8 @@ import {
 } from '../stores/bookmark';
 
 import {IBookmarkManagerConfigure} from '../stores/configure';
+import {TreeViewType, TreeViewGroupType, TreeViewSortedType} from '../types';
+import IController from './IController';
 
 export default class BookmarksController implements IController {
   private _context: ExtensionContext;
@@ -51,11 +51,11 @@ export default class BookmarksController implements IController {
 
   private _groupedByWorkspaceFolders: BookmarksGroupedByWorkspaceType[] = [];
 
-  public viewType: ViewType = 'tree';
+  public viewType: TreeViewType = 'tree';
 
-  public groupView: TreeGroupView = 'default';
+  public groupView: TreeViewGroupType = 'default';
 
-  public sortedType: TreeViewSortedByType = 'linenumber';
+  public sortedType: TreeViewSortedType = 'linenumber';
 
   private _disposables: IDisposable[] = [];
 
@@ -129,15 +129,6 @@ export default class BookmarksController implements IController {
       '_needWarning',
       true,
     );
-    this.viewType = this._configService.getGlobalValue('code.viewType', 'tree');
-    this.groupView = this._configService.getGlobalValue(
-      'code.groupView',
-      'file',
-    );
-
-    if (!workspace.workspaceFolders || workspace.workspaceFolders!.length < 2) {
-      this.groupView = 'default';
-    }
 
     this._configService.onExtensionConfigChange(configuration => {
       this._configuration = configuration;
@@ -153,13 +144,6 @@ export default class BookmarksController implements IController {
       }
     });
 
-    registerExtensionCustomContextByKey(
-      'code.viewAsTree',
-      this.viewType === 'tree',
-    );
-
-    registerExtensionCustomContextByKey('code.view.groupView', this.groupView);
-
     this._initStore();
 
     this._initialWatcher();
@@ -167,6 +151,17 @@ export default class BookmarksController implements IController {
 
   private async _initStore() {
     this._store = BookmarksStore.create();
+
+    this.viewType = this._store.viewType as TreeViewType;
+    this.groupView = this._store.groupView as TreeViewGroupType;
+    this.sortedType = this._store.sortedType as TreeViewSortedType;
+
+    if (
+      (!workspace.workspaceFolders || workspace.workspaceFolders!.length < 2) &&
+      this.groupView !== 'default'
+    ) {
+      this._store.updateGroupView('default');
+    }
 
     let store;
     this._resolveDatastoreFromStoreFile();
@@ -185,6 +180,10 @@ export default class BookmarksController implements IController {
     }
 
     this._storeDisposer = onSnapshot(this._store, snapshot => {
+      // 更新对应的配置数据
+      this.viewType = this._store.viewType as TreeViewType;
+      this.groupView = this._store.groupView as TreeViewGroupType;
+      this.sortedType = this._store.sortedType as TreeViewSortedType;
       this.save();
     });
     this._changeView();
@@ -228,7 +227,7 @@ export default class BookmarksController implements IController {
     for (ws of wsFolders) {
       const storeFilePath = path.join(
         ws.uri.fsPath,
-        './.vscode/bookmark-manager.json',
+        `./${EXTENSION_STORE_PATH}`,
       );
       if (fs.existsSync(storeFilePath)) {
         const _bookmarks = (
@@ -280,10 +279,6 @@ export default class BookmarksController implements IController {
     }
 
     return this._store.bookmakrsGroupedByWorkspace;
-  }
-
-  changeSortType(sortType: TreeViewSortedByType): void {
-    this.sortedType = sortType;
   }
 
   add(bookmark: Partial<Omit<IBookmark, 'id'>>) {
@@ -402,21 +397,18 @@ export default class BookmarksController implements IController {
     this._fire();
   }
 
-  changeViewType(viewType: ViewType) {
-    this.viewType = viewType;
-    this._configService.updateGlobalValue('code.viewType', viewType);
+  changeSortType(sortType: TreeViewSortedType): void {
+    this._store.updateSortedType(sortType);
+  }
 
-    registerExtensionCustomContextByKey(
-      'code.viewAsTree',
-      this.viewType === 'tree',
-    );
+  changeViewType(viewType: TreeViewType) {
+    this._store.udpateViewType(viewType);
     this._changeView();
     this._fire();
   }
 
-  changeGroupView(groupType: TreeGroupView) {
-    this.groupView = groupType;
-    this._configService.updateGlobalValue('code.groupView', groupType);
+  changeGroupView(groupType: TreeViewGroupType) {
+    this._store.updateGroupView(groupType);
     this._changeView();
     this._fire();
   }
