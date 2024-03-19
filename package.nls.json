@@ -51,5 +51,6 @@
   "bookmark-manager.group": "Group",
   "bookmark-manager.useBuiltInColors": "When this configuration is turned on, the built-in color set will be added to the defined color (label) set; at the same time, when the user does not customize the color, the built-in color set will be used by default, otherwise the user-defined color set will be used.",
   "bookmark-manager.alwaysIgnore": "Always add 'bookmark-manager.json' to the '.gitignore 'file",
-  "bookmark-manager.autoSwitchSingleToMultiWithLineWrap": "Automatically switches a single-line bookmark to a multi-line bookmark when wrapping"
+  "bookmark-manager.autoSwitchSingleToMultiWithLineWrap": "Automatically switches a single-line bookmark to a multi-line bookmark when wrapping",
+  "bookmark-manager.addBookmark": "Add new bookmark"
 }

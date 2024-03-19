@@ -3,7 +3,6 @@ import {disableAllEvents} from './events';
 import logger from './utils/logger';
 import {ExtensionContext} from 'vscode';
 import bootstrap from './bootstrap';
-
 /**
  * 插件上下文
  */
