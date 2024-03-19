@@ -34,13 +34,11 @@ const extensionConfig = {
   module: {
     rules: [
       {
-        test: /\.ts$/,
-        exclude: /node_modules/,
-        use: [
-          {
-            loader: 'ts-loader',
-          },
-        ],
+        test: /\.m?ts$/,
+        exclude: /(node_modules)/,
+        use: {
+          loader: 'swc-loader',
+        },
       },
     ],
   },

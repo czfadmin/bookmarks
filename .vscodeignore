@@ -15,3 +15,7 @@ vsc-extension-quickstart.md
 resources/bootstrap-icons.json
 resources/bootstrap-icons.svg
 resources/bootstrap-icons.woff
+.swrrc
+.github/**
+.husky/**
+.eslintignore

@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.0.29
+
+### Patch Changes
+
+- 使用swc-loader提升编译速度
+
 ## 0.0.28
 
 ### Patch Changes
