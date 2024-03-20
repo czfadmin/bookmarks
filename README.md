@@ -1,5 +1,9 @@
 # Bookmark Manager
 
+![GitHub Release Date](https://img.shields.io/github/release-date/czfadmin/bookmarks)
+
+<img alt="Visual Studio Marketplace Last Updated" src="https://img.shields.io/visual-studio-marketplace/last-updated/czfadmin.bookmark-manager">
+
 - [中文](./README-ZN.md)
 
 ## Features
@@ -79,3 +83,14 @@
 - ⚒️ Note that there is currently a problem of abnormal bookmark information when the code is refactored.
 
   **Enjoy!**
+
+## Contributors
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+[![All Contributors](https://img.shields.io/github/all-contributors/czfadmin/bookmarks?color=ee8449&style=flat-square)](#contributors)
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
