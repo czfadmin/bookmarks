@@ -42,7 +42,8 @@
     "publish:beta": "vsce package --pre-release",
     "publish": "vsce publish",
     "lint-staged": "lint-staged",
-    "l10n": "node ./node_modules/@vscode/l10n-dev/dist/cli.js export -o ./l10n ./src"
+    "l10n": "node ./node_modules/@vscode/l10n-dev/dist/cli.js export -o ./l10n ./src",
+    "commitlint": "commitlint --edit $1"
   },
   "license": "MIT",
   "activationEvents": [
