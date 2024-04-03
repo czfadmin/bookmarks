@@ -1,8 +1,8 @@
 # Bookmark Manager
 
-![GitHub Release Date](https://img.shields.io/github/release-date/czfadmin/bookmarks)
-
-<img alt="Visual Studio Marketplace Last Updated" src="https://img.shields.io/visual-studio-marketplace/last-updated/czfadmin.bookmark-manager">
+![GitHub Release Date](https://img.shields.io/github/release-date/czfadmin/bookmarks?logo=github)
+![GitHub last commit](https://img.shields.io/github/last-commit/czfadmin/bookmarks?logo=github)
+![Visual Studio Marketplace Last Updated](https://img.shields.io/visual-studio-marketplace/last-updated/czfadmin.bookmark-manager?logo=visualstudiocode&logoColor=blue)
 
 - [中文](./README-ZN.md)
 
