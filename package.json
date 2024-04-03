@@ -611,7 +611,10 @@
     "ts-loader": "^9.4.2",
     "typescript": "^5.0.4",
     "webpack": "^5.81.0",
-    "webpack-cli": "^5.0.2"
+    "webpack-cli": "^5.0.2",
+    "@commitlint/cli": "^19.2.1",
+    "@commitlint/config-angular": "^19.1.0",
+    "@release-it/conventional-changelog": "^8.0.1"
   },
   "dependencies": {
     "@vscode/l10n": "^0.0.16",
