@@ -13,12 +13,15 @@ import {
   TextDocumentContentChangeEvent,
   TextDocumentChangeEvent,
   l10n,
+  ThemeIcon,
 } from 'vscode';
 import {LineBookmarkContext} from '../types';
 import {resolveBookmarkController} from '../bootstrap';
 import resolveServiceManager from '../services/ServiceManager';
 import {defaultColors} from '../constants/colors';
 import {IBookmark} from '../stores/bookmark';
+import {IBookmarkGroup} from '../stores';
+import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
 
 const REGEXP_NEWLINE = /(\r\n)|(\n)/g;
 /**
@@ -712,8 +715,8 @@ export function updateBookmarksGroupByChangedLine(
     const changeLines = isDeleteLine
       ? change.range.start.line - change.range.end.line
       : isNewLine
-      ? newLines
-      : 0;
+        ? newLines
+        : 0;
     for (bookmark of bookmarksBlowChangedLine) {
       startLine = bookmark.rangesOrOptions.range.start.line + changeLines;
       line = document.lineAt(startLine);
@@ -805,4 +808,28 @@ export function sortBookmarksByLineNumber(bookmarks: IBookmark[]) {
 export function getBookmarksFromFileUri(uri: Uri) {
   const controller = resolveBookmarkController();
   return controller.getBookmarkStoreByFileUri(uri);
+}
+
+export async function showGroupPickItems(
+  all: boolean = false,
+): Promise<IBookmarkGroup | undefined> {
+  const controller = resolveBookmarkController();
+  const groups = all
+    ? controller.groups
+    : controller.groups.filter(it => it.id !== DEFAULT_BOOKMARK_GROUP_ID);
+
+  let groupPickItems: QuickPickItem[] = groups.map(it => ({
+    label: it.label,
+    iconPath: ThemeIcon.Folder,
+  }));
+
+  const selectedGroup = await window.showQuickPick(groupPickItems, {
+    matchOnDescription: true,
+    matchOnDetail: true,
+  });
+  if (!selectedGroup) {
+    return;
+  }
+
+  return controller.groups.find(it => it.label === selectedGroup.label);
 }

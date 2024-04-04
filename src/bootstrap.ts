@@ -12,7 +12,6 @@ import {
   updateFilesRenameAndDeleteListeners,
   updateTextEditorSelectionListener,
 } from './events';
-import {registerCodeCommands, registerUniversalCommands} from './commands';
 import {registerTelemetryLogger} from './utils';
 import logger from './utils/logger';
 
@@ -21,6 +20,8 @@ import {
   initServiceManager,
   postInitController,
 } from './services/ServiceManager';
+
+import registerAllBookmarksCommands from './commands';
 
 let controllerManager: {
   bookmarks?: BookmarksController;
@@ -41,9 +42,8 @@ function registerAllTreeView(context: ExtensionContext) {
 /**
  * 注册所有的命令
  */
-function registerAllCommands() {
-  registerCodeCommands();
-  registerUniversalCommands();
+function registerAllCommands(context: ExtensionContext) {
+  registerAllBookmarksCommands(context);
 }
 
 /**
@@ -84,7 +84,7 @@ export default async function bootstrap(context: ExtensionContext) {
     initialController(context, sm);
     postInitController();
     registerAllTreeView(context);
-    registerAllCommands();
+    registerAllCommands(context);
     updateEverything();
   } catch (error) {
     console.error(error);

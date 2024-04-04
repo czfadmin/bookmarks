@@ -18,6 +18,7 @@ import {fileURLToPath} from 'node:url';
 
 import {IDisposable} from '../utils';
 import {
+  DEFAULT_BOOKMARK_COLOR,
   EXTENSION_ID,
   EXTENSION_STORE_FILE_NAME,
   EXTENSION_STORE_PATH,
@@ -26,16 +27,23 @@ import {
 import ConfigService from '../services/ConfigService';
 import {ServiceManager} from '../services/ServiceManager';
 import {
-  BookmarksStore,
   BookmarksGroupedByColorType,
   BookmarksGroupedByFileWithSortType,
   BookmarksGroupedByWorkspaceType,
   IBookmark,
+  IBookmarkGroup,
   IBookmarksStore,
-} from '../stores/bookmark';
+} from '../stores';
+import {BookmarksStore} from '../stores/bookmark-store';
 
 import {IBookmarkManagerConfigure} from '../stores/configure';
-import {TreeViewType, TreeViewGroupType, TreeViewSortedType} from '../types';
+import {
+  TreeViewType,
+  TreeViewGroupType,
+  TreeViewSortedType,
+  IBookmarkStoreInfo,
+  BookmarksGroupedByCustomType,
+} from '../types';
 import IController from './IController';
 
 export default class BookmarksController implements IController {
@@ -72,6 +80,11 @@ export default class BookmarksController implements IController {
    */
   private _needWarning: boolean = true;
 
+  /**
+   * 表示该插件第一次初始化状态
+   */
+  private _needWatchFiles: boolean = false;
+
   private _storeDisposer: IDisposer | undefined;
 
   public onDidChangeEvent: Event<void> = this._onDidChangeEvent.event;
@@ -86,6 +99,13 @@ export default class BookmarksController implements IController {
 
   public get groupedByWorkspaceFolders(): BookmarksGroupedByWorkspaceType[] {
     return this._groupedByWorkspaceFolders;
+  }
+
+  public get groupedByCustomBookmarks(): BookmarksGroupedByCustomType[] {
+    if (!this.store) {
+      return [];
+    }
+    return this.store.getBookmarksGroupedByCustom;
   }
 
   public get workspaceState(): Memento {
@@ -114,6 +134,10 @@ export default class BookmarksController implements IController {
       return 0;
     }
     return this._store.labeledCount;
+  }
+
+  public get groups(): IBookmarkGroup[] {
+    return this._store?.groups || [];
   }
 
   constructor(context: ExtensionContext, serviceManager: ServiceManager) {
@@ -209,9 +233,12 @@ export default class BookmarksController implements IController {
         this._store.clearAll();
       });
       this._watcher.onDidChange(uri => {
-        this._resolveDatastoreFromStoreFile();
-        this._changeView();
-        this.refresh();
+        // if (this._needWatchFiles) {
+        //   this._resolveDatastoreFromStoreFile();
+        //   this._changeView();
+        //   this.refresh();
+        // }
+        // this._needWatchFiles = true;
       });
       this._disposables.push(this._watcher);
     }
@@ -224,20 +251,33 @@ export default class BookmarksController implements IController {
   private _resolveDatastoreFromStoreFile() {
     let ws;
     const wsFolders = workspace.workspaceFolders || [];
+    this._needWatchFiles = false;
     for (ws of wsFolders) {
       const storeFilePath = path.join(
         ws.uri.fsPath,
         `./${EXTENSION_STORE_PATH}`,
       );
       if (fs.existsSync(storeFilePath)) {
-        const _bookmarks = (
-          JSON.parse(fs.readFileSync(storeFilePath).toString()) || {content: []}
-        ).content;
+        let content = fs.readFileSync(storeFilePath, 'utf-8');
+        if (!content || !content.length) {
+          content = JSON.stringify({
+            content: [],
+            bookmarks: [],
+            groups: [],
+          });
+        }
+        const storeContent = JSON.parse(content) as IBookmarkStoreInfo;
+
+        const _bookmarks = storeContent.content || storeContent.bookmarks || [];
+
+        this._store.addGroups(storeContent.groups || []);
+
         if (_bookmarks && _bookmarks.length) {
           this._store.addBookmarks(_bookmarks);
         }
       }
     }
+    this._needWarning = true;
   }
 
   /**
@@ -278,7 +318,7 @@ export default class BookmarksController implements IController {
       return [];
     }
 
-    return this._store.bookmakrsGroupedByWorkspace;
+    return this._store.bookmarksGroupedByWorkspace;
   }
 
   add(bookmark: Partial<Omit<IBookmark, 'id'>>) {
@@ -331,29 +371,6 @@ export default class BookmarksController implements IController {
       return [];
     }
     return this._store.getBookmarksByFileUri(fileUri);
-  }
-
-  /**
-   *
-   * 根据文件名对书签进行分组
-   * [
-   *  { fileId: xxx ,
-   *    bookmarks: [
-   *
-   *    ]
-   *  },
-   *   { fileId: xxx ,
-   *      bookmarks: [
-   *
-   *     ]
-   *  }
-   * ]
-   */
-  private _getBookmarksGroupedByFile() {
-    if (!this._store) {
-      return [];
-    }
-    return this._store.bookmarksGroupedByFile;
   }
 
   restore() {
@@ -413,6 +430,22 @@ export default class BookmarksController implements IController {
     this._fire();
   }
 
+  addBookmarkGroup(groupName: string, color: string = DEFAULT_BOOKMARK_COLOR) {
+    this._store.addGroup(groupName, color);
+  }
+
+  deleteGroup(groupId: string) {
+    this._store.deleteGroup(groupId);
+  }
+
+  /**
+   * 清除指定组中的所有的书签
+   * @param groupId
+   */
+  clearAllBookmarksInGroup(groupId: string) {
+    this._store.clearAllBookmarksInGroup(groupId);
+  }
+
   /**
    * 将数据写入到`.vscode/bookmark.json`中
    * @returns
@@ -452,15 +485,20 @@ export default class BookmarksController implements IController {
   }
 
   private _buildBookmarksContent(workspace: WorkspaceFolder) {
-    const content = {
-      version: process.env.version,
+    const storeInfo: IBookmarkStoreInfo = {
+      version: process.env.version!,
       workspace: workspace.name,
       updatedDate: new Date().toLocaleDateString(),
-      content: this._store.bookmarks.filter(
+      bookmarks: this._store.bookmarks.filter(
         it => it.wsFolder?.uri.fsPath === workspace.uri.fsPath,
       ),
+      groups: this._store.groups.map(group => ({
+        id: group.id,
+        label: group.label,
+        sortedIndex: group.sortedIndex,
+      })),
     };
-    return JSON.stringify(content);
+    return JSON.stringify(storeInfo);
   }
 
   /**
@@ -508,6 +546,30 @@ export default class BookmarksController implements IController {
       );
     }
   }
+
+  /**
+   *
+   * 根据文件名对书签进行分组
+   * [
+   *  { fileId: xxx ,
+   *    bookmarks: [
+   *
+   *    ]
+   *  },
+   *   { fileId: xxx ,
+   *      bookmarks: [
+   *
+   *     ]
+   *  }
+   * ]
+   */
+  private _getBookmarksGroupedByFile() {
+    if (!this._store) {
+      return [];
+    }
+    return this._store.bookmarksGroupedByFile;
+  }
+
   dispose(): void {
     this._disposables.filter(it => it).forEach(it => it.dispose());
     this._storeDisposer?.();

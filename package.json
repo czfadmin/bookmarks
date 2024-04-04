@@ -206,6 +206,41 @@
         "command": "bookmark-manager.groupedByWorkspace",
         "title": "%bookmark-manager.groupedByWorkspace%",
         "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.groupedByCustom",
+        "title": "%bookmark-manager.groupedByCustom%",
+        "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.addBookmarkGroup",
+        "title": "%bookmark-manager.addBookmarkGroup%",
+        "icon": "$(new-folder)",
+        "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.chanegBookmarkGroupLabel",
+        "title": "%bookmark-manager.chanegBookmarkGroupLabel%",
+        "icon": "$(notebook-edit)",
+        "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.deleteBookmarkGroup",
+        "title": "%bookmark-manager.deleteBookmarkGroup%",
+        "icon": "$(bookmark)",
+        "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.changeBookmarkGroupColor",
+        "title": "%bookmark-manager.changeBookmarkGroupColor%",
+        "icon": "$(bookmark)",
+        "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.clearAllBookmarksInGroup",
+        "title": "%bookmark-manager.clearAllBookmarksInGroup%",
+        "icon": "$(clear-all)",
+        "category": "Bookmark Manager (BM)"
       }
     ],
     "views": {
@@ -434,12 +469,22 @@
           "group": "group@2"
         },
         {
+          "command": "bookmark-manager.groupedByCustom",
+          "group": "group@3"
+        },
+        {
           "command": "bookmark-manager.groupedByWorkspace",
           "when": "view == bookmark-manager && bookmark-manager.multiRootWorkspaces",
-          "group": "group@3"
+          "group": "group@4"
         }
       ],
       "view/title": [
+        {
+          "command": "bookmark-manager.addBookmarkGroup",
+          "title": "%bookmark-manager.addBookmarkGroup%",
+          "when": "view == bookmark-manager || view == bookmark-manager.universal",
+          "group": "navigation@1"
+        },
         {
           "command": "bookmark-manager.viewAsTree",
           "when": "view == bookmark-manager && !bookmark-manager.code.viewAsTree",
@@ -530,6 +575,26 @@
           "command": "bookmark-manager.deleteUniversalBookmark",
           "when": "view == bookmark-manager.universal",
           "group": "inline@3"
+        },
+        {
+          "command": "bookmark-manager.chanegBookmarkGroupLabel",
+          "when": "view == bookmark-manager && viewItem === custom",
+          "group": "inline@1"
+        },
+        {
+          "command": "bookmark-manager.clearAllBookmarksInGroup",
+          "when": "view == bookmark-manager && viewItem === custom",
+          "group": "inline@2"
+        },
+        {
+          "command": "bookmark-manager.changeBookmarkGroupColor",
+          "when": "view == bookmark-manager && viewItem === custom && false",
+          "group": "itemContextGroup@2"
+        },
+        {
+          "command": "bookmark-manager.deleteBookmarkGroup",
+          "when": "view == bookmark-manager && viewItem === custom",
+          "group": "itemContextGroup@1"
         }
       ],
       "commandPalette": [
@@ -556,6 +621,10 @@
         {
           "command": "bookmark-manager.groupedByDefault",
           "when": "false"
+        },
+        {
+          "command": "bookmark-manager.groupedByWorkspace",
+          "when": "bookmark-manager.multiRootWorkspaces"
         },
         {
           "command": "bookmark-manager.groupedByWorkspace",

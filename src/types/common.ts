@@ -34,4 +34,9 @@ export type TreeViewSortedType =
 /**
  * 视图分组方式
  */
-export type TreeViewGroupType = 'file' | 'color' | 'default' | 'workspace';
+export type TreeViewGroupType =
+  | 'file'
+  | 'color'
+  | 'default'
+  | 'workspace'
+  | 'custom';

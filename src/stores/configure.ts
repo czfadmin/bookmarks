@@ -124,6 +124,7 @@ export const BookmarkManagerConfigureModel = types
       resolveConfiguration,
     };
   });
+
 export const RootConfigureModel = types
   .model('RootConfigureMode', {
     decoration: types.maybeNull(CreateDecorationOptionsModel),
