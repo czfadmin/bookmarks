@@ -241,6 +241,12 @@
         "title": "%bookmark-manager.clearAllBookmarksInGroup%",
         "icon": "$(clear-all)",
         "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.clearAllBookmarksInColor",
+        "title": "%bookmark-manager.clearAllBookmarksInColor%",
+        "icon": "$(clear-all)",
+        "category": "Bookmark Manager (BM)"
       }
     ],
     "views": {
@@ -560,6 +566,11 @@
           "command": "bookmark-manager.changeBookmarkColorName",
           "when": "view==bookmark-manager && viewItem === color",
           "group": "itemContextGroup@1"
+        },
+        {
+          "command": "bookmark-manager.clearAllBookmarksInColor",
+          "when": "view==bookmark-manager && viewItem === color",
+          "group": "inline@1"
         },
         {
           "command": "bookmark-manager.copyUniversalBookmarkContent",

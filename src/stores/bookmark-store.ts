@@ -423,9 +423,20 @@ export const BookmarksStore = types
           self.bookmarks.remove(item);
         }
       },
-      clearByColor(color: string) {},
+      clearBookmarksByColor(color: string) {
+        const bookmarks = self.bookmarks.filter(
+          it => it.customColor.name === color,
+        );
+        for (let bookmark of bookmarks) {
+          self.bookmarks.remove(bookmark);
+        }
+      },
       clearAll() {
         self.bookmarks.clear();
+        self.groups.clear();
+        self.groupView = 'file';
+        self.viewType = 'tree';
+        self.sortedType = 'linenumber';
       },
     };
   });

@@ -9,7 +9,7 @@ import {
 } from 'vscode';
 import {resolveBookmarkController} from '../../bootstrap';
 import resolveServiceManager from '../../services/ServiceManager';
-import {IBookmark} from '../../stores';
+import {BookmarksGroupedByColorType, IBookmark} from '../../stores';
 import {LineBookmarkContext} from '../../types';
 import {
   checkIfBookmarksIsInCurrentEditor,
@@ -384,4 +384,17 @@ export function openInEditor(args: any) {
   window.showInformationMessage(
     l10n.t('This feature has not been developed yet, thanks!'),
   );
+}
+
+export function clearAllBookmarksInColor(args: any) {
+  if (!args || !args.meta) {
+    return;
+  }
+  const controller = resolveBookmarkController();
+  if (!controller) {
+    return;
+  }
+
+  const meta = args.meta as BookmarksGroupedByColorType;
+  controller.clearAllBookmarksInColor(meta.color);
 }

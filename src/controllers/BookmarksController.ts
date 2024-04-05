@@ -400,6 +400,18 @@ export default class BookmarksController implements IController {
     this._store.clearBookmarksByFile(fileUri);
   }
 
+  /**
+   * 根据颜色清除颜色中所有存在标签
+   * @param color
+   * @returns
+   */
+  clearAllBookmarksInColor(color: string) {
+    if (!this._store.bookmarks.length) {
+      return;
+    }
+    this._store.clearBookmarksByColor(color);
+  }
+
   save() {
     if (this._configuration.createJsonFile) {
       this._saveToDisk();
