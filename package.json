@@ -482,7 +482,7 @@
         {
           "command": "bookmark-manager.addBookmarkGroup",
           "title": "%bookmark-manager.addBookmarkGroup%",
-          "when": "view == bookmark-manager || view == bookmark-manager.universal",
+          "when": "view == bookmark-manager",
           "group": "navigation@1"
         },
         {
