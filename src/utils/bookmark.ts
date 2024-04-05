@@ -13,12 +13,18 @@ import {
   TextDocumentContentChangeEvent,
   TextDocumentChangeEvent,
   l10n,
+  ThemeIcon,
 } from 'vscode';
 import {LineBookmarkContext} from '../types';
 import {resolveBookmarkController} from '../bootstrap';
-import resolveServiceManager from '../services/ServiceManager';
+import resolveServiceManager, {
+  ServiceManager,
+} from '../services/ServiceManager';
 import {defaultColors} from '../constants/colors';
 import {IBookmark} from '../stores/bookmark';
+import {IBookmarkGroup} from '../stores';
+import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
+import BookmarkTreeItem from '../providers/BookmarksTreeItem';
 
 const REGEXP_NEWLINE = /(\r\n)|(\n)/g;
 /**
@@ -442,62 +448,12 @@ export async function chooseBookmarkColor() {
  * 快速跳转到书签指定位置
  */
 export async function quicklyJumpToBookmark() {
-  const controller = resolveBookmarkController();
-  const sm = resolveServiceManager();
-  const gutters = sm.gutterService.gutters;
-  const tagGutters = sm.gutterService.tagGutters;
-  if (!controller || !controller.store) {
-    return;
-  }
-
-  const pickItems = controller.store.bookmarks.map(it => {
-    const iconPath = it.label
-      ? (tagGutters[it.color] || tagGutters['default']).iconPath
-      : (gutters[it.color] || (tagGutters['default'] as any)).iconPath;
-    return {
-      filename: it.fileName || '',
-      label:
-        it.label || it.description || it.selectionContent?.slice(0, 120) || '',
-      description: getLineInfoStrFromBookmark(it),
-      detail: it.fileName,
-      iconPath: iconPath as any,
-      meta: it,
-    };
-  });
-  const chosenBookmarks = await window.showQuickPick(pickItems, {
-    title: l10n.t('Select a bookmark to jump to the corresponding location.'),
-    placeHolder: l10n.t('Please select the bookmark you want to open'),
-    canPickMany: false,
-    ignoreFocusOut: false,
-    async onDidSelectItem(item: QuickPickItem & {meta: IBookmark}) {
-      // @ts-ignore
-      let bookmark = typeof item === 'object' ? item.meta : undefined;
-      if (bookmark) {
-        const doc = await workspace.openTextDocument(
-          Uri.from({
-            scheme: 'file',
-            path: item.meta.fileId,
-          }),
-        );
-        const editor = await window.showTextDocument(doc, {
-          preview: true,
-          preserveFocus: true,
-        });
-        editor.selection = new Selection(
-          bookmark.selection.start,
-          bookmark.selection.end,
-        );
-        editor.revealRange(
-          bookmark.selection,
-          TextEditorRevealType.InCenterIfOutsideViewport,
-        );
-      }
-    },
-  });
+  const chosenBookmarks = await showBookmarksQuickPick();
   if (!chosenBookmarks) {
     return;
   }
 
+  // @ts-ignore
   gotoSourceLocation(chosenBookmarks.meta);
 }
 
@@ -712,8 +668,8 @@ export function updateBookmarksGroupByChangedLine(
     const changeLines = isDeleteLine
       ? change.range.start.line - change.range.end.line
       : isNewLine
-      ? newLines
-      : 0;
+        ? newLines
+        : 0;
     for (bookmark of bookmarksBlowChangedLine) {
       startLine = bookmark.rangesOrOptions.range.start.line + changeLines;
       line = document.lineAt(startLine);
@@ -805,4 +761,150 @@ export function sortBookmarksByLineNumber(bookmarks: IBookmark[]) {
 export function getBookmarksFromFileUri(uri: Uri) {
   const controller = resolveBookmarkController();
   return controller.getBookmarkStoreByFileUri(uri);
+}
+
+export async function showGroupQuickPick(
+  all: boolean = false,
+  selectedGroupId?: string,
+): Promise<IBookmarkGroup | undefined> {
+  const controller = resolveBookmarkController();
+  const groups = all
+    ? controller.groups
+    : controller.groups.filter(it => it.id !== DEFAULT_BOOKMARK_GROUP_ID);
+
+  const placeHolder =
+    groups.find(it => it.id === selectedGroupId)?.label || 'Select a group';
+
+  let groupPickItems: QuickPickItem[] = groups.map(it => ({
+    label: it.label,
+    iconPath: ThemeIcon.Folder,
+  }));
+
+  const selectedGroup = await window.showQuickPick(groupPickItems, {
+    title: l10n.t('Change bookmark grouping'),
+    matchOnDescription: true,
+    matchOnDetail: true,
+    placeHolder,
+  });
+
+  if (!selectedGroup) {
+    return;
+  }
+
+  return controller.groups.find(it => it.label === selectedGroup.label);
+}
+
+/**
+ * 从`context`获取书签数据
+ * @param cb
+ * @returns
+ */
+export function getBookmarkFromCtx(
+  context: LineBookmarkContext,
+  cb?: () => void,
+) {
+  let bookmark: IBookmark | undefined;
+  if (
+    context &&
+    'contextValue' in context &&
+    context.contextValue === 'bookmark'
+  ) {
+    bookmark = context.meta as IBookmark;
+  } else {
+    bookmark = getBookmarkFromLineNumber();
+  }
+
+  if (!bookmark && cb) {
+    cb();
+    return;
+  }
+  return bookmark;
+}
+
+/**
+ * 从`context`获取书签数据
+ * @param cb
+ * @returns
+ */
+export function getBookmarkColorFromCtx(
+  context: LineBookmarkContext | BookmarkTreeItem | undefined,
+  cb?: () => void,
+) {
+  let bookmark: IBookmark | undefined;
+  if (
+    context &&
+    'contextValue' in context &&
+    context.contextValue === 'color'
+  ) {
+    bookmark = context.meta as IBookmark;
+  }
+
+  if (!bookmark && cb) {
+    cb();
+    return;
+  }
+  return bookmark;
+}
+
+export function getBookmarkIcon(sm: ServiceManager, bookmark: IBookmark) {
+  const gutters = sm.gutterService.gutters;
+  const tagGutters = sm.gutterService.tagGutters;
+
+  return bookmark.label
+    ? (tagGutters[bookmark.color] || tagGutters['default']).iconPath
+    : (gutters[bookmark.color] || (tagGutters['default'] as any)).iconPath;
+}
+
+export async function showBookmarksQuickPick(bookmarks?: IBookmark[]) {
+  let _bookmarks = bookmarks;
+  const sm = resolveServiceManager();
+  if (!_bookmarks) {
+    _bookmarks = resolveBookmarkController().store.bookmarks;
+  }
+  const quickItems = _bookmarks.map(it => ({
+    label:
+      it.label || it.description || it.selectionContent?.slice(0, 120) || '',
+    description: getLineInfoStrFromBookmark(it),
+    detail: it.fileId,
+    meta: it,
+    iconPath: getBookmarkIcon(sm, it) as any,
+  }));
+
+  // @ts-ignore
+  const selectedBookmark = await window.showQuickPick(quickItems, {
+    title: l10n.t('Select a bookmark to jump to the corresponding location.'),
+    placeHolder: l10n.t('Please select the bookmark you want to open'),
+    matchOnDescription: true,
+    matchOnDetail: true,
+    ignoreFocusOut: false,
+    onDidSelectItem: async (item: QuickPickItem & {meta: IBookmark}) => {
+      // @ts-ignore
+      let bookmark = typeof item === 'object' ? item.meta : undefined;
+      if (bookmark) {
+        const doc = await workspace.openTextDocument(
+          Uri.from({
+            scheme: 'file',
+            path: item.meta.fileId,
+          }),
+        );
+        const editor = await window.showTextDocument(doc, {
+          preview: true,
+          preserveFocus: true,
+        });
+        editor.selection = new Selection(
+          bookmark.selection.start,
+          bookmark.selection.end,
+        );
+        editor.revealRange(
+          bookmark.selection,
+          TextEditorRevealType.InCenterIfOutsideViewport,
+        );
+      }
+    },
+  });
+  if (!selectedBookmark) {
+    return;
+  }
+  // @ts-ignore
+  return selectedBookmark.meta;
 }

@@ -8,9 +8,11 @@ import {
 } from 'vscode';
 
 import BaseTreeItem from './BaseTreeItem';
-import {BookmarksGroupedByFileType} from '../types';
+import {
+  BookmarksGroupedByFileType,
+  BookmarksGroupedByCustomType,
+} from '../types';
 import {getLineInfoStrFromBookmark} from '../utils';
-import {CMD_GO_TO_SOURCE_LOCATION} from '../constants';
 import {ServiceManager} from '../services/ServiceManager';
 import {
   BookmarksGroupedByColorType,
@@ -23,7 +25,8 @@ export default class BookmarkTreeItem extends BaseTreeItem {
     | IBookmark
     | BookmarksGroupedByFileType
     | BookmarksGroupedByColorType
-    | BookmarksGroupedByWorkspaceType;
+    | BookmarksGroupedByWorkspaceType
+    | BookmarksGroupedByCustomType;
 
   private _sm: ServiceManager;
 
@@ -35,7 +38,8 @@ export default class BookmarkTreeItem extends BaseTreeItem {
       | IBookmark
       | BookmarksGroupedByFileType
       | BookmarksGroupedByColorType
-      | BookmarksGroupedByWorkspaceType,
+      | BookmarksGroupedByWorkspaceType
+      | BookmarksGroupedByCustomType,
     sm: ServiceManager,
   ) {
     super(label, collapsibleState, contextValue);
@@ -56,10 +60,17 @@ export default class BookmarkTreeItem extends BaseTreeItem {
       this._resolveFileOverview();
       this.label = _meta.fileName;
       this.description = workspace.asRelativePath(_meta.fileId);
+    } else if (this.contextValue === 'custom') {
+      this.label = label;
+      const meta = this.meta as BookmarksGroupedByCustomType;
+      this.iconPath = ThemeIcon.Folder;
+      if (meta && meta.group.activeStatus) {
+        this.iconPath = new ThemeIcon('folder-active');
+      }
     } else {
       this.command = {
         title: l10n.t('Jump to bookmark position'),
-        command: `bookmark-manager.${CMD_GO_TO_SOURCE_LOCATION}`,
+        command: `bookmark-manager.gotoSourceLocation`,
         arguments: [this.meta],
       };
       this._createTooltips();

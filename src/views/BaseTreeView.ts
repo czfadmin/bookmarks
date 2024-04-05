@@ -6,7 +6,8 @@ import IController from '../controllers/IController';
 import resolveServiceManager, {
   ServiceManager,
 } from '../services/ServiceManager';
-import {IBookmark} from '../stores';
+import {IBookmark, IBookmarkGroup} from '../stores';
+import {BookmarksGroupedByCustomType} from '../types';
 export enum TreeViewEnum {
   BASE = 0,
   UNIVERSAL,
@@ -118,6 +119,36 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
             ['file', 'workspace'].includes(sourceContextValue)
           ) {
             return;
+          }
+
+          // 分组情况下进行拖拽操作
+          if (
+            sourceContextValue === 'bookmark' &&
+            targetContextValue === 'custom'
+          ) {
+            const meta = draggedSource.meta as IBookmark;
+            const targetMeta = target.meta as BookmarksGroupedByCustomType;
+            // 同一分组时 不允许拖拽
+            if (meta.groupId === targetMeta.id) {
+              return;
+            }
+            meta.changeGroupId(targetMeta.id);
+          }
+
+          // 分组拖拽调整顺序
+          if (
+            sourceContextValue === 'custom' &&
+            targetContextValue === 'custom'
+          ) {
+            const sourceMeta =
+              draggedSource.meta as BookmarksGroupedByCustomType;
+            const targetMeta = target.meta as BookmarksGroupedByCustomType;
+            if (sourceMeta.id === targetMeta.id) {
+              return;
+            }
+            const sourceGroupIndex = sourceMeta.group.sortedIndex;
+            sourceMeta.group.setSortedIndex(targetMeta.group.sortedIndex);
+            targetMeta.group.setSortedIndex(sourceGroupIndex);
           }
 
           // 1. 对于顶层级进行拖拽, 顶层进行排序

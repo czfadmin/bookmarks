@@ -10,28 +10,11 @@ import resolveServiceManager from '../services/ServiceManager';
 
 export type UniversalContext = UniversalTreeItem;
 
-/**
- * 注册通用的书签命令
- * @param context
- */
-export function registerUniversalCommands() {
-  addUniversalBookmark();
-  deleteUniversalBookmark();
-  clearAllUniversalBookmarks();
-  changeUniversalBookmarkColor();
-  editUniversalBookmarkLabel();
-  copyUniversalBookmarkCommand();
-}
-
 const universalTypePickItems: QuickPickItem[] = [
   {
     label: 'link',
     iconPath: new ThemeIcon('globe'),
   },
-  // {
-  //   label: 'file',
-  //   iconPath: new ThemeIcon('file'),
-  // },
   {
     label: 'code',
     iconPath: new ThemeIcon('file-code'),
@@ -61,148 +44,130 @@ function resolveIcon(type: string) {
   return icon;
 }
 
-export function addUniversalBookmark() {
+export async function addUniversalBookmark(ctx: UniversalContext) {
   const sm = resolveServiceManager();
-  registerCommand('addUniversalBookmark', async (ctx: any) => {
-    const selectedType = await window.showQuickPick(universalTypePickItems, {
-      title: '请选择类型',
-      canPickMany: false,
-      ignoreFocusOut: false,
+  const selectedType = await window.showQuickPick(universalTypePickItems, {
+    title: '请选择类型',
+    canPickMany: false,
+    ignoreFocusOut: false,
+  });
+
+  if (!selectedType) {
+    return;
+  }
+  let input: string | undefined = '';
+  let newBookmark: Partial<UniversalBookmarkMeta> = {
+    label: input || '',
+    type: selectedType.label as UniversalBookmarkType,
+    color: sm.configService.colors['default'],
+  } as UniversalBookmarkMeta;
+
+  newBookmark.icon = resolveIcon(newBookmark.type as string);
+
+  if (selectedType.label !== 'file') {
+    input = await window.showInputBox({
+      title: '创建书签',
+      placeHolder: '请输入内容',
     });
 
-    if (!selectedType) {
-      return;
-    }
-    let input: string | undefined = '';
-    let newBookmark: Partial<UniversalBookmarkMeta> = {
-      label: input || '',
-      type: selectedType.label as UniversalBookmarkType,
-      color: sm.configService.colors['default'],
-    } as UniversalBookmarkMeta;
+    newBookmark[newBookmark.type!] = input;
+  }
 
-    newBookmark.icon = resolveIcon(newBookmark.type as string);
+  const controller = resolveUniversalController();
 
-    if (selectedType.label !== 'file') {
-      input = await window.showInputBox({
-        title: '创建书签',
-        placeHolder: '请输入内容',
-      });
-
-      newBookmark[newBookmark.type!] = input;
-    }
-
-    const controller = resolveUniversalController();
-
-    controller.add(newBookmark as UniversalBookmarkMeta);
-  });
+  controller.add(newBookmark as UniversalBookmarkMeta);
 }
 
-function deleteUniversalBookmark() {
-  registerCommand('deleteUniversalBookmark', async (ctx: UniversalContext) => {
-    const {meta} = ctx;
-    if (!meta) {
-      return;
-    }
+function deleteUniversalBookmark(ctx: UniversalContext) {
+  const {meta} = ctx;
+  if (!meta) {
+    return;
+  }
 
-    const controller = resolveUniversalController();
-    controller.remove(meta.id);
-  });
+  const controller = resolveUniversalController();
+  controller.remove(meta.id);
 }
 
-function clearAllUniversalBookmarks() {
-  registerCommand('clearAllUniversalBookmarks', ctx => {
-    const controller = resolveUniversalController();
-    controller.clearAll();
-  });
+export function clearAllUniversalBookmarks(ctx: UniversalContext) {
+  const controller = resolveUniversalController();
+  controller.clearAll();
 }
 
-function changeUniversalBookmarkColor() {
+export async function changeUniversalBookmarkColor(ctx: UniversalContext) {
   const sm = resolveServiceManager();
-  registerCommand(
-    'changeUniversalBookmarkColor',
-    async (ctx: UniversalContext) => {
-      const {meta} = ctx;
-      if (!meta) {
-        return;
-      }
-      const colors = sm.configService.colors;
-      const gutters = sm.gutterService.gutters;
-      const pickItems = Object.keys(colors).map(color => {
-        return {
-          label: color,
-          iconPath: (gutters[color] || gutters['default']).iconPath,
-        } as QuickPickItem;
-      });
-      const chosenColor = await window.showQuickPick(pickItems, {
-        title: l10n.t(
-          "Select bookmark color. Press 'Enter' to confirm, 'Escape' to cancel",
-        ),
-        placeHolder: l10n.t('Please select bookmark color'),
-        canPickMany: false,
-      });
-      if (!chosenColor) {
-        return;
-      }
-      const controller = resolveUniversalController();
-      controller.update(meta.id, {
-        color: chosenColor.label,
-      });
-    },
-  );
+  const {meta} = ctx;
+  if (!meta) {
+    return;
+  }
+  const colors = sm.configService.colors;
+  const gutters = sm.gutterService.gutters;
+  const pickItems = Object.keys(colors).map(color => {
+    return {
+      label: color,
+      iconPath: (gutters[color] || gutters['default']).iconPath,
+    } as QuickPickItem;
+  });
+  const chosenColor = await window.showQuickPick(pickItems, {
+    title: l10n.t(
+      "Select bookmark color. Press 'Enter' to confirm, 'Escape' to cancel",
+    ),
+    placeHolder: l10n.t('Please select bookmark color'),
+    canPickMany: false,
+  });
+  if (!chosenColor) {
+    return;
+  }
+  const controller = resolveUniversalController();
+  controller.update(meta.id, {
+    color: chosenColor.label,
+  });
 }
 
-function editUniversalBookmarkLabel() {
-  registerCommand(
-    'editUniversalBookmarkLabel',
-    async (ctx: UniversalContext) => {
-      const {meta} = ctx;
-      if (!meta) {
-        return;
-      }
+export async function editUniversalBookmarkLabel(ctx: UniversalContext) {
+  const {meta} = ctx;
+  if (!meta) {
+    return;
+  }
 
-      const input = await window.showInputBox({
-        placeHolder: l10n.t('Type a label for your bookmarks'),
-        title: l10n.t(
-          'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
-        ),
-        value: meta[meta.type] || meta.label,
-      });
-      if (!input) {
-        return;
-      }
-      const controller = resolveUniversalController();
-      controller.update(meta.id, {
-        label: input,
-      });
-    },
-  );
+  const input = await window.showInputBox({
+    placeHolder: l10n.t('Type a label for your bookmarks'),
+    title: l10n.t(
+      'Bookmark Label (Press `Enter` to confirm or press `Escape` to cancel)',
+    ),
+    value: meta[meta.type] || meta.label,
+  });
+  if (!input) {
+    return;
+  }
+  const controller = resolveUniversalController();
+  controller.update(meta.id, {
+    label: input,
+  });
 }
 
 /**
  * 复制命令
  */
-function copyUniversalBookmarkCommand() {
-  registerCommand('copyUniversalBookmarkContent', (ctx: UniversalContext) => {
-    const {meta} = ctx;
-    if (!meta) {
-      return;
-    }
-    const content = meta[meta.type];
-    const clipboard = env.clipboard;
-    clipboard.writeText(content);
-    window.showInformationMessage('Copied!');
-  });
+export function copyUniversalBookmarkContent(ctx: UniversalContext) {
+  const {meta} = ctx;
+  if (!meta) {
+    return;
+  }
+  const content = meta[meta.type];
+  const clipboard = env.clipboard;
+  clipboard.writeText(content);
+  window.showInformationMessage('Copied!');
 }
 
 /**
  * 打开保存的链接
  */
-function openUniversalLink() {
-  registerCommand('openUniversalLink', (ctx: UniversalBookmarkMeta) => {
-    const {meta} = ctx;
-    if (!meta || meta.type !== 'link') {
-      return;
-    }
-    const link = meta[meta.type];
-  });
-}
+// export function openUniversalLink() {
+//   registerCommand('openUniversalLink', (ctx: UniversalBookmarkMeta) => {
+//     const {meta} = ctx;
+//     if (!meta || meta.type !== 'link') {
+//       return;
+//     }
+//     const link = meta[meta.type];
+//   });
+// }

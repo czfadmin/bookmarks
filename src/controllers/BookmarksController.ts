@@ -18,6 +18,7 @@ import {fileURLToPath} from 'node:url';
 
 import {IDisposable} from '../utils';
 import {
+  DEFAULT_BOOKMARK_COLOR,
   EXTENSION_ID,
   EXTENSION_STORE_FILE_NAME,
   EXTENSION_STORE_PATH,
@@ -26,16 +27,23 @@ import {
 import ConfigService from '../services/ConfigService';
 import {ServiceManager} from '../services/ServiceManager';
 import {
-  BookmarksStore,
   BookmarksGroupedByColorType,
   BookmarksGroupedByFileWithSortType,
   BookmarksGroupedByWorkspaceType,
   IBookmark,
+  IBookmarkGroup,
   IBookmarksStore,
-} from '../stores/bookmark';
+} from '../stores';
+import {BookmarksStore} from '../stores/bookmark-store';
 
 import {IBookmarkManagerConfigure} from '../stores/configure';
-import {TreeViewType, TreeViewGroupType, TreeViewSortedType} from '../types';
+import {
+  TreeViewType,
+  TreeViewGroupType,
+  TreeViewSortedType,
+  IBookmarkStoreInfo,
+  BookmarksGroupedByCustomType,
+} from '../types';
 import IController from './IController';
 
 export default class BookmarksController implements IController {
@@ -45,17 +53,42 @@ export default class BookmarksController implements IController {
 
   private _store!: IBookmarksStore;
 
-  private _groupedByFile: BookmarksGroupedByFileWithSortType[] = [];
+  // private _groupedByFile: BookmarksGroupedByFileWithSortType[] = [];
 
-  private _groupedByColor: BookmarksGroupedByColorType[] = [];
+  // private _groupedByColor: BookmarksGroupedByColorType[] = [];
 
-  private _groupedByWorkspaceFolders: BookmarksGroupedByWorkspaceType[] = [];
+  // private _groupedByWorkspaceFolders: BookmarksGroupedByWorkspaceType[] = [];
 
-  public viewType: TreeViewType = 'tree';
+  public get viewType(): TreeViewType {
+    return this._store.viewType as TreeViewType;
+  }
 
-  public groupView: TreeViewGroupType = 'default';
+  public get groupView(): TreeViewGroupType {
+    return this._store.groupView as TreeViewGroupType;
+  }
 
-  public sortedType: TreeViewSortedType = 'linenumber';
+  public get sortedType(): TreeViewSortedType {
+    return this._store.sortedType as TreeViewSortedType;
+  }
+
+  public get groupedBookmarks():
+    | BookmarksGroupedByFileWithSortType[]
+    | BookmarksGroupedByCustomType[]
+    | BookmarksGroupedByColorType[]
+    | BookmarksGroupedByWorkspaceType[] {
+    switch (this._store.groupView) {
+      case 'file':
+      case 'default':
+        return this._store.bookmarksGroupedByFile;
+      case 'color':
+        return this._store.bookmarksGroupedByColor;
+      case 'workspace':
+        return this._store.bookmarksGroupedByWorkspace;
+      case 'custom':
+        return this._store.getBookmarksGroupedByCustom;
+    }
+    return [];
+  }
 
   private _disposables: IDisposable[] = [];
 
@@ -72,28 +105,21 @@ export default class BookmarksController implements IController {
    */
   private _needWarning: boolean = true;
 
+  /**
+   * 表示该插件第一次初始化状态
+   */
+  private _needWatchFiles: boolean = false;
+
   private _storeDisposer: IDisposer | undefined;
 
   public onDidChangeEvent: Event<void> = this._onDidChangeEvent.event;
-
-  public get groupedByFileBookmarks(): BookmarksGroupedByFileWithSortType[] {
-    return this._groupedByFile;
-  }
-
-  public get groupedByColorBookmarks(): BookmarksGroupedByColorType[] {
-    return this._groupedByColor;
-  }
-
-  public get groupedByWorkspaceFolders(): BookmarksGroupedByWorkspaceType[] {
-    return this._groupedByWorkspaceFolders;
-  }
 
   public get workspaceState(): Memento {
     return this._context.workspaceState;
   }
 
-  public get store(): IBookmarksStore | undefined {
-    return this._store;
+  public get store(): IBookmarksStore {
+    return this._store!;
   }
 
   /**
@@ -114,6 +140,10 @@ export default class BookmarksController implements IController {
       return 0;
     }
     return this._store.labeledCount;
+  }
+
+  public get groups(): IBookmarkGroup[] {
+    return this._store?.groups || [];
   }
 
   constructor(context: ExtensionContext, serviceManager: ServiceManager) {
@@ -152,10 +182,6 @@ export default class BookmarksController implements IController {
   private async _initStore() {
     this._store = BookmarksStore.create();
 
-    this.viewType = this._store.viewType as TreeViewType;
-    this.groupView = this._store.groupView as TreeViewGroupType;
-    this.sortedType = this._store.sortedType as TreeViewSortedType;
-
     if (
       (!workspace.workspaceFolders || workspace.workspaceFolders!.length < 2) &&
       this.groupView !== 'default'
@@ -179,14 +205,10 @@ export default class BookmarksController implements IController {
       }
     }
 
+    // 监听mst的store的快照, 当快照发生变化时, 将数据保存到存储文件中
     this._storeDisposer = onSnapshot(this._store, snapshot => {
-      // 更新对应的配置数据
-      this.viewType = this._store.viewType as TreeViewType;
-      this.groupView = this._store.groupView as TreeViewGroupType;
-      this.sortedType = this._store.sortedType as TreeViewSortedType;
       this.save();
     });
-    this._changeView();
   }
 
   /**
@@ -208,11 +230,10 @@ export default class BookmarksController implements IController {
       this._watcher.onDidDelete(uri => {
         this._store.clearAll();
       });
-      this._watcher.onDidChange(uri => {
-        this._resolveDatastoreFromStoreFile();
-        this._changeView();
-        this.refresh();
-      });
+      // this._watcher.onDidChange(uri => {
+      //   this._resolveDatastoreFromStoreFile();
+      //   this.refresh();
+      // });
       this._disposables.push(this._watcher);
     }
   }
@@ -224,65 +245,40 @@ export default class BookmarksController implements IController {
   private _resolveDatastoreFromStoreFile() {
     let ws;
     const wsFolders = workspace.workspaceFolders || [];
+    this._needWatchFiles = false;
     for (ws of wsFolders) {
       const storeFilePath = path.join(
         ws.uri.fsPath,
         `./${EXTENSION_STORE_PATH}`,
       );
       if (fs.existsSync(storeFilePath)) {
-        const _bookmarks = (
-          JSON.parse(fs.readFileSync(storeFilePath).toString()) || {content: []}
-        ).content;
-        if (_bookmarks && _bookmarks.length) {
-          this._store.addBookmarks(_bookmarks);
+        let content = fs.readFileSync(storeFilePath, 'utf-8');
+        if (!content || !content.length) {
+          content = JSON.stringify({
+            content: [],
+            bookmarks: [],
+            groups: [],
+            viewType: 'tree',
+            groupView: 'default',
+            sortedType: 'linenumber',
+          });
         }
+        const storeContent = JSON.parse(content) as IBookmarkStoreInfo;
+
+        this._store.updateStore(storeContent);
       }
     }
-  }
-
-  /**
-   * 当viewType改变的时候, 转换成对应的格式
-   */
-  private _changeView() {
-    if (this.viewType === 'tree') {
-      if (this.groupView === 'color') {
-        this._groupedByColor = this._getBookmarksGroupedByColor();
-      }
-      if (this.groupView === 'default') {
-        this._groupedByFile = this._getBookmarksGroupedByFile();
-      }
-      if (this.groupView === 'workspace') {
-        this._groupedByWorkspaceFolders =
-          this._getBookmarksGroupedByWorkspace();
-      }
-    }
-  }
-
-  /**
-   * 获取按照书签颜色设置的书签列表
-   * @returns
-   */
-  private _getBookmarksGroupedByColor() {
-    if (!this._store) {
-      return [];
-    }
-    return this._store.bookmarksGroupedByColor;
-  }
-
-  /**
-   * 获取按照工作区间分组的书签列表
-   * @returns
-   */
-  private _getBookmarksGroupedByWorkspace() {
-    if (!this._store) {
-      return [];
-    }
-
-    return this._store.bookmakrsGroupedByWorkspace;
+    this._needWarning = true;
   }
 
   add(bookmark: Partial<Omit<IBookmark, 'id'>>) {
-    const newBookmark = this._store.createBookmark(bookmark);
+    const activedGroup = this._store.activedGroup;
+
+    const newBookmark = this._store.createBookmark({
+      ...bookmark,
+      groupId: activedGroup?.id,
+    });
+
     this._store.add(newBookmark);
   }
 
@@ -327,33 +323,7 @@ export default class BookmarksController implements IController {
   }
 
   getBookmarkStoreByFileUri(fileUri: Uri): IBookmark[] {
-    if (!this._store) {
-      return [];
-    }
     return this._store.getBookmarksByFileUri(fileUri);
-  }
-
-  /**
-   *
-   * 根据文件名对书签进行分组
-   * [
-   *  { fileId: xxx ,
-   *    bookmarks: [
-   *
-   *    ]
-   *  },
-   *   { fileId: xxx ,
-   *      bookmarks: [
-   *
-   *     ]
-   *  }
-   * ]
-   */
-  private _getBookmarksGroupedByFile() {
-    if (!this._store) {
-      return [];
-    }
-    return this._store.bookmarksGroupedByFile;
   }
 
   restore() {
@@ -377,10 +347,16 @@ export default class BookmarksController implements IController {
    * @returns
    */
   clearAllBookmarkInFile(fileUri: Uri) {
-    if (!this._store.bookmarks.length) {
-      return;
-    }
     this._store.clearBookmarksByFile(fileUri);
+  }
+
+  /**
+   * 根据颜色清除颜色中所有存在标签
+   * @param color
+   * @returns
+   */
+  clearAllBookmarksInColor(color: string) {
+    this._store.clearBookmarksByColor(color);
   }
 
   save() {
@@ -389,8 +365,7 @@ export default class BookmarksController implements IController {
     } else {
       this.workspaceState.update(EXTENSION_ID, this._store);
     }
-    this._changeView();
-    this._fire();
+    this.refresh();
   }
 
   refresh() {
@@ -399,20 +374,49 @@ export default class BookmarksController implements IController {
 
   changeSortType(sortType: TreeViewSortedType): void {
     this._store.updateSortedType(sortType);
+    this.refresh();
   }
 
   changeViewType(viewType: TreeViewType) {
     this._store.udpateViewType(viewType);
-    this._changeView();
-    this._fire();
+    this.refresh();
   }
 
   changeGroupView(groupType: TreeViewGroupType) {
     this._store.updateGroupView(groupType);
-    this._changeView();
-    this._fire();
+    this.refresh();
   }
 
+  addBookmarkGroup(groupName: string, color: string = DEFAULT_BOOKMARK_COLOR) {
+    this._store.addGroup(groupName, color);
+  }
+
+  deleteGroup(groupId: string) {
+    this._store.deleteGroup(groupId);
+  }
+
+  /**
+   * 清除指定组中的所有的书签
+   * @param groupId
+   */
+  clearAllBookmarksInGroup(groupId: string) {
+    this._store.clearAllBookmarksInGroup(groupId);
+  }
+
+  /**
+   * 设置分组的激活状态
+   * @param meta 待激活的分组
+   */
+  setAsDefaultActivedGroup(meta: IBookmarkGroup) {
+    const prevActivedGroup = this._store.activedGroup;
+    if (prevActivedGroup && prevActivedGroup.id === meta.id) {
+      return;
+    }
+
+    prevActivedGroup?.setActiveStatus(false);
+
+    meta.setActiveStatus(true);
+  }
   /**
    * 将数据写入到`.vscode/bookmark.json`中
    * @returns
@@ -452,15 +456,19 @@ export default class BookmarksController implements IController {
   }
 
   private _buildBookmarksContent(workspace: WorkspaceFolder) {
-    const content = {
-      version: process.env.version,
+    const storeInfo: IBookmarkStoreInfo = {
+      version: process.env.version!,
       workspace: workspace.name,
       updatedDate: new Date().toLocaleDateString(),
-      content: this._store.bookmarks.filter(
+      viewType: this._store.viewType,
+      groupView: this._store.groupView,
+      sortedType: this._store.sortedType,
+      bookmarks: this._store.bookmarks.filter(
         it => it.wsFolder?.uri.fsPath === workspace.uri.fsPath,
       ),
+      groups: this._store.groups,
     };
-    return JSON.stringify(content);
+    return JSON.stringify(storeInfo);
   }
 
   /**
@@ -508,6 +516,7 @@ export default class BookmarksController implements IController {
       );
     }
   }
+
   dispose(): void {
     this._disposables.filter(it => it).forEach(it => it.dispose());
     this._storeDisposer?.();
