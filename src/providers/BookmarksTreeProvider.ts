@@ -8,7 +8,12 @@ import {
 } from '../types';
 import {resolveBookmarkController} from '../bootstrap';
 import BookmarksController from '../controllers/BookmarksController';
-import {BookmarksGroupedByWorkspaceType, IBookmark} from '../stores/bookmark';
+import {
+  BookmarksGroupedByColorType,
+  BookmarksGroupedByFileWithSortType,
+  BookmarksGroupedByWorkspaceType,
+  IBookmark,
+} from '../stores/bookmark';
 
 export class BookmarksTreeProvider extends BaseTreeProvider<
   BookmarkTreeItem,
@@ -54,7 +59,8 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
 
   getChildrenByFile(element?: BookmarkTreeItem | undefined) {
     if (!element) {
-      const bookmarkRootStoreArr = this.controller.groupedByFileBookmarks;
+      const bookmarkRootStoreArr = this.controller
+        .groupedBookmarks as BookmarksGroupedByFileWithSortType[];
       const children = bookmarkRootStoreArr.map(it => {
         let label = this.isRelativePath
           ? this.getRelativePath(it.fileName)
@@ -108,7 +114,8 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
   }
   getChildrenByColor(element?: BookmarkTreeItem | undefined) {
     if (!element) {
-      const store = this.controller.groupedByColorBookmarks;
+      const store = this.controller
+        .groupedBookmarks as BookmarksGroupedByColorType[];
       const children = store.map(it => {
         return new BookmarkTreeItem(
           it.color,
@@ -142,7 +149,8 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
 
   getChildrenByWorkspace(element?: BookmarkTreeItem | undefined) {
     if (!element) {
-      const store = this.controller.groupedByWorkspaceFolders;
+      const store = this.controller
+        .groupedBookmarks as BookmarksGroupedByWorkspaceType[];
       const children = store.map(it => {
         return new BookmarkTreeItem(
           it.workspace.name!,
@@ -191,7 +199,8 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
 
   getChildrenByCustomGroup(element?: BookmarkTreeItem | undefined) {
     if (!element) {
-      const store = this.controller.groupedByCustomBookmarks;
+      const store = this.controller
+        .groupedBookmarks as BookmarksGroupedByCustomType[];
       const children = store.map(it => {
         return new BookmarkTreeItem(
           it.label!,

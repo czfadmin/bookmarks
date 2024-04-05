@@ -11,7 +11,6 @@ import {
   TreeViewSortedType,
   TreeViewType,
 } from '../types';
-import resolveServiceManager from '../services/ServiceManager';
 import {registerExtensionCustomContextByKey} from '../context';
 import {
   Bookmark,
@@ -53,7 +52,7 @@ export const BookmarksStore = types
       getBookmarksByFileUri(fileUri: Uri) {
         return self.bookmarks.filter(it => it.fileId === fileUri.fsPath);
       },
-      get bookmarksGroupedByFile() {
+      get bookmarksGroupedByFile(): BookmarksGroupedByFileWithSortType[] {
         if (!self.bookmarks.length) {
           return [];
         }
@@ -254,52 +253,71 @@ export const BookmarksStore = types
       }
       self.bookmarks.push(bookmark);
     }
-    return {
-      afterCreate() {
-        const sm = resolveServiceManager();
-        self.viewType = sm.configService.getGlobalValue(
-          'code.viewType',
-          'tree',
-        );
-        self.groupView = sm.configService.getGlobalValue(
-          'code.groupView',
-          'file',
-        );
-        self.sortedType = sm.configService.getGlobalValue(
-          'code.sortedType',
-          'createdTime',
-        );
 
-        // 注册对应的上下文
-        registerExtensionCustomContextByKey(
-          'code.viewAsTree',
-          self.viewType === 'tree',
-        );
-
-        registerExtensionCustomContextByKey(
-          'code.view.groupView',
-          self.groupView,
-        );
-
-        registerExtensionCustomContextByKey(
-          'code.view.sortedType',
-          self.sortedType,
-        );
-      },
-
-      add,
-      addBookmarks(bookmarks: any[]) {
-        let _bookmarks: IBookmark[] = [];
-        for (let bookmark of bookmarks) {
-          if (_bookmarks.find(it => it.id === bookmark.id)) {
-            continue;
-          }
-          _bookmarks.push(createBookmark(bookmark));
+    function addGroups(
+      groups: Pick<IBookmarkGroup, 'id' | 'label' | 'sortedIndex'>[],
+    ) {
+      for (const group of groups) {
+        if (self.groups.find(it => it.id === group.id)) {
+          continue;
         }
+        self.groups.push(BookmarkGroup.create(group));
+      }
 
-        self.bookmarks.push(..._bookmarks);
-      },
+      if (!self.groups.find(it => it.id === DEFAULT_BOOKMARK_GROUP_ID)) {
+        self.groups.push(
+          BookmarkGroup.create({
+            id: DEFAULT_BOOKMARK_GROUP_ID,
+            label: l10n.t('Default Group'),
+            sortedIndex: 0,
+            activeStatus: true,
+          }),
+        );
+      }
+    }
 
+    function addBookmarks(bookmarks: any[]) {
+      let _bookmarks: IBookmark[] = [];
+      for (let bookmark of bookmarks) {
+        if (_bookmarks.find(it => it.id === bookmark.id)) {
+          continue;
+        }
+        _bookmarks.push(createBookmark(bookmark));
+      }
+
+      self.bookmarks.push(..._bookmarks);
+    }
+
+    function updateStore(data: any) {
+      const {groups = [], sortedType, viewType, groupView} = data;
+      const _bookmarks = data.content || data.bookmarks || [];
+      self.groupView = groupView;
+      self.sortedType = sortedType;
+      self.viewType = viewType;
+
+      // 注册对应的上下文
+      registerExtensionCustomContextByKey(
+        'code.viewAsTree',
+        self.viewType === 'tree',
+      );
+
+      registerExtensionCustomContextByKey(
+        'code.view.groupView',
+        self.groupView,
+      );
+
+      registerExtensionCustomContextByKey(
+        'code.view.sortedType',
+        self.sortedType,
+      );
+
+      addBookmarks(_bookmarks);
+      addGroups(groups);
+    }
+    return {
+      afterCreate() {},
+      add,
+      addBookmarks,
       addGroup(label: string, color: string) {
         if (self.groups.find(it => it.label === label)) {
           window.showInformationMessage(l10n.t('Group name already exists'));
@@ -316,27 +334,7 @@ export const BookmarksStore = types
         );
       },
 
-      addGroups(
-        groups: Pick<IBookmarkGroup, 'id' | 'label' | 'sortedIndex'>[],
-      ) {
-        for (const group of groups) {
-          if (self.groups.find(it => it.id === group.id)) {
-            continue;
-          }
-          self.groups.push(BookmarkGroup.create(group));
-        }
-
-        if (!self.groups.find(it => it.id === DEFAULT_BOOKMARK_GROUP_ID)) {
-          self.groups.push(
-            BookmarkGroup.create({
-              id: DEFAULT_BOOKMARK_GROUP_ID,
-              label: l10n.t('Default Group'),
-              sortedIndex: 0,
-              activeStatus: true,
-            }),
-          );
-        }
-      },
+      addGroups,
       deleteGroup(groupId: string) {
         if (!groupId || groupId.length === 0) {
           return;
@@ -397,8 +395,6 @@ export const BookmarksStore = types
         if (self.viewType === viewType) {
           return;
         }
-        const sm = resolveServiceManager();
-        sm.configService.updateGlobalValue('code.viewType', viewType);
         registerExtensionCustomContextByKey(
           'code.viewAsTree',
           viewType === 'tree',
@@ -409,8 +405,6 @@ export const BookmarksStore = types
         if (self.groupView === groupView) {
           return;
         }
-        const sm = resolveServiceManager();
-        sm.configService.updateGlobalValue('code.groupView', groupView);
         registerExtensionCustomContextByKey('code.view.groupView', groupView);
         self.groupView = groupView;
       },
@@ -418,8 +412,6 @@ export const BookmarksStore = types
         if (self.sortedType === sortedType) {
           return;
         }
-        const sm = resolveServiceManager();
-        sm.configService.updateGlobalValue('code.sortedType', sortedType);
         registerExtensionCustomContextByKey('code.view.sortedType', sortedType);
         self.sortedType = sortedType;
       },
@@ -446,6 +438,7 @@ export const BookmarksStore = types
         self.viewType = 'tree';
         self.sortedType = 'linenumber';
       },
+      updateStore,
     };
   });
 

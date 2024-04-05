@@ -60,5 +60,6 @@
   "bookmark-manager.addBookmarkGroup": "Add a bookmark group",
   "bookmark-manager.groupedByCustom": "Grouped by custom",
   "bookmark-manager.clearAllBookmarksInColor": "Clear bookmarks in this color",
-  "bookmark-manager.setAsDefaultActivedGroup": "Set as default activation group"
+  "bookmark-manager.setAsDefaultActivedGroup": "Set as default activation group",
+  "bookmark-manager.changeBookmarkGroup": "Change group"
 }

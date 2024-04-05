@@ -60,5 +60,6 @@
   "bookmark-manager.addBookmarkGroup": "新增书签分组",
   "bookmark-manager.groupedByCustom": "自定义分组",
   "bookmark-manager.clearAllBookmarksInColor": "清除此颜色下的所有书签",
-  "bookmark-manager.setAsDefaultActivedGroup": "设置为默认激活组"
+  "bookmark-manager.setAsDefaultActivedGroup": "设置为默认激活组",
+  "bookmark-manager.changeBookmarkGroup": "改变书签分组"
 }

@@ -253,6 +253,12 @@
         "title": "%bookmark-manager.setAsDefaultActivedGroup%",
         "icon": "$(clear-all)",
         "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.changeBookmarkGroup",
+        "title": "%bookmark-manager.changeBookmarkGroup%",
+        "icon": "$(bookmark)",
+        "category": "Bookmark Manager (BM)"
       }
     ],
     "views": {
@@ -449,6 +455,10 @@
           "group": "bookmarksActionsGroup@3"
         },
         {
+          "command": "bookmark-manager.changeBookmarkGroup",
+          "group": "bookmarksAGroupActionGroup@1"
+        },
+        {
           "command": "bookmark-manager.editLabel",
           "group": "bookmarksEditActionGroup@1"
         },
@@ -547,6 +557,11 @@
           "command": "bookmark-manager.deleteBookmark",
           "when": "view==bookmark-manager && viewItem === bookmark",
           "group": "inline@3"
+        },
+        {
+          "command": "bookmark-manager.changeBookmarkGroup",
+          "when": "view==bookmark-manager && viewItem === bookmark",
+          "group": "bookmarksGroupActionGroup@1"
         },
         {
           "command": "bookmark-manager.clearAllBookmarksInCurrentFile",

@@ -11,6 +11,18 @@ export interface IBookmarkStoreInfo {
    */
   updatedDate: string;
   /**
+   * 视图样式
+   */
+  viewType: string;
+  /**
+   * 分组类型
+   */
+  groupView: string;
+  /**
+   * 排序类型
+   */
+  sortedType: string;
+  /**
    * @deprecated 使用bookmarks字段代替
    */
   content?: IBookmark[];
@@ -19,11 +31,13 @@ export interface IBookmarkStoreInfo {
    * 书签列表
    */
   bookmarks: IBookmark[];
-
   /**
    * 自定义分组类型
    */
-  groups: Pick<IBookmarkGroup, 'id' | 'label' | 'sortedIndex'>[];
+  groups: Pick<
+    IBookmarkGroup,
+    'id' | 'label' | 'sortedIndex' | 'activeStatus'
+  >[];
 }
 
 /**

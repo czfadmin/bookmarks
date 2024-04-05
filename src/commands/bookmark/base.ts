@@ -20,6 +20,7 @@ import {
   getLineInfoStrFromBookmark,
   gotoSourceLocation as gotoSourceLocationUtil,
   quicklyJumpToBookmark,
+  showGroupPickItems,
   toggleBookmark,
   toggleBookmarksWithSelections,
 } from '../../utils';
@@ -397,4 +398,20 @@ export function clearAllBookmarksInColor(args: any) {
 
   const meta = args.meta as BookmarksGroupedByColorType;
   controller.clearAllBookmarksInColor(meta.color);
+}
+
+/**
+ * 更改书签分组
+ * @param args
+ */
+export async function changeBookmarkGroup(args: any) {
+  const bookmark = getBookmarkFromCtx(args);
+  if (!bookmark) {
+    return;
+  }
+  const newGroup = await showGroupPickItems(true, bookmark.groupId);
+  if (!newGroup) {
+    return;
+  }
+  bookmark.changeGroupId(newGroup.id);
 }

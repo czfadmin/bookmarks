@@ -812,11 +812,15 @@ export function getBookmarksFromFileUri(uri: Uri) {
 
 export async function showGroupPickItems(
   all: boolean = false,
+  selectedGroupId?: string,
 ): Promise<IBookmarkGroup | undefined> {
   const controller = resolveBookmarkController();
   const groups = all
     ? controller.groups
     : controller.groups.filter(it => it.id !== DEFAULT_BOOKMARK_GROUP_ID);
+
+  const placeHolder =
+    groups.find(it => it.id === selectedGroupId)?.label || 'Select a group';
 
   let groupPickItems: QuickPickItem[] = groups.map(it => ({
     label: it.label,
@@ -824,9 +828,12 @@ export async function showGroupPickItems(
   }));
 
   const selectedGroup = await window.showQuickPick(groupPickItems, {
+    title: l10n.t('Change bookmark grouping'),
     matchOnDescription: true,
     matchOnDetail: true,
+    placeHolder,
   });
+
   if (!selectedGroup) {
     return;
   }
