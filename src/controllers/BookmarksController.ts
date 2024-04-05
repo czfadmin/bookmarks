@@ -89,6 +89,7 @@ export default class BookmarksController implements IController {
     }
     return [];
   }
+
   private _disposables: IDisposable[] = [];
 
   private _watcher: FileSystemWatcher | undefined;
@@ -117,8 +118,8 @@ export default class BookmarksController implements IController {
     return this._context.workspaceState;
   }
 
-  public get store(): IBookmarksStore | undefined {
-    return this._store;
+  public get store(): IBookmarksStore {
+    return this._store!;
   }
 
   /**
@@ -514,29 +515,6 @@ export default class BookmarksController implements IController {
         `${ignoreContent}\n${EXTENSION_STORE_FILE_NAME}`,
       );
     }
-  }
-
-  /**
-   *
-   * 根据文件名对书签进行分组
-   * [
-   *  { fileId: xxx ,
-   *    bookmarks: [
-   *
-   *    ]
-   *  },
-   *   { fileId: xxx ,
-   *      bookmarks: [
-   *
-   *     ]
-   *  }
-   * ]
-   */
-  private _getBookmarksGroupedByFile() {
-    if (!this._store) {
-      return [];
-    }
-    return this._store.bookmarksGroupedByFile;
   }
 
   dispose(): void {

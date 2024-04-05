@@ -259,6 +259,12 @@
         "title": "%bookmark-manager.changeBookmarkGroup%",
         "icon": "$(bookmark)",
         "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.listBookmarksInSelectedGroup",
+        "title": "%bookmark-manager.listBookmarksInSelectedGroup%",
+        "icon": "$(bookmark)",
+        "category": "Bookmark Manager (BM)"
       }
     ],
     "views": {

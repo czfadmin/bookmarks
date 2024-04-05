@@ -1,10 +1,26 @@
-import {window, l10n} from 'vscode';
+import {
+  window,
+  l10n,
+  Selection,
+  TextEditorRevealType,
+  Uri,
+  workspace,
+  QuickPickItem,
+  ThemeIcon,
+} from 'vscode';
 import {resolveBookmarkController} from '../../bootstrap';
 import {DEFAULT_BOOKMARK_COLOR} from '../../constants';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../../constants/bookmark';
-import {IBookmarkGroup} from '../../stores';
+import {IBookmark, IBookmarkGroup} from '../../stores';
 import {BookmarksGroupedByCustomType} from '../../types';
-import {showGroupPickItems} from '../../utils';
+import {
+  showGroupQuickPick,
+  getBookmarkFromCtx,
+  gotoSourceLocation,
+  getLineInfoStrFromBookmark,
+  getBookmarkIcon,
+  showBookmarksQuickPick,
+} from '../../utils';
 import {IBookmarkCommand, IBookmarkCommandContext} from '../../types/command';
 
 export const BookmarkGroupCommands: IBookmarkCommand[] = [
@@ -14,7 +30,7 @@ export const BookmarkGroupCommands: IBookmarkCommand[] = [
     callback: async (ctx: IBookmarkCommandContext, args: any) => {
       let meta: IBookmarkGroup | undefined;
       if (!args || !args.meta) {
-        meta = await showGroupPickItems(true);
+        meta = await showGroupQuickPick(true);
         if (!meta) {
           return;
         }
@@ -31,7 +47,7 @@ export const BookmarkGroupCommands: IBookmarkCommand[] = [
     callback: async (ctx: IBookmarkCommandContext, args: any) => {
       let meta: IBookmarkGroup | undefined;
       if (!args || !args.meta) {
-        meta = await showGroupPickItems(false);
+        meta = await showGroupQuickPick(false);
         if (!meta) {
           return;
         }
@@ -51,7 +67,7 @@ export const BookmarkGroupCommands: IBookmarkCommand[] = [
     callback: async (ctx: IBookmarkCommandContext, args: any) => {
       let meta: IBookmarkGroup | undefined;
       if (!args || !args.meta) {
-        meta = await showGroupPickItems(false);
+        meta = await showGroupQuickPick(false);
         if (!meta) {
           return;
         }
@@ -71,7 +87,7 @@ export const BookmarkGroupCommands: IBookmarkCommand[] = [
     callback: async (ctx: IBookmarkCommandContext, args: any) => {
       let meta: IBookmarkGroup | undefined;
       if (!args || !args.meta) {
-        meta = await showGroupPickItems(false);
+        meta = await showGroupQuickPick(false);
         if (!meta) {
           return;
         }
@@ -153,7 +169,7 @@ export const BookmarkGroupCommands: IBookmarkCommand[] = [
 export async function setAsDefaultActivedGroup(args: any) {
   let meta: IBookmarkGroup | undefined;
   if (!args || !args.meta) {
-    meta = await showGroupPickItems(false);
+    meta = await showGroupQuickPick(false);
     if (!meta) {
       return;
     }
@@ -162,4 +178,42 @@ export async function setAsDefaultActivedGroup(args: any) {
   }
   const controller = resolveBookmarkController();
   controller.setAsDefaultActivedGroup(meta);
+}
+
+/**
+ * 更改书签分组
+ * @param args
+ */
+export async function changeBookmarkGroup(args: any) {
+  const bookmark = getBookmarkFromCtx(args);
+  if (!bookmark) {
+    return;
+  }
+  const newGroup = await showGroupQuickPick(true, bookmark.groupId);
+  if (!newGroup) {
+    return;
+  }
+  bookmark.changeGroupId(newGroup.id);
+}
+
+export async function listBookmarksInSelectedGroup(args: any) {
+  const group = await showGroupQuickPick(true);
+  if (!group) {
+    return;
+  }
+
+  const controller = resolveBookmarkController();
+
+  const bookmarks =
+    (
+      controller.store
+        .getBookmarksGroupedByCustom as BookmarksGroupedByCustomType[]
+    ).find(it => it.id === group.id)?.bookmarks || [];
+
+  const selectedBookmark = await showBookmarksQuickPick(bookmarks);
+  if (!selectedBookmark) {
+    return;
+  }
+  // @ts-ignore
+  gotoSourceLocation(selectedBookmark.meta);
 }

@@ -15,66 +15,15 @@ import {
   checkIfBookmarksIsInCurrentEditor,
   chooseBookmarkColor,
   deleteBookmark as deleteBookmarkUtil,
-  getBookmarkFromLineNumber,
   getBookmarksFromFileUri,
   getLineInfoStrFromBookmark,
   gotoSourceLocation as gotoSourceLocationUtil,
   quicklyJumpToBookmark,
-  showGroupPickItems,
   toggleBookmark,
+  getBookmarkFromCtx,
+  getBookmarkColorFromCtx,
   toggleBookmarksWithSelections,
 } from '../../utils';
-import BookmarkTreeItem from '../../providers/BookmarksTreeItem';
-
-/**
- * 从`context`获取书签数据
- * @param cb
- * @returns
- */
-function getBookmarkFromCtx(context: LineBookmarkContext, cb?: () => void) {
-  let bookmark: IBookmark | undefined;
-  if (
-    context &&
-    'contextValue' in context &&
-    context.contextValue === 'bookmark'
-  ) {
-    bookmark = context.meta as IBookmark;
-  } else {
-    bookmark = getBookmarkFromLineNumber();
-  }
-
-  if (!bookmark && cb) {
-    cb();
-    return;
-  }
-  return bookmark;
-}
-
-/**
- * 从`context`获取书签数据
-
- * @param cb
- * @returns
- */
-function getBookmarkColorFromCtx(
-  context: LineBookmarkContext | BookmarkTreeItem | undefined,
-  cb?: () => void,
-) {
-  let bookmark: IBookmark | undefined;
-  if (
-    context &&
-    'contextValue' in context &&
-    context.contextValue === 'color'
-  ) {
-    bookmark = context.meta as IBookmark;
-  }
-
-  if (!bookmark && cb) {
-    cb();
-    return;
-  }
-  return bookmark;
-}
 
 /**
  * 开启行书签, 使用默认颜色且无标签等相关信息
@@ -398,20 +347,4 @@ export function clearAllBookmarksInColor(args: any) {
 
   const meta = args.meta as BookmarksGroupedByColorType;
   controller.clearAllBookmarksInColor(meta.color);
-}
-
-/**
- * 更改书签分组
- * @param args
- */
-export async function changeBookmarkGroup(args: any) {
-  const bookmark = getBookmarkFromCtx(args);
-  if (!bookmark) {
-    return;
-  }
-  const newGroup = await showGroupPickItems(true, bookmark.groupId);
-  if (!newGroup) {
-    return;
-  }
-  bookmark.changeGroupId(newGroup.id);
 }
