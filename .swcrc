@@ -9,7 +9,10 @@
     "target": "es5",
     "loose": false,
     "externalHelpers": false,
-    "keepClassNames": false
+    "keepClassNames": false,
+    "minify": {
+      "keep_fnames": true
+    }
   },
-  "minify": true
+  "minify": false
 }
