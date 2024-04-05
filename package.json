@@ -219,8 +219,8 @@
         "category": "Bookmark Manager (BM)"
       },
       {
-        "command": "bookmark-manager.chanegBookmarkGroupLabel",
-        "title": "%bookmark-manager.chanegBookmarkGroupLabel%",
+        "command": "bookmark-manager.changeBookmarkGroupLabel",
+        "title": "%bookmark-manager.changeBookmarkGroupLabel%",
         "icon": "$(notebook-edit)",
         "category": "Bookmark Manager (BM)"
       },
@@ -577,7 +577,7 @@
           "group": "inline@3"
         },
         {
-          "command": "bookmark-manager.chanegBookmarkGroupLabel",
+          "command": "bookmark-manager.changeBookmarkGroupLabel",
           "when": "view == bookmark-manager && viewItem === custom",
           "group": "inline@1"
         },

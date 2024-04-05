@@ -67,7 +67,7 @@ export const BookmarkGroupCommands: IBookmarkCommand[] = [
     },
   },
   {
-    name: 'chanegBookmarkGroupLabel',
+    name: 'changeBookmarkGroupLabel',
     callback: async (ctx: IBookmarkCommandContext, args: any) => {
       let meta: IBookmarkGroup | undefined;
       if (!args || !args.meta) {

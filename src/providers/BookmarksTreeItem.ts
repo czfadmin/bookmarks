@@ -13,7 +13,6 @@ import {
   BookmarksGroupedByCustomType,
 } from '../types';
 import {getLineInfoStrFromBookmark} from '../utils';
-import {CMD_GO_TO_SOURCE_LOCATION} from '../constants';
 import {ServiceManager} from '../services/ServiceManager';
 import {
   BookmarksGroupedByColorType,
@@ -67,7 +66,7 @@ export default class BookmarkTreeItem extends BaseTreeItem {
     } else {
       this.command = {
         title: l10n.t('Jump to bookmark position'),
-        command: `bookmark-manager.${CMD_GO_TO_SOURCE_LOCATION}`,
+        command: `bookmark-manager.gotoSourceLocation`,
         arguments: [this.meta],
       };
       this._createTooltips();

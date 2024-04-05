@@ -5,7 +5,7 @@ export const BookmarkGroup = types
   .model('BookmarkGroup', {
     id: types.string,
     label: types.string,
-    sortedIndex: types.number,
+    sortedIndex: types.optional(types.number, 0),
     color: types.optional(types.string, DEFAULT_BOOKMARK_GROUP_COLOR),
   })
   .actions(self => {

@@ -178,7 +178,9 @@ export const BookmarksStore = types
           }
         }
 
-        return grouped;
+        return grouped.sort(
+          (a, b) => a.group.sortedIndex - b.group.sortedIndex,
+        );
       },
       get totalCount() {
         return self.bookmarks.length;
@@ -301,7 +303,7 @@ export const BookmarksStore = types
           BookmarkGroup.create({
             id: generateUUID(),
             label,
-            sortedIndex: -1,
+            sortedIndex: self.groups.length,
             color,
           }),
         );
@@ -322,7 +324,7 @@ export const BookmarksStore = types
             BookmarkGroup.create({
               id: DEFAULT_BOOKMARK_GROUP_ID,
               label: l10n.t('Default Group'),
-              sortedIndex: -1,
+              sortedIndex: 0,
             }),
           );
         }

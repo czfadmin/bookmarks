@@ -87,7 +87,6 @@ export default async function bootstrap(context: ExtensionContext) {
     registerAllCommands(context);
     updateEverything();
   } catch (error) {
-    console.error(error);
     logger.error(error);
   }
 }

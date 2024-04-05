@@ -52,5 +52,11 @@
   "bookmark-manager.useBuiltInColors": "开启此配置,将会在已定义的颜色(标签)集合中追加内置的颜色集合; 同时当用户未自定义颜色的时候, 默认也使用内置的颜色集合, 反之使用用户自定义颜色集合.",
   "bookmark-manager.alwaysIgnore": "将`bookmark-manager.json`总是添加到`.gitignore` 文件中",
   "bookmark-manager.autoSwitchSingleToMultiWithLineWrap": "当在存在单行书签的时候进行换行时,自动改变将单行书签类型的书签改变成多行书签",
-  "bookmark-manager.addBookmark": "增加新书签"
+  "bookmark-manager.addBookmark": "增加新书签",
+  "bookmark-manager.changeBookmarkGroupLabel": "改变分组标签",
+  "bookmark-manager.clearAllBookmarksInGroup": "清除此分组中的所有书签",
+  "bookmark-manager.changeBookmarkGroupColor": "改变分组颜色",
+  "bookmark-manager.deleteBookmarkGroup": "删除分组",
+  "bookmark-manager.addBookmarkGroup": "新增书签分组",
+  "bookmark-manager.groupedByCustom": "自定义分组"
 }
