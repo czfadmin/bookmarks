@@ -247,6 +247,12 @@
         "title": "%bookmark-manager.clearAllBookmarksInColor%",
         "icon": "$(clear-all)",
         "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.setAsDefaultActivedGroup",
+        "title": "%bookmark-manager.setAsDefaultActivedGroup%",
+        "icon": "$(clear-all)",
+        "category": "Bookmark Manager (BM)"
       }
     ],
     "views": {
@@ -603,9 +609,14 @@
           "group": "itemContextGroup@2"
         },
         {
-          "command": "bookmark-manager.deleteBookmarkGroup",
+          "command": "bookmark-manager.setAsDefaultActivedGroup",
           "when": "view == bookmark-manager && viewItem === custom",
           "group": "itemContextGroup@1"
+        },
+        {
+          "command": "bookmark-manager.deleteBookmarkGroup",
+          "when": "view == bookmark-manager && viewItem === custom",
+          "group": "itemContextGroup@2"
         }
       ],
       "commandPalette": [

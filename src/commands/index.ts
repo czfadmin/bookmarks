@@ -8,6 +8,10 @@ function log(name: string) {
 
 /**
  * 注册所需要的代码相关命令
+ * 注意写法, 默认从对应的模块中导入, 然后注册自定义的命令以及回调,
+ * 不要额外的进行使用`register`去注册,同意使用此方法注册命令
+ *  @param context
+ *
  */
 function registerCodeCommands(context: ExtensionContext) {
   import('./bookmark')

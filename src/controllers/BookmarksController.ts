@@ -322,7 +322,13 @@ export default class BookmarksController implements IController {
   }
 
   add(bookmark: Partial<Omit<IBookmark, 'id'>>) {
-    const newBookmark = this._store.createBookmark(bookmark);
+    const activedGroup = this._store.activedGroup;
+
+    const newBookmark = this._store.createBookmark({
+      ...bookmark,
+      groupId: activedGroup?.id,
+    });
+
     this._store.add(newBookmark);
   }
 
@@ -459,6 +465,20 @@ export default class BookmarksController implements IController {
   }
 
   /**
+   * 设置分组的激活状态
+   * @param meta 待激活的分组
+   */
+  setAsDefaultActivedGroup(meta: IBookmarkGroup) {
+    const prevActivedGroup = this._store.activedGroup;
+    if (prevActivedGroup && prevActivedGroup.id === meta.id) {
+      return;
+    }
+
+    prevActivedGroup?.setActiveStatus(false);
+
+    meta.setActiveStatus(true);
+  }
+  /**
    * 将数据写入到`.vscode/bookmark.json`中
    * @returns
    */
@@ -504,11 +524,7 @@ export default class BookmarksController implements IController {
       bookmarks: this._store.bookmarks.filter(
         it => it.wsFolder?.uri.fsPath === workspace.uri.fsPath,
       ),
-      groups: this._store.groups.map(group => ({
-        id: group.id,
-        label: group.label,
-        sortedIndex: group.sortedIndex,
-      })),
+      groups: this._store.groups,
     };
     return JSON.stringify(storeInfo);
   }

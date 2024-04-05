@@ -62,7 +62,11 @@ export default class BookmarkTreeItem extends BaseTreeItem {
       this.description = workspace.asRelativePath(_meta.fileId);
     } else if (this.contextValue === 'custom') {
       this.label = label;
+      const meta = this.meta as BookmarksGroupedByCustomType;
       this.iconPath = ThemeIcon.Folder;
+      if (meta && meta.group.activeStatus) {
+        this.iconPath = new ThemeIcon('folder-active');
+      }
     } else {
       this.command = {
         title: l10n.t('Jump to bookmark position'),

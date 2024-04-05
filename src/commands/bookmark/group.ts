@@ -145,3 +145,21 @@ export const BookmarkGroupCommands: IBookmarkCommand[] = [
     },
   },
 ];
+
+/**
+ * 设置默认激活组, 此时可以将默认创建的书签放到此分组中
+ * @param args
+ */
+export async function setAsDefaultActivedGroup(args: any) {
+  let meta: IBookmarkGroup | undefined;
+  if (!args || !args.meta) {
+    meta = await showGroupPickItems(false);
+    if (!meta) {
+      return;
+    }
+  } else {
+    meta = (args.meta as BookmarksGroupedByCustomType).group!;
+  }
+  const controller = resolveBookmarkController();
+  controller.setAsDefaultActivedGroup(meta);
+}

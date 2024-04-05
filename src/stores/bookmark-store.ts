@@ -191,6 +191,12 @@ export const BookmarksStore = types
       get colors() {
         return self.bookmarks.map(it => it.color || it.customColor.name);
       },
+      get activedGroup() {
+        return (
+          self.groups.find(it => it.activeStatus === true) ||
+          self.groups.find(it => it.id === DEFAULT_BOOKMARK_GROUP_ID)
+        );
+      },
     };
   })
   .actions(self => {
@@ -305,6 +311,7 @@ export const BookmarksStore = types
             label,
             sortedIndex: self.groups.length,
             color,
+            activeStatus: false,
           }),
         );
       },
@@ -325,6 +332,7 @@ export const BookmarksStore = types
               id: DEFAULT_BOOKMARK_GROUP_ID,
               label: l10n.t('Default Group'),
               sortedIndex: 0,
+              activeStatus: true,
             }),
           );
         }
