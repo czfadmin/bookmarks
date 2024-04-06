@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.0.32
+
+### Patch Changes
+
+- 0d606d1: 增加Walkthrough
+
 ## 0.0.30
 
 ### Patch Changes

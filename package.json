@@ -2,7 +2,7 @@
   "name": "bookmark-manager",
   "displayName": "Bookmark Manager (BM)",
   "description": "Simple and easy to use bookmark manager",
-  "version": "0.0.31",
+  "version": "0.0.32",
   "engines": {
     "vscode": "^1.82.0"
   },
