@@ -265,6 +265,18 @@
         "title": "%bookmark-manager.listBookmarksInSelectedGroup%",
         "icon": "$(bookmark)",
         "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.showWalkthroughs",
+        "title": "%bookmark-manager.showWalkthroughs%",
+        "icon": "$(bookmark)",
+        "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.changeSetting",
+        "title": "%bookmark-manager.changeSetting%",
+        "icon": "$(bookmark)",
+        "category": "Bookmark Manager (BM)"
       }
     ],
     "views": {
@@ -698,7 +710,79 @@
           "fontCharacter": "\\f101"
         }
       }
-    }
+    },
+    "walkthroughs": [
+      {
+        "id": "bookmark-manager-walkthroughs",
+        "title": "Bookmark Manager Walkthroughs",
+        "description": "Bookmark Manager Walkthroughs",
+        "steps": [
+          {
+            "id": "introduction",
+            "title": "Introduction",
+            "description": "Plug-in introduction",
+            "media": {
+              "image": "resources/overview.gif",
+              "altText": "overview"
+            },
+            "completionEvents": []
+          },
+          {
+            "id": "groupCustomization",
+            "title": "Group customization",
+            "description": "You can create and manage customized bookmark groups, and you can also set the default activation group and drag and drop to adjust the order of the groups.",
+            "media": {
+              "image": "resources/group-customization.png",
+              "altText": "group customization"
+            },
+            "completionEvents": []
+          },
+          {
+            "id": "quickJumpToBookmarks",
+            "title": "Quick jump to bookmarks",
+            "description": "You can use the command to quickly preview and jump to the bookmark you will select.",
+            "media": {
+              "image": "resources/quick-jump-to-bookmark.png",
+              "altText": "quick jump to bookmark"
+            },
+            "completionEvents": []
+          },
+          {
+            "id": "variousColorsAvailable",
+            "title": "Various colors available",
+            "description": "You can use and create many different colors to decorate your bookmarks.",
+            "media": {
+              "image": "resources/various-colors.png",
+              "altText": "various-colors"
+            },
+            "completionEvents": []
+          },
+          {
+            "id": "focusOnBookmarkManagerTreeView",
+            "title": "Focus on Bookmark Manager View",
+            "description": "This step will run a command and show bookmark-manager tree view.\n[Open Bookmark Manager View](command:bookmark-manager.focus)",
+            "media": {
+              "image": "resources/tree-view.png",
+              "altText": "Focus on Bookmark Manager View"
+            },
+            "completionEvents": [
+              "command:bookmark-manager.focus"
+            ]
+          },
+          {
+            "id": "changesetting",
+            "title": "Change Setting",
+            "description": "This step will change a setting and check off when the setting has changed\n[Change Setting](command:bookmark-manager.changeSetting)",
+            "media": {
+              "markdown": "resources/markdown.md"
+            },
+            "completionEvents": [
+              "command:bookmark-manager.changeSetting"
+            ]
+          }
+        ]
+      }
+    ]
   },
   "devDependencies": {
     "@changesets/cli": "^2.26.2",

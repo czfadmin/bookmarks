@@ -323,11 +323,17 @@ export const BookmarksStore = types
           window.showInformationMessage(l10n.t('Group name already exists'));
           return;
         }
+
+        const maxIdx = self.groups.reduce(
+          (a, b) => (b.sortedIndex > a ? b.sortedIndex : a),
+          0,
+        );
+        console.log(maxIdx);
         self.groups.push(
           BookmarkGroup.create({
             id: generateUUID(),
             label,
-            sortedIndex: self.groups.length,
+            sortedIndex: maxIdx + 1,
             color,
             activeStatus: false,
           }),
@@ -434,6 +440,14 @@ export const BookmarksStore = types
       clearAll() {
         self.bookmarks.clear();
         self.groups.clear();
+        self.groups.push(
+          BookmarkGroup.create({
+            id: DEFAULT_BOOKMARK_GROUP_ID,
+            label: l10n.t('Default Group'),
+            sortedIndex: 0,
+            activeStatus: true,
+          }),
+        );
         self.groupView = 'file';
         self.viewType = 'tree';
         self.sortedType = 'linenumber';

@@ -62,5 +62,7 @@
   "bookmark-manager.clearAllBookmarksInColor": "Clear bookmarks in this color",
   "bookmark-manager.setAsDefaultActivedGroup": "Set as default activation group",
   "bookmark-manager.changeBookmarkGroup": "Change group",
-  "bookmark-manager.listBookmarksInSelectedGroup": "List the bookmarks in the selected group"
+  "bookmark-manager.listBookmarksInSelectedGroup": "List the bookmarks in the selected group",
+  "bookmark-manager.showWalkthroughs": "Show walkthroughs",
+  "bookmark-manager.changeSetting": "Change setting"
 }

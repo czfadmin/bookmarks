@@ -153,7 +153,7 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
 
           // 1. 对于顶层级进行拖拽, 顶层进行排序
           // 2. 第二层级中 进行排序
-          console.log(draggedSource, target);
+          // console.log(draggedSource, target);
         }
       },
     };
