@@ -10,28 +10,33 @@
 - 书签管理视图
 - 快速跳转预览书签
 - 自定义书签备注
+- 分组自定义
 
 ### 预览
 
 - 总览
 
-  ![picture 8](images/6217a2dedefaf433e61dda94f782a283bdf01bafdf6e50b2dc32d29838c28e69.png)
+![overview](resources/overview.gif)
 
-- 侧边栏书签管理
+- 管理视图
 
-![picture 6](images/b0e8682a5dacc5c7df3d350fc89b0de76a9347f52f43c9693fa901ada57a3c6c.png)
+![tree-view](images/tree-view.png)
 
-- 书签多颜色分类管理
+- 可选多种颜色
 
-![picture 1](./images/454a86e976aac9448e305cc9942b13273a70e7cc89bec928f8e4234ed75411f2.png)
+![various-colors](resources/various-colors.png)
 
 - 悬浮时显示书签详情
 
-![picture 5](images/5880f91f811e917059eb6012407449ebbd177483a3bfe5ead87c7cac8dc4a8d8.png)
+![float-prompt](images/float-prompt.png)
 
-- 展示书签概览列表
+- 文件预览
 
-![picture 7](images/e15e1d0a9a1015637318d11f8db04f0c79255831cb3dcc0c65d993b689712e4c.png)
+![file-overview](images/file-overview.png)
+
+- 分组自定义
+
+![Group customization](resources/group-customization.png)
 
 ## 插件配置
 
@@ -52,10 +57,9 @@
 - `bookmark-manager.outlitextDecorationThicknessne`：自定义装饰的厚度。
 - `bookmark-manager.lineBlame`：为书签启用 `lineBlame`。
 - `bookmark-manager.enableClick`：启用点击跳转到书签位置。
+- ....
 
 ## 命令
-
-![picture 4](images/049f56ef509d47834c9df728f9cd94362df7fd6e3f3d8ac98a644694c925be16.png)
 
 - `bookmark-manager.toggleLineBookmark`：切换行书签。
 - `bookmark-manager.toggleLineBookmarkWithLabel`：使用标签切换行书签。
@@ -71,6 +75,7 @@
 - `bookmark-manager.quickJumpTo`：快速跳转。
 - `bookmark-manager.openInEditor`：在编辑器中打开。 **WIP**
 - `bookmark-manager.listBookmarksInCurrentFile`：列出当前文件中的书签。
+- ...
 
 ## 注意
 

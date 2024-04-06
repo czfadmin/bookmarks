@@ -14,28 +14,33 @@
 - Bookmark management view
 - Quickly jump to preview bookmarks
 - Customized bookmark notes
+- Group customization
 
 ### Preview
 
 - Overview
 
-![picture 8](images/6217a2dedefaf433e61dda94f782a283bdf01bafdf6e50b2dc32d29838c28e69.png)
+![overview](resources/overview.gif)
 
 - Sidebar bookmark management
 
-![picture 6](images/b0e8682a5dacc5c7df3d350fc89b0de76a9347f52f43c9693fa901ada57a3c6c.png)
+![tree-view](images/tree-view.png)
 
-- Bookmark multi-color classification management
+- Various colors available
 
-![picture 1](./images/454a86e976aac9448e305cc9942b13273a70e7cc89bec928f8e4234ed75411f2.png)
+![various-colors](resources/various-colors.png)
 
 - The floating prompt displays bookmark information
 
-![picture 5](images/5880f91f811e917059eb6012407449ebbd177483a3bfe5ead87c7cac8dc4a8d8.png)
+![float-prompt](images/float-prompt.png)
 
 - Display an overview list of bookmarks
 
-![picture 7](images/e15e1d0a9a1015637318d11f8db04f0c79255831cb3dcc0c65d993b689712e4c.png)
+![file-overview](images/file-overview.png)
+
+- Group customization
+
+![Group customization](resources/group-customization.png)
 
 ## Configuration
 
@@ -56,10 +61,9 @@
 - `bookmark-manager.outlitextDecorationThicknessne`: Customize the thickness of the decoration.
 - `bookmark-manager.lineBlame`: Enable `lineBlame` for bookmarks.
 - `bookmark-manager.enableClick`: Enable click to jump to bookmark location.
+- ......
 
 ### Commands
-
-![picture 4](images/049f56ef509d47834c9df728f9cd94362df7fd6e3f3d8ac98a644694c925be16.png)
 
 - `bookmark-manager.toggleLineBookmark`: Toggle line bookmark.
 - `bookmark-manager.toggleLineBookmarkWithLabel`: Toggle line bookmark with label.

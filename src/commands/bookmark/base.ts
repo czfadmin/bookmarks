@@ -6,6 +6,7 @@ import {
   workspace,
   Uri,
   TextEditorRevealType,
+  commands,
 } from 'vscode';
 import {resolveBookmarkController} from '../../bootstrap';
 import resolveServiceManager from '../../services/ServiceManager';
@@ -347,4 +348,15 @@ export function clearAllBookmarksInColor(args: any) {
 
   const meta = args.meta as BookmarksGroupedByColorType;
   controller.clearAllBookmarksInColor(meta.color);
+}
+
+/**
+ * 打开交互指南
+ * @param args
+ */
+export function showWalkthroughs(args: any) {
+  commands.executeCommand(
+    'welcome.showAllWalkthroughs',
+    '@ext:czfadmin.bookmark-manager',
+  );
 }
