@@ -546,10 +546,10 @@ export function updateBookmarksGroupByChangedLine(
   const {configService} = serviceManager;
   const changeText = change.text;
   const isNewLine = REGEXP_NEWLINE.test(changeText);
-
   const isDeleteLine = change.range.end.line > change.range.start.line;
-
   const bookmarkInCurrentLine = getBookmarkFromLineNumber();
+  const {autoSwitchSingleToMultiWhenLineWrapping} = configService.configuration;
+  let needUpdateDecorations = false;
   // 1. 当发生改变的区域存在行书签
   if (bookmarkInCurrentLine) {
     // 发生改变的行
@@ -605,35 +605,39 @@ export function updateBookmarksGroupByChangedLine(
         selectionContent = document.getText(selection);
         hasChanged = true;
       }
-    } else if (
-      isNewLine &&
-      configService.configuration.autoSwitchSingleToMultiWhenLineWrapping
-    ) {
-      // 进行换行操作, 转换为区域标签
+    } else {
       let newLines = 1;
       const matches = change.text.match(REGEXP_NEWLINE);
       if (matches) {
         newLines = matches.length;
       }
-      selection = new Selection(
-        new Position(
-          originalSelection.start.line,
-          originalSelection.start.character,
-        ),
-        new Position(
-          originalSelection.end.line + newLines,
-          originalSelection.end.character,
-        ),
-      );
-      bookmarkType = 'selection';
+      let startLine = originalSelection.start.line;
+      let endLine = originalSelection.end.line;
+      let startChar = originalSelection.start.character;
+      let endCharacter = changedLine.range.end.character;
+      if (autoSwitchSingleToMultiWhenLineWrapping) {
+        startLine =
+          change.range.start.character === 0
+            ? originalSelection.start.line + newLines
+            : originalSelection.start.line;
+        endLine += newLines;
+        bookmarkType = 'selection';
+        endCharacter = document.lineAt(endLine).range.end.character;
+      } else {
+        // 如果从行的开头进行换行
+        if (change.range.start.character === 0) {
+          startLine += newLines;
+          endLine += newLines;
+          endCharacter = document.lineAt(endLine).range.end.character;
+        }
+      }
+      const anchor = new Position(startLine, startChar);
+
+      const active = new Position(endLine, endCharacter);
+
+      selection = new Selection(anchor, active);
       selectionContent = document.getText(selection);
       hasChanged = true;
-    } else if (
-      isNewLine &&
-      !configService.configuration.autoSwitchSingleToMultiWhenLineWrapping
-    ) {
-      // 这时候要刷新下打开的编辑器的装饰器样式, 要不然会被用户误认为还是将单行书签转换为多行书签显示
-      serviceManager.decorationService.updateActiveEditorAllDecorations();
     }
 
     if (!hasChanged) {
@@ -645,14 +649,33 @@ export function updateBookmarksGroupByChangedLine(
       type: bookmarkType,
       selectionContent,
     });
-    return;
+    needUpdateDecorations = true;
   }
 
-  if (!isNewLine && !isDeleteLine) {
-    return;
+  // 如果改动的当前行不存在书签,但是光标移动到新的行存在标签的时候, 需要将当前行的标签range 补充全(要求是单行书签情况下)
+  const cursorLine = document.lineAt(change.range.start.line);
+  const bookmark = getBookmarkFromLineNumber(cursorLine.range.start.line);
+  if (bookmark && bookmark.type === 'line') {
+    const selection = new Selection(
+      new Position(
+        bookmark.selection.start.line,
+        bookmark.selection.start.character,
+      ),
+      new Position(bookmark.selection.end.line, cursorLine.range.end.character),
+    );
+    // 更新当前行的书签信息
+    updateLineBookmarkRangeWhenDocumentChange(bookmark, {
+      selection,
+      type: 'line',
+      selectionContent: document.getText(selection),
+    });
+
+    needUpdateDecorations = true;
   }
+
+  const blowCursorLine = cursorLine.range.end.line + 1;
   // 2. 当前所发生改变的change 不存在书签 1> 发生改变的行下方的书签, 回车, 新增 , 以及删除
-  const bookmarksBlowChangedLine = getBookmarksBelowChangedLine();
+  const bookmarksBlowChangedLine = getBookmarksBelowChangedLine(blowCursorLine);
   if (bookmarksBlowChangedLine && bookmarksBlowChangedLine.length) {
     let bookmark,
       selection,
@@ -678,7 +701,10 @@ export function updateBookmarksGroupByChangedLine(
       // 当书签为行标签时
       if (bookmark.type === 'line') {
         selection = new Selection(
-          new Position(startLine, startPos),
+          new Position(
+            startLine,
+            bookmark.rangesOrOptions.range.start.character,
+          ),
           new Position(startLine, line.range.end.character),
         );
       } else {
@@ -696,6 +722,12 @@ export function updateBookmarksGroupByChangedLine(
         selectionContent: bookmark.selectionContent,
       });
     }
+    needUpdateDecorations = true;
+  }
+
+  if (needUpdateDecorations) {
+    // 这时候要刷新下打开的编辑器的装饰器样式, 要不然会被用户误认为还是将单行书签转换为多行书签显示
+    serviceManager.decorationService.updateActiveEditorAllDecorations();
   }
 }
 /**
