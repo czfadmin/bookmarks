@@ -7,24 +7,33 @@ export const BookmarkGroup = types
      * 书签ID
      */
     id: types.string,
+
     /**
      * 书签标签
      */
     label: types.string,
+
     /**
      * 书签在视图中排序索引
      */
     sortedIndex: types.optional(types.number, 0),
+
     /**
      * 书签颜色
      */
     color: types.optional(types.string, DEFAULT_BOOKMARK_GROUP_COLOR),
+
     /**
      * 当前组是否为默认激活的分组
      * - 默认情况下,默认分组为激活状态,其他未非激活状态
      * - 设置为true 的话,默认创建的书签将会放置到激活的分组中
      */
     activeStatus: types.optional(types.boolean, false),
+
+    /**
+     * 保持公共区间的文件夹名称, 以便在多个工作区间中区别
+     */
+    workspace: types.optional(types.string, ''),
   })
   .actions(self => {
     return {

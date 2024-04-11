@@ -1,5 +1,5 @@
 import {Instance, types} from 'mobx-state-tree';
-import {l10n, Uri, window, workspace} from 'vscode';
+import {l10n, Uri, window, workspace, WorkspaceFolder} from 'vscode';
 import {
   createHoverMessage,
   generateUUID,
@@ -255,7 +255,10 @@ export const BookmarksStore = types
     }
 
     function addGroups(
-      groups: Pick<IBookmarkGroup, 'id' | 'label' | 'sortedIndex'>[],
+      groups: Pick<
+        IBookmarkGroup,
+        'id' | 'label' | 'sortedIndex' | 'workspace'
+      >[],
     ) {
       for (const group of groups) {
         if (self.groups.find(it => it.id === group.id)) {
@@ -271,6 +274,7 @@ export const BookmarksStore = types
             label: l10n.t('Default Group'),
             sortedIndex: 0,
             activeStatus: true,
+            workspace: '',
           }),
         );
       }
@@ -288,9 +292,8 @@ export const BookmarksStore = types
       self.bookmarks.push(..._bookmarks);
     }
 
-    function updateStore(data: any) {
-      const {groups = [], sortedType, viewType, groupView} = data;
-      const _bookmarks = data.content || data.bookmarks || [];
+    function initStore(data: any) {
+      const {sortedType, viewType, groupView} = data;
       self.groupView = groupView;
       self.sortedType = sortedType;
       self.viewType = viewType;
@@ -310,149 +313,176 @@ export const BookmarksStore = types
         'code.view.sortedType',
         self.sortedType,
       );
-
-      addBookmarks(_bookmarks);
-      addGroups(groups);
     }
-    return {
-      afterCreate() {},
-      add,
-      addBookmarks,
-      addGroup(label: string, color: string) {
-        if (self.groups.find(it => it.label === label)) {
-          window.showInformationMessage(l10n.t('Group name already exists'));
-          return;
-        }
 
-        const maxIdx = self.groups.reduce(
-          (a, b) => (b.sortedIndex > a ? b.sortedIndex : a),
-          0,
+    function addGroup(
+      label: string,
+      color: string,
+      workspaceFolder?: WorkspaceFolder,
+    ) {
+      if (self.groups.find(it => it.label === label)) {
+        window.showInformationMessage(l10n.t('Group name already exists'));
+        return;
+      }
+
+      const maxIdx = self.groups.reduce(
+        (a, b) => (b.sortedIndex > a ? b.sortedIndex : a),
+        0,
+      );
+      self.groups.push(
+        BookmarkGroup.create({
+          id: generateUUID(),
+          label,
+          sortedIndex: maxIdx + 1,
+          color,
+          activeStatus: false,
+          workspace: workspaceFolder?.name || '',
+        }),
+      );
+    }
+
+    function deleteGroup(groupId: string) {
+      if (!groupId || groupId.length === 0) {
+        return;
+      }
+      const idx = self.groups.findIndex(it => it.id === groupId);
+      if (idx === -1) {
+        return;
+      }
+      const bookmarks = self.bookmarks.filter(it => it.groupId === groupId);
+
+      for (let bookmark of bookmarks) {
+        self.bookmarks.remove(bookmark);
+      }
+
+      self.groups.splice(idx, 1);
+    }
+
+    function clearAllBookmarksInGroup(groupId: string) {
+      if (!groupId || groupId.length === 0) {
+        return;
+      }
+      const idx = self.groups.findIndex(it => it.id === groupId);
+      if (idx === -1) {
+        return;
+      }
+      const bookmarks = self.bookmarks.filter(it => it.groupId === groupId);
+      if (!bookmarks.length) {
+        return;
+      }
+
+      for (let bookmark of bookmarks) {
+        self.bookmarks.remove(bookmark);
+      }
+    }
+
+    function deleteBookmark(id: string) {
+      const idx = self.bookmarks.findIndex(it => it.id === id);
+      if (idx === -1) {
+        return false;
+      }
+      self.bookmarks.splice(idx, 1);
+      return true;
+    }
+
+    function udpateViewType(viewType: TreeViewType) {
+      if (self.viewType === viewType) {
+        return;
+      }
+      registerExtensionCustomContextByKey(
+        'code.viewAsTree',
+        viewType === 'tree',
+      );
+      self.viewType = viewType;
+    }
+
+    function updateGroupView(groupView: TreeViewGroupType) {
+      if (self.groupView === groupView) {
+        return;
+      }
+      registerExtensionCustomContextByKey('code.view.groupView', groupView);
+      self.groupView = groupView;
+    }
+
+    function updateSortedType(sortedType: TreeViewSortedType) {
+      if (self.sortedType === sortedType) {
+        return;
+      }
+      registerExtensionCustomContextByKey('code.view.sortedType', sortedType);
+      self.sortedType = sortedType;
+    }
+
+    function clearBookmarksByFile(fileUri: Uri) {
+      const deleteItems = self.bookmarks.filter(
+        it => it.fileId === fileUri.fsPath,
+      );
+      for (let item of deleteItems) {
+        self.bookmarks.remove(item);
+      }
+    }
+
+    function clearBookmarksByColor(color: string) {
+      const bookmarks = self.bookmarks.filter(
+        it => it.customColor.name === color,
+      );
+      for (let bookmark of bookmarks) {
+        self.bookmarks.remove(bookmark);
+      }
+    }
+
+    function clearAll(wsFolder?: WorkspaceFolder) {
+      if (wsFolder) {
+        const wsName = wsFolder.name;
+
+        const delBookmarks = self.bookmarks.filter(
+          it => it.workspaceFolder.name === wsName,
         );
-        console.log(maxIdx);
-        self.groups.push(
-          BookmarkGroup.create({
-            id: generateUUID(),
-            label,
-            sortedIndex: maxIdx + 1,
-            color,
-            activeStatus: false,
-          }),
-        );
-      },
-
-      addGroups,
-      deleteGroup(groupId: string) {
-        if (!groupId || groupId.length === 0) {
-          return;
-        }
-        const idx = self.groups.findIndex(it => it.id === groupId);
-        if (idx === -1) {
-          return;
-        }
-        const bookmarks = self.bookmarks.filter(it => it.groupId === groupId);
-
-        for (let bookmark of bookmarks) {
+        const delGroups = self.groups.filter(it => it.workspace === wsName);
+        for (let bookmark of delBookmarks) {
           self.bookmarks.remove(bookmark);
         }
 
-        self.groups.splice(idx, 1);
-      },
-
-      clearAllBookmarksInGroup(groupId: string) {
-        if (!groupId || groupId.length === 0) {
-          return;
+        for (let group of delGroups) {
+          self.groups.remove(group);
         }
-        const idx = self.groups.findIndex(it => it.id === groupId);
-        if (idx === -1) {
-          return;
-        }
-        const bookmarks = self.bookmarks.filter(it => it.groupId === groupId);
-        if (!bookmarks.length) {
-          return;
-        }
-
-        for (let bookmark of bookmarks) {
-          self.bookmarks.remove(bookmark);
-        }
-      },
-      createBookmark,
-      delete(id: string) {
-        const idx = self.bookmarks.findIndex(it => it.id === id);
-        if (idx === -1) {
-          return false;
-        }
-        self.bookmarks.splice(idx, 1);
-        return true;
-      },
-      update(id: string, dto: Partial<IBookmark>) {
-        const bookmark = self.bookmarks.find(it => it.id === id);
-        if (!bookmark) {
-          return;
-        }
-        Object.keys(dto).forEach(key => {
-          // @ts-ignore
-          if (dto[key]) {
-            // @ts-ignore
-            bookmark[key] = dto[key];
-          }
-        });
-      },
-      udpateViewType(viewType: TreeViewType) {
-        if (self.viewType === viewType) {
-          return;
-        }
-        registerExtensionCustomContextByKey(
-          'code.viewAsTree',
-          viewType === 'tree',
-        );
-        self.viewType = viewType;
-      },
-      updateGroupView(groupView: TreeViewGroupType) {
-        if (self.groupView === groupView) {
-          return;
-        }
-        registerExtensionCustomContextByKey('code.view.groupView', groupView);
-        self.groupView = groupView;
-      },
-      updateSortedType(sortedType: TreeViewSortedType) {
-        if (self.sortedType === sortedType) {
-          return;
-        }
-        registerExtensionCustomContextByKey('code.view.sortedType', sortedType);
-        self.sortedType = sortedType;
-      },
-      clearBookmarksByFile(fileUri: Uri) {
-        const deleteItems = self.bookmarks.filter(
-          it => it.fileId === fileUri.fsPath,
-        );
-        for (let item of deleteItems) {
-          self.bookmarks.remove(item);
-        }
-      },
-      clearBookmarksByColor(color: string) {
-        const bookmarks = self.bookmarks.filter(
-          it => it.customColor.name === color,
-        );
-        for (let bookmark of bookmarks) {
-          self.bookmarks.remove(bookmark);
-        }
-      },
-      clearAll() {
+      } else {
         self.bookmarks.clear();
         self.groups.clear();
+      }
+      if (self.groups.find(it => it.id !== DEFAULT_BOOKMARK_GROUP_ID)) {
         self.groups.push(
           BookmarkGroup.create({
             id: DEFAULT_BOOKMARK_GROUP_ID,
             label: l10n.t('Default Group'),
             sortedIndex: 0,
             activeStatus: true,
+            workspace: '',
           }),
         );
-        self.groupView = 'file';
-        self.viewType = 'tree';
-        self.sortedType = 'linenumber';
-      },
-      updateStore,
+      }
+      self.groupView = 'file';
+      self.viewType = 'tree';
+      self.sortedType = 'linenumber';
+    }
+
+    function afterCreate() {}
+    return {
+      afterCreate,
+      add,
+      addBookmarks,
+      addGroup,
+      addGroups,
+      deleteGroup,
+      clearAllBookmarksInGroup,
+      createBookmark,
+      delete: deleteBookmark,
+      udpateViewType,
+      updateGroupView,
+      updateSortedType,
+      clearBookmarksByFile,
+      clearBookmarksByColor,
+      clearAll,
+      initStore,
     };
   });
 

@@ -36,7 +36,7 @@ export interface IBookmarkStoreInfo {
    */
   groups: Pick<
     IBookmarkGroup,
-    'id' | 'label' | 'sortedIndex' | 'activeStatus'
+    'id' | 'label' | 'sortedIndex' | 'activeStatus' | 'workspace'
   >[];
 }
 
