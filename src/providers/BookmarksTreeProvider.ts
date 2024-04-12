@@ -39,7 +39,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
     }
 
     if (viewType === 'tree') {
-      if (groupView === 'default') {
+      if (groupView === 'default' || groupView === 'file') {
         return this.getChildrenByFile(element);
       }
 

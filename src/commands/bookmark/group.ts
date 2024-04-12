@@ -1,27 +1,17 @@
-import {
-  window,
-  l10n,
-  Selection,
-  TextEditorRevealType,
-  Uri,
-  workspace,
-  QuickPickItem,
-  ThemeIcon,
-} from 'vscode';
+import {window, l10n} from 'vscode';
 import {resolveBookmarkController} from '../../bootstrap';
 import {DEFAULT_BOOKMARK_COLOR} from '../../constants';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../../constants/bookmark';
-import {IBookmark, IBookmarkGroup} from '../../stores';
+import {IBookmarkGroup} from '../../stores';
 import {BookmarksGroupedByCustomType} from '../../types';
 import {
   showGroupQuickPick,
   getBookmarkFromCtx,
   gotoSourceLocation,
-  getLineInfoStrFromBookmark,
-  getBookmarkIcon,
   showBookmarksQuickPick,
 } from '../../utils';
 import {IBookmarkCommand, IBookmarkCommandContext} from '../../types/command';
+import {showWorkspaceFolderQuickPick} from '../../utils/workspace';
 
 export const BookmarkGroupCommands: IBookmarkCommand[] = [
   {
@@ -115,6 +105,18 @@ export const BookmarkGroupCommands: IBookmarkCommand[] = [
     name: 'addBookmarkGroup',
     docs: ` * 通过命令创建分组 * - 可支持自定义分组名称(非按照颜色分组,同时之前未分组的归为Default组) * - 分组拖拽移动 * - 分组拖拽排序`,
     callback: async (ctx: IBookmarkCommandContext, args: any) => {
+      let selectedWorkspaceFolder;
+      console.log(args);
+      // 此时从命令面板或者视图顶部的菜单中选择调用此命令,以及当存在多个工作区间, 需要用户选择工作区进行操作.
+      if (!args || (args && args.contextValue !== 'workspace')) {
+        selectedWorkspaceFolder = await showWorkspaceFolderQuickPick();
+      }
+
+      // 当在工作区间分组样式时, 进行增加分组,此时该组绑定到该工作区间
+      if (args && args.contextValue === 'workspace') {
+        selectedWorkspaceFolder = args.meta.workspace;
+      }
+
       const userInput = await window.showInputBox({
         placeHolder: l10n.t('Please input new group name'),
       });
@@ -125,7 +127,11 @@ export const BookmarkGroupCommands: IBookmarkCommand[] = [
 
       const controller = resolveBookmarkController();
 
-      controller.addBookmarkGroup(userInput, DEFAULT_BOOKMARK_COLOR);
+      controller.addBookmarkGroup(
+        userInput,
+        DEFAULT_BOOKMARK_COLOR,
+        selectedWorkspaceFolder,
+      );
     },
   },
   {

@@ -1,4 +1,4 @@
-import {Instance, types} from 'mobx-state-tree';
+import {Instance, SnapshotIn, types} from 'mobx-state-tree';
 import {DEFAULT_BOOKMARK_COLOR} from '../constants';
 import {Selection, Uri, WorkspaceFolder, workspace} from 'vscode';
 import {createHoverMessage} from '../utils';
@@ -89,14 +89,19 @@ export const Bookmark = types
     };
   })
   .actions(self => {
-    function update(bookmarkDto: Partial<Omit<IBookmark, 'id'>>) {
-      Object.keys(bookmarkDto).forEach(it => {
+    function setProp<
+      K extends keyof SnapshotIn<typeof self>,
+      V extends SnapshotIn<typeof self>[K],
+    >(key: K, value: V) {
+      self[key] = value;
+    }
+    function update(dto: Partial<Omit<IBookmark, 'id'>>) {
+      Object.keys(dto).forEach(key => {
         // @ts-ignore
-        if (bookmarkDto[it]) {
-          // @ts-ignore
-          self[it] = bookmarkDto[it];
-        }
+        setProp(key, dto[key]);
       });
+
+      updateRangesOrOptionsHoverMessage();
     }
     function updateRangesOrOptionsHoverMessage() {
       const rangesOrOptions = {...self.rangesOrOptions};
@@ -142,6 +147,7 @@ export const Bookmark = types
     }
 
     return {
+      setProp,
       update,
       updateLabel,
       updateDescription,

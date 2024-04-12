@@ -2,7 +2,7 @@
   "name": "bookmark-manager",
   "displayName": "Bookmark Manager (BM)",
   "description": "Simple and easy to use bookmark manager",
-  "version": "0.0.32",
+  "version": "0.0.33",
   "engines": {
     "vscode": "^1.82.0"
   },
@@ -142,12 +142,6 @@
         "command": "bookmark-manager.listBookmarksInCurrentFile",
         "title": "%bookmark-manager.listBookmarksInCurrentFile%",
         "icon": "$(bookmark)",
-        "category": "Bookmark Manager (BM)"
-      },
-      {
-        "command": "bookmark-manager.addBookmark",
-        "title": "%bookmark-manager.addBookmark%",
-        "icon": "$(diff-insert)",
         "category": "Bookmark Manager (BM)"
       },
       {
@@ -627,6 +621,11 @@
           "group": "inline@3"
         },
         {
+          "command": "bookmark-manager.addBookmarkGroup",
+          "when": "view == bookmark-manager && viewItem === workspace",
+          "group": "itemContextGroup@1"
+        },
+        {
           "command": "bookmark-manager.changeBookmarkGroupLabel",
           "when": "view == bookmark-manager && viewItem === custom",
           "group": "inline@1"
@@ -644,12 +643,12 @@
         {
           "command": "bookmark-manager.setAsDefaultActivedGroup",
           "when": "view == bookmark-manager && viewItem === custom",
-          "group": "itemContextGroup@1"
+          "group": "itemContextGroup@2"
         },
         {
           "command": "bookmark-manager.deleteBookmarkGroup",
           "when": "view == bookmark-manager && viewItem === custom",
-          "group": "itemContextGroup@2"
+          "group": "itemContextGroup@3"
         }
       ],
       "commandPalette": [
@@ -671,15 +670,11 @@
         },
         {
           "command": "bookmark-manager.groupedByColor",
-          "when": "false"
+          "when": "true"
         },
         {
           "command": "bookmark-manager.groupedByDefault",
-          "when": "false"
-        },
-        {
-          "command": "bookmark-manager.groupedByWorkspace",
-          "when": "bookmark-manager.multiRootWorkspaces"
+          "when": "true"
         },
         {
           "command": "bookmark-manager.groupedByWorkspace",

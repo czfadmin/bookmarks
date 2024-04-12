@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.0.33
+
+### Patch Changes
+
+- 修复书签移动时出现装饰器位置异常问题
+
 ## 0.0.32
 
 ### Patch Changes

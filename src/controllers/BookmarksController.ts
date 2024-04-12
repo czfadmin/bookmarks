@@ -53,12 +53,6 @@ export default class BookmarksController implements IController {
 
   private _store!: IBookmarksStore;
 
-  // private _groupedByFile: BookmarksGroupedByFileWithSortType[] = [];
-
-  // private _groupedByColor: BookmarksGroupedByColorType[] = [];
-
-  // private _groupedByWorkspaceFolders: BookmarksGroupedByWorkspaceType[] = [];
-
   public get viewType(): TreeViewType {
     return this._store.viewType as TreeViewType;
   }
@@ -104,11 +98,6 @@ export default class BookmarksController implements IController {
    * 表示第一次创建存储文件
    */
   private _needWarning: boolean = true;
-
-  /**
-   * 表示该插件第一次初始化状态
-   */
-  private _needWatchFiles: boolean = false;
 
   private _storeDisposer: IDisposer | undefined;
 
@@ -180,6 +169,7 @@ export default class BookmarksController implements IController {
   }
 
   private async _initStore() {
+    let store;
     this._store = BookmarksStore.create();
 
     if (
@@ -189,7 +179,6 @@ export default class BookmarksController implements IController {
       this._store.updateGroupView('default');
     }
 
-    let store;
     this._resolveDatastoreFromStoreFile();
     // 当从 `bookmark-manager.json`文件中读取, 直接刷新返回
     if (!this._configuration.createJsonFile) {
@@ -204,7 +193,6 @@ export default class BookmarksController implements IController {
         }
       }
     }
-
     // 监听mst的store的快照, 当快照发生变化时, 将数据保存到存储文件中
     this._storeDisposer = onSnapshot(this._store, snapshot => {
       this.save();
@@ -228,12 +216,13 @@ export default class BookmarksController implements IController {
         '**/.vscode/bookmark-manager.json',
       );
       this._watcher.onDidDelete(uri => {
-        this._store.clearAll();
+        if (!uri) {return;}
+        const wsFolder = workspace.getWorkspaceFolder(uri);
+        /**
+         * 清除指定的工作区间的书签
+         */
+        this._store.clearAll(wsFolder);
       });
-      // this._watcher.onDidChange(uri => {
-      //   this._resolveDatastoreFromStoreFile();
-      //   this.refresh();
-      // });
       this._disposables.push(this._watcher);
     }
   }
@@ -245,7 +234,7 @@ export default class BookmarksController implements IController {
   private _resolveDatastoreFromStoreFile() {
     let ws;
     const wsFolders = workspace.workspaceFolders || [];
-    this._needWatchFiles = false;
+    let firstInit = true;
     for (ws of wsFolders) {
       const storeFilePath = path.join(
         ws.uri.fsPath,
@@ -264,11 +253,20 @@ export default class BookmarksController implements IController {
           });
         }
         const storeContent = JSON.parse(content) as IBookmarkStoreInfo;
-
-        this._store.updateStore(storeContent);
+        // 这时候要添加每个工作区间的文件夹中的书签和分组信息
+        if (firstInit) {
+          this._store.initStore(storeContent);
+          firstInit = false;
+        }
+        this._store.addGroups(storeContent.groups || []);
+        this._store.addBookmarks(
+          storeContent.content || storeContent.bookmarks || [],
+        );
       }
     }
     this._needWarning = true;
+    // 手动调用一次保存, 因为此时store的快照未被监听
+    this.save();
   }
 
   add(bookmark: Partial<Omit<IBookmark, 'id'>>) {
@@ -387,8 +385,12 @@ export default class BookmarksController implements IController {
     this.refresh();
   }
 
-  addBookmarkGroup(groupName: string, color: string = DEFAULT_BOOKMARK_COLOR) {
-    this._store.addGroup(groupName, color);
+  addBookmarkGroup(
+    groupName: string,
+    color: string = DEFAULT_BOOKMARK_COLOR,
+    workspaceFolder?: WorkspaceFolder,
+  ) {
+    this._store.addGroup(groupName, color, workspaceFolder);
   }
 
   deleteGroup(groupId: string) {
@@ -456,6 +458,17 @@ export default class BookmarksController implements IController {
   }
 
   private _buildBookmarksContent(workspace: WorkspaceFolder) {
+    const saveBookmarks = this._store.bookmarks.filter(
+      it => it.wsFolder?.uri.fsPath === workspace.uri.fsPath,
+    );
+    // 可能使用了在其他公共区间船创建的分组
+    const _usedGroupdIds = saveBookmarks.map(it => it.groupId);
+    const groups = this._store.groups.filter(
+      it =>
+        !it.workspace ||
+        it.workspace === workspace.name ||
+        _usedGroupdIds.includes(it.id),
+    );
     const storeInfo: IBookmarkStoreInfo = {
       version: process.env.version!,
       workspace: workspace.name,
@@ -463,10 +476,8 @@ export default class BookmarksController implements IController {
       viewType: this._store.viewType,
       groupView: this._store.groupView,
       sortedType: this._store.sortedType,
-      bookmarks: this._store.bookmarks.filter(
-        it => it.wsFolder?.uri.fsPath === workspace.uri.fsPath,
-      ),
-      groups: this._store.groups,
+      bookmarks: saveBookmarks,
+      groups,
     };
     return JSON.stringify(storeInfo);
   }
