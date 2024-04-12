@@ -124,15 +124,9 @@ export function getBookmarksBelowChangedLine(
   }
 
   const lineNumber = line || editor.selection.active.line;
-  const _bookmarks = bookmarks
-    .map(it => ({
-      ...it,
-      startLine: it.selection.start.line,
-      endLine: it.selection.end.line,
-    }))
-    .sort((a, b) => a.startLine - b.startLine);
-
-  return _bookmarks.filter(it => it.startLine > lineNumber);
+  return bookmarks
+    .sort((a, b) => a.selection.start.line - b.selection.start.line)
+    .filter(it => it.selection.start.line > lineNumber);
 }
 
 /**
@@ -547,8 +541,13 @@ export function updateBookmarksGroupByChangedLine(
   const changeText = change.text;
   const isNewLine = REGEXP_NEWLINE.test(changeText);
   const isDeleteLine = change.range.end.line > change.range.start.line;
+  const isLineStart = change.range.start.character === 0;
   const bookmarkInCurrentLine = getBookmarkFromLineNumber();
   const {autoSwitchSingleToMultiWhenLineWrapping} = configService.configuration;
+  const cursorLine = document.lineAt(change.range.start.line);
+  const bookmarkInCursor = getBookmarkFromLineNumber(
+    cursorLine.range.start.line,
+  );
   let needUpdateDecorations = false;
   // 1. 当发生改变的区域存在行书签
   if (bookmarkInCurrentLine) {
@@ -616,16 +615,15 @@ export function updateBookmarksGroupByChangedLine(
       let startChar = originalSelection.start.character;
       let endCharacter = changedLine.range.end.character;
       if (autoSwitchSingleToMultiWhenLineWrapping) {
-        startLine =
-          change.range.start.character === 0
-            ? originalSelection.start.line + newLines
-            : originalSelection.start.line;
+        startLine = isLineStart
+          ? originalSelection.start.line + newLines
+          : originalSelection.start.line;
         endLine += newLines;
         bookmarkType = 'selection';
         endCharacter = document.lineAt(endLine).range.end.character;
       } else {
         // 如果从行的开头进行换行
-        if (change.range.start.character === 0) {
+        if (isLineStart) {
           startLine += newLines;
           endLine += newLines;
           endCharacter = document.lineAt(endLine).range.end.character;
@@ -653,18 +651,19 @@ export function updateBookmarksGroupByChangedLine(
   }
 
   // 如果改动的当前行不存在书签,但是光标移动到新的行存在标签的时候, 需要将当前行的标签range 补充全(要求是单行书签情况下)
-  const cursorLine = document.lineAt(change.range.start.line);
-  const bookmark = getBookmarkFromLineNumber(cursorLine.range.start.line);
-  if (bookmark && bookmark.type === 'line') {
+  if (bookmarkInCursor && bookmarkInCursor.type === 'line' && !isLineStart) {
     const selection = new Selection(
       new Position(
-        bookmark.selection.start.line,
-        bookmark.selection.start.character,
+        bookmarkInCursor.selection.start.line,
+        bookmarkInCursor.selection.start.character,
       ),
-      new Position(bookmark.selection.end.line, cursorLine.range.end.character),
+      new Position(
+        bookmarkInCursor.selection.end.line,
+        cursorLine.range.end.character,
+      ),
     );
     // 更新当前行的书签信息
-    updateLineBookmarkRangeWhenDocumentChange(bookmark, {
+    updateLineBookmarkRangeWhenDocumentChange(bookmarkInCursor, {
       selection,
       type: 'line',
       selectionContent: document.getText(selection),
@@ -673,8 +672,8 @@ export function updateBookmarksGroupByChangedLine(
     needUpdateDecorations = true;
   }
 
-  const blowCursorLine = cursorLine.range.end.line + 1;
   // 2. 当前所发生改变的change 不存在书签 1> 发生改变的行下方的书签, 回车, 新增 , 以及删除
+  const blowCursorLine = cursorLine.range.end.line + (bookmarkInCursor ? 1 : 0);
   const bookmarksBlowChangedLine = getBookmarksBelowChangedLine(blowCursorLine);
   if (bookmarksBlowChangedLine && bookmarksBlowChangedLine.length) {
     let bookmark,
@@ -694,25 +693,24 @@ export function updateBookmarksGroupByChangedLine(
         ? newLines
         : 0;
     for (bookmark of bookmarksBlowChangedLine) {
-      startLine = bookmark.rangesOrOptions.range.start.line + changeLines;
+      const {rangesOrOptions} = bookmark;
+      startLine = rangesOrOptions.range.start.line + changeLines;
       line = document.lineAt(startLine);
       startPos = line.text.indexOf(line.text.trim());
-      selection = bookmark.rangesOrOptions.range;
+      selection = rangesOrOptions.range;
       // 当书签为行标签时
       if (bookmark.type === 'line') {
         selection = new Selection(
-          new Position(
-            startLine,
-            bookmark.rangesOrOptions.range.start.character,
-          ),
+          new Position(startLine, rangesOrOptions.range.start.character),
           new Position(startLine, line.range.end.character),
         );
       } else {
         // 当是区域标签的时候, 同时更新end的行数
-        const endLine = bookmark.rangesOrOptions.range.end.line + changeLines;
+        const endLine = rangesOrOptions.range.end.line + changeLines;
+        startPos = rangesOrOptions.range.start.character;
         selection = new Selection(
           new Position(startLine, startPos),
-          new Position(endLine, bookmark.rangesOrOptions.range.end.character),
+          new Position(endLine, rangesOrOptions.range.end.character),
         );
       }
 
@@ -742,7 +740,7 @@ export function updateLineBookmarkRangeWhenDocumentChange(
   const {selection, selectionContent, ...rest} = dto;
   bookmark.update({
     selectionContent,
-    type: rest.type,
+    type: rest.type || bookmark.type,
     rangesOrOptions: {
       ...bookmark.rangesOrOptions,
       range: selection as Range,

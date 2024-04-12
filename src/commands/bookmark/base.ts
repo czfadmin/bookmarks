@@ -11,7 +11,7 @@ import {
 import {resolveBookmarkController} from '../../bootstrap';
 import resolveServiceManager from '../../services/ServiceManager';
 import {BookmarksGroupedByColorType, IBookmark} from '../../stores';
-import {LineBookmarkContext} from '../../types';
+import {BookmarksGroupedByFileType, LineBookmarkContext} from '../../types';
 import {
   checkIfBookmarksIsInCurrentEditor,
   chooseBookmarkColor,
@@ -221,7 +221,8 @@ export function clearAllBookmarksInCurrentFile(args: any) {
   }
 
   if (args && args.meta) {
-    controller.clearAllBookmarkInFile(args.meta.fileUri);
+    const meta = args.meta as BookmarksGroupedByFileType;
+    controller.clearAllBookmarkInFile(Uri.file(meta.fileId));
   } else {
     const activeEditor = window.activeTextEditor;
     if (!activeEditor) {
