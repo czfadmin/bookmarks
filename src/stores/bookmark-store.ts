@@ -21,18 +21,49 @@ import {
 } from './bookmark';
 import {BookmarkGroup, IBookmarkGroup} from './bookmark-group';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
+import {DEFAULT_BOOKMARK_COLOR} from '../constants';
+
 const BookmarkColorGroupModel = types.model('BookmarkColorModel', {
-  id: types.identifier,
-  task: types.string,
+  name: types.optional(types.string, DEFAULT_BOOKMARK_COLOR),
+  sortedIndex: types.optional(types.number, -1),
 });
 
-const BookmarkFileGroupModel = types.model('BookmarkFileGroupModel', {});
+export type BookmarkColorGroupModelType = Instance<
+  typeof BookmarkColorGroupModel
+>;
 
-const BookmarkWorkspaceGroupModel = types.model(
-  'BookmarkWorkspaceGroupModel',
-  {},
-);
-const BookmarkCustomGroupModel = types.model('BookmarkCustomGroupModel', {});
+const BookmarkFileGroupModel = types.model('BookmarkFileGroupModel', {
+  name: types.enumeration([
+    TreeViewGroupEnum.FILE,
+    TreeViewGroupEnum.DEFAULT,
+    TreeViewGroupEnum.COLOR,
+    TreeViewGroupEnum.WORKSPACE,
+    TreeViewGroupEnum.FILE,
+  ]),
+  sortedIndex: types.optional(types.number, -1),
+});
+
+export type BookmarkFileGroupModelType = Instance<
+  typeof BookmarkFileGroupModel
+>;
+
+const BookmarkWorkspaceGroupModel = types.model('BookmarkWorkspaceGroupModel', {
+  name: types.string,
+  sortedIndex: types.optional(types.number, -1),
+});
+
+export type BookmarkWorkspaceGroupModelType = Instance<
+  typeof BookmarkWorkspaceGroupModel
+>;
+
+const BookmarkCustomGroupModel = types.model('BookmarkCustomGroupModel', {
+  name: types.string,
+  sortedIndex: types.optional(types.number, -1),
+});
+
+export type BookmarkCustomGroupModelType = Instance<
+  typeof BookmarkCustomGroupModel
+>;
 
 export const BookmarksStore = types
   .model('BookmarksStore', {
@@ -75,19 +106,19 @@ export const BookmarksStore = types
     /**
      * 按颜色分组的分组信息
      */
-    colorsGroupInfo: types.map(BookmarkColorGroupModel),
+    colorsGroupInfo: types.array(BookmarkColorGroupModel),
     /**
      * 按工作区间分组的分组信息
      */
-    workspaceGroupInfo: types.map(BookmarkWorkspaceGroupModel),
+    workspaceGroupInfo: types.array(BookmarkWorkspaceGroupModel),
     /**
      * 按文件分组的分组信息
      */
-    fileGroupInfo: types.map(BookmarkFileGroupModel),
+    fileGroupInfo: types.array(BookmarkFileGroupModel),
     /**
      * 按自定义分组的分组信息
      */
-    customGroupInfo: types.map(BookmarkCustomGroupModel),
+    customGroupInfo: types.array(BookmarkCustomGroupModel),
   })
   .views(self => {
     return {
@@ -486,9 +517,6 @@ export const BookmarksStore = types
         }
       } else {
         self.bookmarks.clear();
-        self.groups.replace(
-          self.groups.filter(it => it.id === DEFAULT_BOOKMARK_GROUP_ID),
-        );
       }
       if (self.groups.find(it => it.id !== DEFAULT_BOOKMARK_GROUP_ID)) {
         self.groups.push(
@@ -537,6 +565,43 @@ export const BookmarksStore = types
       }
     }
 
+    function addGroupInfo(
+      groupType: TreeViewGroupEnum,
+      info:
+        | BookmarkColorGroupModelType[]
+        | BookmarkWorkspaceGroupModelType[]
+        | BookmarkFileGroupModelType[]
+        | BookmarkCustomGroupModelType[],
+    ) {
+      switch (groupType) {
+        case TreeViewGroupEnum.COLOR:
+          break;
+        case TreeViewGroupEnum.DEFAULT:
+        case TreeViewGroupEnum.FILE:
+          break;
+        case TreeViewGroupEnum.WORKSPACE:
+          break;
+        case TreeViewGroupEnum.CUSTOM:
+          break;
+      }
+    }
+
+    function addColorsGroupInfo(item: BookmarkColorGroupModelType) {
+      self.colorsGroupInfo.push(item);
+    }
+
+    function addWorkspaceGroupInfo(item: BookmarkWorkspaceGroupModelType) {
+      self.workspaceGroupInfo.push(item);
+    }
+
+    function addFileGroupInfo(item: BookmarkFileGroupModelType) {
+      self.fileGroupInfo.push(item);
+    }
+
+    function addCustomroupInfo(item: BookmarkCustomGroupModelType) {
+      self.customGroupInfo.push(item);
+    }
+
     function afterCreate() {}
 
     return {
@@ -557,6 +622,11 @@ export const BookmarksStore = types
       clearAll,
       initStore,
       updateGroupSortedIndex,
+      addGroupInfo,
+      addColorsGroupInfo,
+      addWorkspaceGroupInfo,
+      addFileGroupInfo,
+      addCustomroupInfo,
     };
   });
 

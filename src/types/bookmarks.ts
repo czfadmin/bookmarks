@@ -1,4 +1,11 @@
-import {IBookmark, IBookmarkGroup} from '../stores';
+import {
+  BookmarkColorGroupModelType,
+  BookmarkCustomGroupModelType,
+  BookmarkFileGroupModelType,
+  BookmarkWorkspaceGroupModelType,
+  IBookmark,
+  IBookmarkGroup,
+} from '../stores';
 
 /**
  * 表示保存到`bookmark-manager.json`文件类型
@@ -43,6 +50,14 @@ export interface IBookmarkStoreInfo {
     IBookmarkGroup,
     'id' | 'label' | 'sortedIndex' | 'activeStatus' | 'workspace'
   >[];
+
+  colorsGroupInfo: BookmarkColorGroupModelType[];
+
+  workspaceGroupInfo: BookmarkFileGroupModelType[];
+
+  fileGroupInfo: BookmarkWorkspaceGroupModelType[];
+
+  customGroupInfo: BookmarkCustomGroupModelType[];
 }
 
 /**

@@ -29,7 +29,6 @@ import ConfigService from '../services/ConfigService';
 import {ServiceManager} from '../services/ServiceManager';
 import {
   BookmarksGroupedByColorType,
-  BookmarksGroupedByFileWithSortType,
   BookmarksGroupedByWorkspaceType,
   IBookmark,
   IBookmarkGroup,
@@ -44,6 +43,7 @@ import {
   IBookmarkStoreInfo,
   BookmarksGroupedByCustomType,
   TreeViewGroupEnum,
+  BookmarksGroupedByFileType,
 } from '../types';
 import IController from './IController';
 
@@ -53,38 +53,6 @@ export default class BookmarksController implements IController {
   private _onDidChangeEvent = new EventEmitter<void>();
 
   private _store!: IBookmarksStore;
-
-  public get viewType(): TreeViewStyleEnum {
-    return this._store.viewType as TreeViewStyleEnum;
-  }
-
-  public get groupView(): TreeViewGroupEnum {
-    return this._store.groupView as TreeViewGroupEnum;
-  }
-
-  public get sortedType(): TreeViewSortedTypeEnum {
-    return this._store.sortedType as TreeViewSortedTypeEnum;
-  }
-
-  public get groupedBookmarks():
-    | BookmarksGroupedByFileWithSortType[]
-    | BookmarksGroupedByCustomType[]
-    | BookmarksGroupedByColorType[]
-    | BookmarksGroupedByWorkspaceType[] {
-    switch (this._store.groupView) {
-      case TreeViewGroupEnum.FILE:
-      case TreeViewGroupEnum.DEFAULT:
-        return this._store.bookmarksGroupedByFile;
-      case TreeViewGroupEnum.COLOR:
-        return this._store.bookmarksGroupedByColor;
-      case TreeViewGroupEnum.WORKSPACE:
-        return this._store.bookmarksGroupedByWorkspace;
-      case TreeViewGroupEnum.CUSTOM:
-        return this._store.bookmarksGroupedByCustom;
-    }
-    return [];
-  }
-
   private _disposables: IDisposable[] = [];
 
   private _watcher: FileSystemWatcher | undefined;
@@ -136,6 +104,38 @@ export default class BookmarksController implements IController {
     return this._store?.groups || [];
   }
 
+  public get viewType(): TreeViewStyleEnum {
+    return this._store.viewType as TreeViewStyleEnum;
+  }
+
+  public get groupView(): TreeViewGroupEnum {
+    return this._store.groupView as TreeViewGroupEnum;
+  }
+
+  public get sortedType(): TreeViewSortedTypeEnum {
+    return this._store.sortedType as TreeViewSortedTypeEnum;
+  }
+
+  public get groupedBookmarks():
+    | BookmarksGroupedByFileType[]
+    | BookmarksGroupedByCustomType[]
+    | BookmarksGroupedByColorType[]
+    | BookmarksGroupedByWorkspaceType[] {
+    switch (this._store.groupView) {
+      case TreeViewGroupEnum.FILE:
+      case TreeViewGroupEnum.DEFAULT:
+        return this._store.bookmarksGroupedByFile;
+      case TreeViewGroupEnum.COLOR:
+        return this._store.bookmarksGroupedByColor;
+      case TreeViewGroupEnum.WORKSPACE:
+        return this._store.bookmarksGroupedByWorkspace;
+      case TreeViewGroupEnum.CUSTOM:
+        return this._store.bookmarksGroupedByCustom;
+      default:
+        return [];
+    }
+  }
+
   constructor(context: ExtensionContext, serviceManager: ServiceManager) {
     this._context = context;
     this._serviceManager = serviceManager;
@@ -171,7 +171,12 @@ export default class BookmarksController implements IController {
 
   private async _initStore() {
     let store;
-    this._store = BookmarksStore.create();
+    this._store = BookmarksStore.create({
+      colorsGroupInfo: [],
+      workspaceGroupInfo: [],
+      fileGroupInfo: [],
+      customGroupInfo: [],
+    });
 
     if (
       (!workspace.workspaceFolders || workspace.workspaceFolders!.length < 2) &&
@@ -250,9 +255,9 @@ export default class BookmarksController implements IController {
             content: [],
             bookmarks: [],
             groups: [],
-            viewType: 'tree',
-            groupView: 'default',
-            sortedType: 'linenumber',
+            viewType: TreeViewStyleEnum.TREE,
+            groupView: TreeViewGroupEnum.DEFAULT,
+            sortedType: TreeViewSortedTypeEnum.LINENUMBER,
           });
         }
         const storeContent = JSON.parse(content) as IBookmarkStoreInfo;
