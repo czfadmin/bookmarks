@@ -64,5 +64,6 @@
   "bookmark-manager.changeBookmarkGroup": "改变书签分组",
   "bookmark-manager.listBookmarksInSelectedGroup": "列出已选择分组中的书签列表",
   "bookmark-manager.showWalkthroughs": "显示交互指南",
-  "bookmark-manager.changeSetting": "更改设置"
+  "bookmark-manager.changeSetting": "更改设置",
+  "bookmark-manager.ignoreFolders": "当设置此项时, 将自动忽略在此数组中的文件夹目录下的`.vscode`目录中创建存储文件`bookmark-manager.json`"
 }

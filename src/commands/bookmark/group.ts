@@ -3,7 +3,7 @@ import {resolveBookmarkController} from '../../bootstrap';
 import {DEFAULT_BOOKMARK_COLOR} from '../../constants';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../../constants/bookmark';
 import {IBookmarkGroup} from '../../stores';
-import {BookmarksGroupedByCustomType} from '../../types';
+import {BookmarksGroupedByCustomType, TreeViewGroupEnum} from '../../types';
 import {
   showGroupQuickPick,
   getBookmarkFromCtx,
@@ -106,7 +106,6 @@ export const BookmarkGroupCommands: IBookmarkCommand[] = [
     docs: ` * 通过命令创建分组 * - 可支持自定义分组名称(非按照颜色分组,同时之前未分组的归为Default组) * - 分组拖拽移动 * - 分组拖拽排序`,
     callback: async (ctx: IBookmarkCommandContext, args: any) => {
       let selectedWorkspaceFolder;
-      console.log(args);
       // 此时从命令面板或者视图顶部的菜单中选择调用此命令,以及当存在多个工作区间, 需要用户选择工作区进行操作.
       if (!args || (args && args.contextValue !== 'workspace')) {
         selectedWorkspaceFolder = await showWorkspaceFolderQuickPick();
@@ -139,7 +138,7 @@ export const BookmarkGroupCommands: IBookmarkCommand[] = [
     docs: '按颜色分组',
     callback: async (ctx: IBookmarkCommandContext, args: any) => {
       const controller = resolveBookmarkController();
-      controller.changeGroupView('color');
+      controller.changeGroupView(TreeViewGroupEnum.COLOR);
     },
   },
   {
@@ -147,7 +146,7 @@ export const BookmarkGroupCommands: IBookmarkCommand[] = [
     docs: `默认排序分组`,
     callback: async (ctx: IBookmarkCommandContext, args: any) => {
       const controller = resolveBookmarkController();
-      controller.changeGroupView('default');
+      controller.changeGroupView(TreeViewGroupEnum.DEFAULT);
     },
   },
   {
@@ -155,7 +154,7 @@ export const BookmarkGroupCommands: IBookmarkCommand[] = [
     docs: '按照工作区间分组',
     callback: async (ctx: IBookmarkCommandContext, args: any) => {
       const controller = resolveBookmarkController();
-      controller.changeGroupView('workspace');
+      controller.changeGroupView(TreeViewGroupEnum.WORKSPACE);
     },
   },
   {
@@ -163,7 +162,7 @@ export const BookmarkGroupCommands: IBookmarkCommand[] = [
     docs: '按照用户自定义分组方式分组, 默认未分组放到 `Default` 组中',
     callback: async (ctx: IBookmarkCommandContext, args: any) => {
       const controller = resolveBookmarkController();
-      controller.changeGroupView('custom');
+      controller.changeGroupView(TreeViewGroupEnum.CUSTOM);
     },
   },
 ];
@@ -213,7 +212,7 @@ export async function listBookmarksInSelectedGroup(args: any) {
   const bookmarks =
     (
       controller.store
-        .getBookmarksGroupedByCustom as BookmarksGroupedByCustomType[]
+        .bookmarksGroupedByCustom as BookmarksGroupedByCustomType[]
     ).find(it => it.id === group.id)?.bookmarks || [];
 
   const selectedBookmark = await showBookmarksQuickPick(bookmarks);

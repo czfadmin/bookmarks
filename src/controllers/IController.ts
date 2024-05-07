@@ -1,9 +1,9 @@
 import {Event, Disposable} from 'vscode';
 import {
   BaseMeta,
-  TreeViewGroupType,
-  TreeViewSortedType,
-  TreeViewType,
+  TreeViewGroupEnum,
+  TreeViewSortedTypeEnum,
+  TreeViewStyleEnum,
 } from '../types';
 import {UniversalStoreType} from './UniversalBookmarkController';
 import {IBookmarksStore} from '../stores';
@@ -15,9 +15,9 @@ export default interface IController extends Disposable {
 
   get labeledCount(): number;
 
-  get viewType(): TreeViewType;
+  get viewType(): TreeViewStyleEnum;
 
-  get groupView(): TreeViewGroupType;
+  get groupView(): TreeViewGroupEnum;
 
   onDidChangeEvent: Event<void>;
 
@@ -31,7 +31,7 @@ export default interface IController extends Disposable {
   clearAll(): void;
 
   refresh(): void;
-  changeViewType(viewType: TreeViewType): void;
+  changeViewType(viewType: TreeViewStyleEnum): void;
 
-  changeSortType(sortType: TreeViewSortedType): void;
+  changeSortType(sortType: TreeViewSortedTypeEnum): void;
 }

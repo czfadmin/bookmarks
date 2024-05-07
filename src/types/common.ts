@@ -1,4 +1,4 @@
-import {Uri} from 'vscode';
+import {Uri, workspace} from 'vscode';
 import BookmarkTreeItem from '../providers/BookmarksTreeItem';
 
 export type StringIndexType<T> = {[key: string]: T};
@@ -20,23 +20,28 @@ export type LineBookmarkContext =
 /**
  * 视图查看方式
  */
-export type TreeViewType = 'tree' | 'list';
+export enum TreeViewStyleEnum {
+  TREE = 'tree',
+  LIST = 'list',
+}
 
 /**
  * 视图排序方式
  */
-export type TreeViewSortedType =
-  | 'linenumber'
-  | 'custom'
-  | 'createdTime'
-  | 'updatedTime';
+export enum TreeViewSortedTypeEnum {
+  LINENUMBER = 'linenumber',
+  CUSTOM = 'custom',
+  CREATED_TIME = 'createdTime',
+  UPDATED_TIME = 'updatedTime',
+}
 
 /**
- * 视图分组方式
+ * 视图分组枚举
  */
-export type TreeViewGroupType =
-  | 'file'
-  | 'color'
-  | 'default'
-  | 'workspace'
-  | 'custom';
+export enum TreeViewGroupEnum {
+  FILE = 'file',
+  COLOR = 'color',
+  DEFAULT = 'default',
+  WORKSPACE = 'workspace',
+  CUSTOM = 'custom',
+}

@@ -1,11 +1,12 @@
 import {resolveBookmarkController} from '../../bootstrap';
+import {TreeViewStyleEnum} from '../../types';
 
 /**
  * 按照树格式展示
  */
 export function viewAsTree(args: any) {
   const controller = resolveBookmarkController();
-  controller.changeViewType('tree');
+  controller.changeViewType(TreeViewStyleEnum.TREE);
 }
 
 /**
@@ -13,5 +14,5 @@ export function viewAsTree(args: any) {
  */
 export function viewAsList(args: any) {
   const controller = resolveBookmarkController();
-  controller.changeViewType('list');
+  controller.changeViewType(TreeViewStyleEnum.LIST);
 }

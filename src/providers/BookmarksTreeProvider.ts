@@ -5,6 +5,9 @@ import {
   BookmarkGroupByListType,
   BookmarksGroupedByCustomType,
   BookmarksGroupedByFileType,
+  BookmarkTreeItemCtxValueEnum,
+  TreeViewGroupEnum,
+  TreeViewStyleEnum,
 } from '../types';
 import {resolveBookmarkController} from '../bootstrap';
 import BookmarksController from '../controllers/BookmarksController';
@@ -34,24 +37,27 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
     element?: BookmarkTreeItem | undefined,
   ): ProviderResult<BookmarkTreeItem[]> {
     const {groupView, viewType} = this.controller;
-    if (viewType === 'list') {
+    if (viewType === TreeViewStyleEnum.LIST) {
       return this.getChildrenByList(element);
     }
 
-    if (viewType === 'tree') {
-      if (groupView === 'default' || groupView === 'file') {
+    if (viewType === TreeViewStyleEnum.TREE) {
+      if (
+        groupView === TreeViewGroupEnum.DEFAULT ||
+        groupView === TreeViewGroupEnum.FILE
+      ) {
         return this.getChildrenByFile(element);
       }
 
-      if (groupView === 'color') {
+      if (groupView === TreeViewGroupEnum.COLOR) {
         return this.getChildrenByColor(element);
       }
 
-      if (groupView === 'workspace') {
+      if (groupView === TreeViewGroupEnum.WORKSPACE) {
         return this.getChildrenByWorkspace(element);
       }
 
-      if (groupView === 'custom') {
+      if (groupView === TreeViewGroupEnum.CUSTOM) {
         return this.getChildrenByCustomGroup(element);
       }
     }
@@ -68,7 +74,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
         return new BookmarkTreeItem(
           label,
           TreeItemCollapsibleState.Collapsed,
-          'file',
+          BookmarkTreeItemCtxValueEnum.FILE,
           it,
           this.serviceManager,
         );
@@ -83,7 +89,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
           return new BookmarkTreeItem(
             it.label || it.selectionContent || it.id,
             TreeItemCollapsibleState.None,
-            'bookmark',
+            BookmarkTreeItemCtxValueEnum.BOOKMARK,
             it,
             this.serviceManager,
           );
@@ -103,7 +109,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
         return new BookmarkTreeItem(
           it.label || it.selectionContent || it.id,
           TreeItemCollapsibleState.None,
-          'bookmark',
+          BookmarkTreeItemCtxValueEnum.BOOKMARK,
           it,
           this.serviceManager,
         );
@@ -120,7 +126,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
         return new BookmarkTreeItem(
           it.color,
           TreeItemCollapsibleState.Collapsed,
-          'color',
+          BookmarkTreeItemCtxValueEnum.COLOR,
           it,
           this.serviceManager,
         );
@@ -135,7 +141,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
           return new BookmarkTreeItem(
             it.label || it.selectionContent || it.id,
             TreeItemCollapsibleState.None,
-            'bookmark',
+            BookmarkTreeItemCtxValueEnum.BOOKMARK,
             it,
             this.serviceManager,
           );
@@ -155,7 +161,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
         return new BookmarkTreeItem(
           it.workspace.name!,
           TreeItemCollapsibleState.Collapsed,
-          'workspace',
+          BookmarkTreeItemCtxValueEnum.WORKSPACE,
           it,
           this.serviceManager,
         );
@@ -171,7 +177,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
             return new BookmarkTreeItem(
               it.fileId,
               TreeItemCollapsibleState.Collapsed,
-              'file',
+              BookmarkTreeItemCtxValueEnum.FILE,
               it,
               this.serviceManager,
             );
@@ -184,7 +190,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
             return new BookmarkTreeItem(
               it.label || it.selectionContent || it.id,
               TreeItemCollapsibleState.None,
-              'bookmark',
+              BookmarkTreeItemCtxValueEnum.BOOKMARK,
               it,
               this.serviceManager,
             );
@@ -205,7 +211,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
         return new BookmarkTreeItem(
           it.label!,
           TreeItemCollapsibleState.Collapsed,
-          'custom',
+          BookmarkTreeItemCtxValueEnum.CUSTOM,
           it,
           this.serviceManager,
         );
@@ -220,7 +226,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
           return new BookmarkTreeItem(
             it.label || it.selectionContent || it.id,
             TreeItemCollapsibleState.None,
-            'bookmark',
+            BookmarkTreeItemCtxValueEnum.BOOKMARK,
             it,
             this.serviceManager,
           );

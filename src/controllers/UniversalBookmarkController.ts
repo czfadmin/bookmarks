@@ -2,9 +2,9 @@ import {Event, EventEmitter, ExtensionContext, Uri} from 'vscode';
 import {
   BaseMeta,
   BookmarkColor,
-  TreeViewGroupType,
-  TreeViewSortedType,
-  TreeViewType,
+  TreeViewGroupEnum,
+  TreeViewSortedTypeEnum,
+  TreeViewStyleEnum,
 } from '../types';
 import {generateUUID} from '../utils';
 import IController from './IController';
@@ -63,7 +63,10 @@ export default class UniversalBookmarkController implements IController {
   private _onDidChangeEvent: EventEmitter<void> = new EventEmitter<void>();
 
   private _serviceManager: ServiceManager;
-  public sortedType: Omit<TreeViewSortedType, 'linenumber'> = 'linenumber';
+  public sortedType: Omit<
+    TreeViewSortedTypeEnum,
+    TreeViewSortedTypeEnum.LINENUMBER
+  > = TreeViewSortedTypeEnum.CREATED_TIME;
   public onDidChangeEvent: Event<void> = this._onDidChangeEvent.event;
 
   get globalState() {
@@ -96,11 +99,11 @@ export default class UniversalBookmarkController implements IController {
     }
     this._initial();
   }
-  get viewType(): TreeViewType {
-    return 'list';
+  get viewType(): TreeViewStyleEnum {
+    return TreeViewStyleEnum.LIST;
   }
-  get groupView(): TreeViewGroupType {
-    return 'default';
+  get groupView(): TreeViewGroupEnum {
+    return TreeViewGroupEnum.DEFAULT;
   }
 
   dispose() {}
@@ -174,9 +177,9 @@ export default class UniversalBookmarkController implements IController {
   refresh() {
     this._onDidChangeEvent.fire();
   }
-  changeViewType(viewType: TreeViewType): void {}
+  changeViewType(viewType: TreeViewStyleEnum): void {}
 
-  changeSortType(sortType: TreeViewSortedType): void {
+  changeSortType(sortType: TreeViewSortedTypeEnum): void {
     this.sortedType = sortType;
   }
 }

@@ -196,12 +196,12 @@ export default class DecorationService implements IDisposable {
       const noLabelBookmarks = options.bookmarks.filter(it => !it.label);
 
       const tagRangeOrOptions = this.createRangeOrOptions(hasLabelBookmarks);
+      const noTagRangeOrOptions = this.createRangeOrOptions(noLabelBookmarks);
 
       editor?.setDecorations(
         this.tagDecorations[options.color] || this.tagDecorations['default'],
         tagRangeOrOptions,
       );
-      const noTagRangeOrOptions = this.createRangeOrOptions(noLabelBookmarks);
 
       editor?.setDecorations(
         this.decorations[options.color] || this.decorations['default'],

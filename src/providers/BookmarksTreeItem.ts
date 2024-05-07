@@ -11,6 +11,7 @@ import BaseTreeItem from './BaseTreeItem';
 import {
   BookmarksGroupedByFileType,
   BookmarksGroupedByCustomType,
+  BookmarkTreeItemCtxValueEnum,
 } from '../types';
 import {getLineInfoStrFromBookmark} from '../utils';
 import {ServiceManager} from '../services/ServiceManager';
@@ -33,7 +34,7 @@ export default class BookmarkTreeItem extends BaseTreeItem {
   constructor(
     label: string,
     collapsibleState: TreeItemCollapsibleState,
-    contextValue: string,
+    contextValue: BookmarkTreeItemCtxValueEnum,
     meta:
       | IBookmark
       | BookmarksGroupedByFileType
@@ -46,21 +47,21 @@ export default class BookmarkTreeItem extends BaseTreeItem {
     this.meta = meta;
     this._sm = sm;
 
-    if (this.contextValue === 'color') {
+    if (this.contextValue === BookmarkTreeItemCtxValueEnum.COLOR) {
       this.label = label;
-    } else if (this.contextValue === 'workspace') {
+    } else if (this.contextValue === BookmarkTreeItemCtxValueEnum.WORKSPACE) {
       const meta = this.meta as BookmarksGroupedByWorkspaceType;
       this.label = label;
       this.iconPath = ThemeIcon.Folder;
       if (workspace.workspaceFolders) {
         this.resourceUri = meta.workspace.uri;
       }
-    } else if (this.contextValue === 'file') {
+    } else if (this.contextValue === BookmarkTreeItemCtxValueEnum.FILE) {
       const _meta = this.meta as BookmarksGroupedByFileType;
       this._resolveFileOverview();
       this.label = _meta.fileName;
       this.description = workspace.asRelativePath(_meta.fileId);
-    } else if (this.contextValue === 'custom') {
+    } else if (this.contextValue === BookmarkTreeItemCtxValueEnum.CUSTOM) {
       this.label = label;
       const meta = this.meta as BookmarksGroupedByCustomType;
       this.iconPath = ThemeIcon.Folder;
@@ -81,14 +82,14 @@ export default class BookmarkTreeItem extends BaseTreeItem {
   private _resolveIconPath() {
     const tagGutters = this._sm.gutterService.tagGutters;
     const gutters = this._sm.gutterService.gutters;
-    if (this.contextValue === 'file') {
+    if (this.contextValue === BookmarkTreeItemCtxValueEnum.FILE) {
       const meta = this.meta as BookmarksGroupedByFileType;
       this.iconPath = ThemeIcon.File;
       this.resourceUri = Uri.parse(meta.fileName);
-    } else if (this.contextValue === 'color') {
+    } else if (this.contextValue === BookmarkTreeItemCtxValueEnum.COLOR) {
       const _meta = this.meta as BookmarksGroupedByColorType;
       this.iconPath = (gutters[_meta.color] || gutters['default']).iconPath;
-    } else if (this.contextValue === 'bookmark') {
+    } else if (this.contextValue === BookmarkTreeItemCtxValueEnum.BOOKMARK) {
       const meta = this.meta as IBookmark;
       const color = meta.color || meta.customColor.name;
       this.iconPath = meta.label

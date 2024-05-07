@@ -19,6 +19,7 @@ import {fileURLToPath} from 'node:url';
 import {IDisposable} from '../utils';
 import {
   DEFAULT_BOOKMARK_COLOR,
+  DEFAULT_BOOKMARK_GROUP_ID,
   EXTENSION_ID,
   EXTENSION_STORE_FILE_NAME,
   EXTENSION_STORE_PATH,
@@ -38,11 +39,11 @@ import {BookmarksStore} from '../stores/bookmark-store';
 
 import {IBookmarkManagerConfigure} from '../stores/configure';
 import {
-  TreeViewType,
-  TreeViewGroupType,
-  TreeViewSortedType,
+  TreeViewStyleEnum,
+  TreeViewSortedTypeEnum,
   IBookmarkStoreInfo,
   BookmarksGroupedByCustomType,
+  TreeViewGroupEnum,
 } from '../types';
 import IController from './IController';
 
@@ -53,16 +54,16 @@ export default class BookmarksController implements IController {
 
   private _store!: IBookmarksStore;
 
-  public get viewType(): TreeViewType {
-    return this._store.viewType as TreeViewType;
+  public get viewType(): TreeViewStyleEnum {
+    return this._store.viewType as TreeViewStyleEnum;
   }
 
-  public get groupView(): TreeViewGroupType {
-    return this._store.groupView as TreeViewGroupType;
+  public get groupView(): TreeViewGroupEnum {
+    return this._store.groupView as TreeViewGroupEnum;
   }
 
-  public get sortedType(): TreeViewSortedType {
-    return this._store.sortedType as TreeViewSortedType;
+  public get sortedType(): TreeViewSortedTypeEnum {
+    return this._store.sortedType as TreeViewSortedTypeEnum;
   }
 
   public get groupedBookmarks():
@@ -71,15 +72,15 @@ export default class BookmarksController implements IController {
     | BookmarksGroupedByColorType[]
     | BookmarksGroupedByWorkspaceType[] {
     switch (this._store.groupView) {
-      case 'file':
-      case 'default':
+      case TreeViewGroupEnum.FILE:
+      case TreeViewGroupEnum.DEFAULT:
         return this._store.bookmarksGroupedByFile;
-      case 'color':
+      case TreeViewGroupEnum.COLOR:
         return this._store.bookmarksGroupedByColor;
-      case 'workspace':
+      case TreeViewGroupEnum.WORKSPACE:
         return this._store.bookmarksGroupedByWorkspace;
-      case 'custom':
-        return this._store.getBookmarksGroupedByCustom;
+      case TreeViewGroupEnum.CUSTOM:
+        return this._store.bookmarksGroupedByCustom;
     }
     return [];
   }
@@ -174,9 +175,9 @@ export default class BookmarksController implements IController {
 
     if (
       (!workspace.workspaceFolders || workspace.workspaceFolders!.length < 2) &&
-      this.groupView !== 'default'
+      this.groupView !== TreeViewGroupEnum.DEFAULT
     ) {
-      this._store.updateGroupView('default');
+      this._store.updateGroupView(TreeViewGroupEnum.DEFAULT);
     }
 
     this._resolveDatastoreFromStoreFile();
@@ -216,7 +217,9 @@ export default class BookmarksController implements IController {
         '**/.vscode/bookmark-manager.json',
       );
       this._watcher.onDidDelete(uri => {
-        if (!uri) {return;}
+        if (!uri) {
+          return;
+        }
         const wsFolder = workspace.getWorkspaceFolder(uri);
         /**
          * 清除指定的工作区间的书签
@@ -370,17 +373,17 @@ export default class BookmarksController implements IController {
     this._fire();
   }
 
-  changeSortType(sortType: TreeViewSortedType): void {
+  changeSortType(sortType: TreeViewSortedTypeEnum): void {
     this._store.updateSortedType(sortType);
     this.refresh();
   }
 
-  changeViewType(viewType: TreeViewType) {
+  changeViewType(viewType: TreeViewStyleEnum) {
     this._store.udpateViewType(viewType);
     this.refresh();
   }
 
-  changeGroupView(groupType: TreeViewGroupType) {
+  changeGroupView(groupType: TreeViewGroupEnum) {
     this._store.updateGroupView(groupType);
     this.refresh();
   }
@@ -461,8 +464,14 @@ export default class BookmarksController implements IController {
     const saveBookmarks = this._store.bookmarks.filter(
       it => it.wsFolder?.uri.fsPath === workspace.uri.fsPath,
     );
-    // 可能使用了在其他公共区间船创建的分组
+    // 可能使用了在其他工作区间船创建的分组
     const _usedGroupdIds = saveBookmarks.map(it => it.groupId);
+
+    // 默认都要带上默认的分组, 避免首次切换到自定义分组的时候失败
+    if (!_usedGroupdIds.includes(DEFAULT_BOOKMARK_GROUP_ID)) {
+      _usedGroupdIds.push(DEFAULT_BOOKMARK_GROUP_ID);
+    }
+
     const groups = this._store.groups.filter(
       it =>
         !it.workspace ||

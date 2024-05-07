@@ -2,9 +2,12 @@ import {Instance, SnapshotIn, types} from 'mobx-state-tree';
 import {DEFAULT_BOOKMARK_COLOR} from '../constants';
 import {Selection, Uri, WorkspaceFolder, workspace} from 'vscode';
 import {createHoverMessage} from '../utils';
-import {BookmarkColor, BookmarksGroupedByFileType} from '../types';
 import {
-  SortedType,
+  BookmarkColor,
+  BookmarksGroupedByFileType,
+  BookmarkTypeEnum,
+} from '../types';
+import {
   MyColorType,
   MyUriType,
   MyWorkspaceFolderType,
@@ -12,20 +15,18 @@ import {
   TagType,
   IDecorationOptionsType,
   IMyColorType,
+  TSortedInfo,
+  SortedInfoType,
 } from './custom';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
-
-export type BookmarksGroupedByFileWithSortType = BookmarksGroupedByFileType &
-  SortedType;
 
 export type BookmarksGroupedByColorType = {
   color: BookmarkColor;
   bookmarks: IBookmark[];
-  sortedIndex?: number;
 };
 
 export type BookmarksGroupedByWorkspaceType = {
-  workspace: Partial<WorkspaceFolder> & SortedType;
+  workspace: Partial<WorkspaceFolder>;
   files: BookmarksGroupedByFileType[];
 };
 
@@ -36,11 +37,12 @@ export const Bookmark = types
     description: types.optional(types.string, ''),
     customColor: types.optional(MyColorType, {
       name: DEFAULT_BOOKMARK_COLOR,
-      sortedIndex: -1,
-      bookmarkSortedIndex: -1,
     }),
     fileUri: MyUriType,
-    type: types.optional(types.enumeration(['line', 'selection']), 'line'),
+    type: types.optional(
+      types.enumeration([BookmarkTypeEnum.LINE, BookmarkTypeEnum.SELECTION]),
+      BookmarkTypeEnum.LINE,
+    ),
     selectionContent: types.optional(types.string, ''),
     languageId: types.optional(types.string, 'javascript'),
     workspaceFolder: MyWorkspaceFolderType,
@@ -49,9 +51,9 @@ export const Bookmark = types
     tag: types.optional(TagType, {
       name: 'default',
       sortedIndex: -1,
-      bookmarkSortedIndex: -1,
     }),
     groupId: types.optional(types.string, DEFAULT_BOOKMARK_GROUP_ID),
+    sortedInfo: types.maybeNull(SortedInfoType),
   })
   .views(self => {
     return {
@@ -137,13 +139,46 @@ export const Bookmark = types
     function updateFileUri(uri: Uri) {
       self.fileUri = {
         fsPath: uri.fsPath,
-        sortedIndex: self.fileUri.sortedIndex,
-        bookmarkSortedIndex: self.fileUri.bookmarkSortedIndex,
       };
     }
 
     function changeGroupId(id: string) {
       self.groupId = id;
+    }
+
+    /**
+     * 书签的按颜色分组情况下组的排序索引
+     * @param idx
+     */
+    function updateColorSortedIndex(idx: number) {
+      // self.customColor.sortedIndex = idx;
+    }
+
+    /**
+     * 书签的按工作区间分组情况下组的排序索引
+     * @param idx
+     */
+    function updateWorkspaceSortedIndex(idx: number) {
+      // self.workspaceFolder.sortedIndex = idx;
+    }
+
+    /**
+     * 书签的按文件分组情况下组的排序索引
+     * @param idx
+     */
+    function updateFileSortedIndex(idx: number) {
+      // self.fileUri.sortedIndex = idx;
+    }
+
+    /**
+     * 对指定的key类型进行排序, 作用时更新在特定组中的书签顺序
+     * @param key
+     * @param value
+     */
+    function updateSortedInfo(key: keyof TSortedInfo, value: number) {
+      if (self.sortedInfo) {
+        self.sortedInfo[key] = value;
+      }
     }
 
     return {
@@ -157,6 +192,10 @@ export const Bookmark = types
       updateFileUri,
       updateColor,
       changeGroupId,
+      updateSortedInfo,
+      updateColorSortedIndex,
+      updateWorkspaceSortedIndex,
+      updateFileSortedIndex,
     };
   });
 

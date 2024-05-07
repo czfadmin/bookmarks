@@ -1,15 +1,12 @@
 import {Instance, types} from 'mobx-state-tree';
 import {Uri, Range, DecorationOptions, Selection} from 'vscode';
+import {TreeViewGroupEnum} from '../types';
 
 export type SortedType = {
   /**
    * 表示文件/工作区间的排序索引
    */
   sortedIndex?: number;
-  /**
-   * 当按照文件/工作区分组的时, 书签的顺序索引
-   */
-  bookmarkSortedIndex?: number;
 };
 
 export type MyUri = {
@@ -17,7 +14,7 @@ export type MyUri = {
    * 文件的相对路径
    */
   fsPath: string;
-} & SortedType;
+};
 
 export type MyWorkspaceFolder = {
   /**
@@ -29,15 +26,16 @@ export type MyWorkspaceFolder = {
    * workspace index
    */
   index: number;
-} & SortedType;
+};
 
 export type MyColor = {
   name: string;
-} & SortedType;
+};
 
 export type MyTag = SortedType & {
   name: string;
 };
+
 export const TagType = types.custom<MyTag, MyTag>({
   name: 'MyTag',
   fromSnapshot(snapshot, env) {
@@ -169,3 +167,23 @@ export const MySelectionType = types.custom<Selection, Selection>({
 });
 
 export type IMySelectionType = Instance<typeof MySelectionType>;
+
+export type TSortedInfo = {
+  [key in (typeof TreeViewGroupEnum)[keyof typeof TreeViewGroupEnum]]: number;
+};
+
+export const SortedInfoType = types.custom<TSortedInfo, TSortedInfo>({
+  name: 'SortedInfoType',
+  fromSnapshot: function (snapshot: TSortedInfo, env?: any): TSortedInfo {
+    return snapshot;
+  },
+  toSnapshot: function (value: TSortedInfo): TSortedInfo {
+    return value;
+  },
+  isTargetType: function (value: TSortedInfo): boolean {
+    return true;
+  },
+  getValidationMessage: function (snapshot: TSortedInfo): string {
+    return '';
+  },
+});

@@ -6,8 +6,12 @@ import IController from '../controllers/IController';
 import resolveServiceManager, {
   ServiceManager,
 } from '../services/ServiceManager';
-import {IBookmark, IBookmarkGroup} from '../stores';
-import {BookmarksGroupedByCustomType} from '../types';
+import {IBookmark} from '../stores';
+import {
+  BookmarksGroupedByCustomType,
+  BookmarkTreeItemCtxValueEnum,
+  TreeViewGroupEnum,
+} from '../types';
 export enum TreeViewEnum {
   BASE = 0,
   UNIVERSAL,
@@ -108,23 +112,28 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
           }
         } else {
           // groupView 为default, workspace 以及 file情况下, 第二级 支持拖拽排序, 第一级支持拖拽排序
-          const sourceContextValue = draggedSource.contextValue;
-          const targetContextValue = target.contextValue;
+          const sourceContextValue =
+            draggedSource.contextValue as BookmarkTreeItemCtxValueEnum;
+          const targetContextValue =
+            target.contextValue as BookmarkTreeItemCtxValueEnum;
           if (!sourceContextValue || !targetContextValue) {
             return;
           }
 
           if (
-            targetContextValue === 'bookmark' &&
-            ['file', 'workspace'].includes(sourceContextValue)
+            targetContextValue === BookmarkTreeItemCtxValueEnum.BOOKMARK &&
+            [
+              BookmarkTreeItemCtxValueEnum.FILE,
+              BookmarkTreeItemCtxValueEnum.WORKSPACE,
+            ].includes(sourceContextValue)
           ) {
             return;
           }
 
           // 分组情况下进行拖拽操作
           if (
-            sourceContextValue === 'bookmark' &&
-            targetContextValue === 'custom'
+            sourceContextValue === BookmarkTreeItemCtxValueEnum.BOOKMARK &&
+            targetContextValue === BookmarkTreeItemCtxValueEnum.CUSTOM
           ) {
             const meta = draggedSource.meta as IBookmark;
             const targetMeta = target.meta as BookmarksGroupedByCustomType;
@@ -137,8 +146,8 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
 
           // 分组拖拽调整顺序
           if (
-            sourceContextValue === 'custom' &&
-            targetContextValue === 'custom'
+            sourceContextValue === BookmarkTreeItemCtxValueEnum.CUSTOM &&
+            targetContextValue === BookmarkTreeItemCtxValueEnum.CUSTOM
           ) {
             const sourceMeta =
               draggedSource.meta as BookmarksGroupedByCustomType;
@@ -149,6 +158,17 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
             const sourceGroupIndex = sourceMeta.group.sortedIndex;
             sourceMeta.group.setSortedIndex(targetMeta.group.sortedIndex);
             targetMeta.group.setSortedIndex(sourceGroupIndex);
+          }
+          // TODO: 同组进行排序
+          const sourceMeta = draggedSource.meta;
+          const targetMeta = target.meta;
+          if (
+            self._controller.groupView === TreeViewGroupEnum.CUSTOM &&
+            targetContextValue === BookmarkTreeItemCtxValueEnum.BOOKMARK &&
+            sourceContextValue === BookmarkTreeItemCtxValueEnum.BOOKMARK
+          ) {
+            if (sourceMeta.groupId === targetMeta.groupId) {
+            }
           }
 
           // 1. 对于顶层级进行拖拽, 顶层进行排序

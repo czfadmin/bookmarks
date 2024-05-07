@@ -437,6 +437,11 @@
           "type": "boolean",
           "default": false,
           "description": "%bookmark-manager.autoSwitchSingleToMultiWithLineWrap%"
+        },
+        "bookmark-manager.ignoreFolders": {
+          "type": "array",
+          "default": [],
+          "description": "%bookmark-manager.ignoreFolders%"
         }
       }
     },

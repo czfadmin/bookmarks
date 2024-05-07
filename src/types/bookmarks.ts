@@ -6,18 +6,22 @@ import {IBookmark, IBookmarkGroup} from '../stores';
 export interface IBookmarkStoreInfo {
   version: string;
   workspace: string;
+
   /**
    * 更新日期
    */
   updatedDate: string;
+
   /**
    * 视图样式
    */
   viewType: string;
+
   /**
    * 分组类型
    */
   groupView: string;
+
   /**
    * 排序类型
    */
@@ -31,6 +35,7 @@ export interface IBookmarkStoreInfo {
    * 书签列表
    */
   bookmarks: IBookmark[];
+
   /**
    * 自定义分组类型
    */
@@ -61,3 +66,16 @@ export type BookmarksGroupedByCustomType = {
    */
   bookmarks: IBookmark[];
 };
+
+export enum BookmarkTreeItemCtxValueEnum {
+  BOOKMARK = 'bookmark',
+  CUSTOM = 'custom',
+  FILE = 'file',
+  WORKSPACE = 'workspace',
+  COLOR = 'color',
+}
+
+export enum BookmarkTypeEnum {
+  LINE = 'line',
+  SELECTION = 'selection',
+}
