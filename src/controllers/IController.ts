@@ -2,11 +2,11 @@ import {Event, Disposable} from 'vscode';
 import {
   BaseMeta,
   TreeViewGroupEnum,
-  TreeViewSortedTypeEnum,
+  TreeViewSortedEnum,
   TreeViewStyleEnum,
 } from '../types';
 import {UniversalStoreType} from './UniversalBookmarkController';
-import {IBookmarksStore} from '../stores';
+import {IBookmark, IBookmarksStore} from '../stores';
 
 export default interface IController extends Disposable {
   get store(): IBookmarksStore | UniversalStoreType | undefined;
@@ -33,5 +33,7 @@ export default interface IController extends Disposable {
   refresh(): void;
   changeViewType(viewType: TreeViewStyleEnum): void;
 
-  changeSortType(sortType: TreeViewSortedTypeEnum): void;
+  changeSortType(sortType: TreeViewSortedEnum): void;
+
+  updateBookmarkSortedInfo(bookmark: IBookmark, idx: number): void;
 }

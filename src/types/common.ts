@@ -28,8 +28,11 @@ export enum TreeViewStyleEnum {
 /**
  * 视图排序方式
  */
-export enum TreeViewSortedTypeEnum {
+export enum TreeViewSortedEnum {
   LINENUMBER = 'linenumber',
+  /**
+   * 当选择自定义排序的时候, 优先级最高, 将忽略其他排序方式
+   */
   CUSTOM = 'custom',
   CREATED_TIME = 'createdTime',
   UPDATED_TIME = 'updatedTime',

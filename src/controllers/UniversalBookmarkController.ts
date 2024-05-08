@@ -3,12 +3,13 @@ import {
   BaseMeta,
   BookmarkColor,
   TreeViewGroupEnum,
-  TreeViewSortedTypeEnum,
+  TreeViewSortedEnum,
   TreeViewStyleEnum,
 } from '../types';
 import {generateUUID} from '../utils';
 import IController from './IController';
 import {ServiceManager} from '../services/ServiceManager';
+import {_NotCustomized} from 'mobx-state-tree';
 export const UNIVERSAL_STORE_KEY = 'bookmark-manager.universal';
 export type UniversalBookmarkType = 'file' | 'link' | 'command' | 'code';
 
@@ -63,10 +64,8 @@ export default class UniversalBookmarkController implements IController {
   private _onDidChangeEvent: EventEmitter<void> = new EventEmitter<void>();
 
   private _serviceManager: ServiceManager;
-  public sortedType: Omit<
-    TreeViewSortedTypeEnum,
-    TreeViewSortedTypeEnum.LINENUMBER
-  > = TreeViewSortedTypeEnum.CREATED_TIME;
+  public sortedType: Omit<TreeViewSortedEnum, TreeViewSortedEnum.LINENUMBER> =
+    TreeViewSortedEnum.CREATED_TIME;
   public onDidChangeEvent: Event<void> = this._onDidChangeEvent.event;
 
   get globalState() {
@@ -98,6 +97,9 @@ export default class UniversalBookmarkController implements IController {
         this._context.globalState.get<UniversalStoreType>(UNIVERSAL_STORE_KEY);
     }
     this._initial();
+  }
+  updateBookmarkSortedInfo(bookmark: any, idx: number): void {
+    throw new Error('Method not implemented.');
   }
   get viewType(): TreeViewStyleEnum {
     return TreeViewStyleEnum.LIST;
@@ -179,7 +181,7 @@ export default class UniversalBookmarkController implements IController {
   }
   changeViewType(viewType: TreeViewStyleEnum): void {}
 
-  changeSortType(sortType: TreeViewSortedTypeEnum): void {
+  changeSortType(sortType: TreeViewSortedEnum): void {
     this.sortedType = sortType;
   }
 }

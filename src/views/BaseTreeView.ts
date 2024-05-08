@@ -35,7 +35,7 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
 
   private _draggingSource: T[] = [];
 
-  private _serviceManager: ServiceManager;
+  private _sm: ServiceManager;
   get disposables() {
     return this._disposables;
   }
@@ -55,14 +55,14 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
   constructor(viewName: string, provider: BaseTreeProvider<T, C>) {
     this._controller = provider.controller;
     this._provider = provider;
-    this._serviceManager = resolveServiceManager();
+    this._sm = resolveServiceManager();
 
     this._dndController = this._buildDndController();
     this._bookmarkTreeView = window.createTreeView(viewName, {
       treeDataProvider: this._provider,
       showCollapseAll: true,
       canSelectMany: false,
-      dragAndDropController: this._dndController,
+      dragAndDropController: this._buildDndController(),
     });
   }
 
@@ -81,7 +81,7 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
         }
 
         // 按照颜色进行分类时 支持拖拽调整颜色, 拖拽调整顺序
-        if (self._controller.groupView === 'color') {
+        if (self._controller.groupView === TreeViewGroupEnum.COLOR) {
           // 整个树进行拖拽
           if (
             draggedSource.meta.bookmarks &&
@@ -160,20 +160,20 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
             targetMeta.group.setSortedIndex(sourceGroupIndex);
           }
           // TODO: 同组进行排序
-          const sourceMeta = draggedSource.meta;
-          const targetMeta = target.meta;
+          const sourceMeta = draggedSource.meta as IBookmark;
+          const targetMeta = target.meta as IBookmark;
+
           if (
-            self._controller.groupView === TreeViewGroupEnum.CUSTOM &&
             targetContextValue === BookmarkTreeItemCtxValueEnum.BOOKMARK &&
             sourceContextValue === BookmarkTreeItemCtxValueEnum.BOOKMARK
           ) {
             if (sourceMeta.groupId === targetMeta.groupId) {
+              self._controller.updateBookmarkSortedInfo(
+                sourceMeta,
+                targetMeta.sortedInfo[self._controller.groupView],
+              );
             }
           }
-
-          // 1. 对于顶层级进行拖拽, 顶层进行排序
-          // 2. 第二层级中 进行排序
-          // console.log(draggedSource, target);
         }
       },
     };

@@ -53,7 +53,16 @@ export const Bookmark = types
       sortedIndex: -1,
     }),
     groupId: types.optional(types.string, DEFAULT_BOOKMARK_GROUP_ID),
-    sortedInfo: types.maybeNull(SortedInfoType),
+    /**
+     * 用于存储在各个分组情况下的分组中的排序索引
+     */
+    sortedInfo: types.optional(SortedInfoType, {
+      color: -1,
+      custom: -1,
+      default: -1,
+      file: -1,
+      workspace: -1,
+    }),
   })
   .views(self => {
     return {
@@ -178,6 +187,7 @@ export const Bookmark = types
     function updateSortedInfo(key: keyof TSortedInfo, value: number) {
       if (self.sortedInfo) {
         self.sortedInfo[key] = value;
+        // 更新同组中数据排序索引
       }
     }
 

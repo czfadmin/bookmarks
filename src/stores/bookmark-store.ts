@@ -1,4 +1,4 @@
-import {Instance, types} from 'mobx-state-tree';
+import {IMapType, Instance, types} from 'mobx-state-tree';
 import {l10n, Uri, window, workspace, WorkspaceFolder} from 'vscode';
 import {
   createHoverMessage,
@@ -9,7 +9,7 @@ import {
   BookmarksGroupedByCustomType,
   BookmarksGroupedByFileType,
   TreeViewGroupEnum,
-  TreeViewSortedTypeEnum,
+  TreeViewSortedEnum,
   TreeViewStyleEnum,
 } from '../types';
 import {registerExtensionCustomContextByKey} from '../context';
@@ -21,18 +21,15 @@ import {
 } from './bookmark';
 import {BookmarkGroup, IBookmarkGroup} from './bookmark-group';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
+import {isProxy} from 'util/types';
 import {DEFAULT_BOOKMARK_COLOR} from '../constants';
 
-const BookmarkColorGroupModel = types.model('BookmarkColorModel', {
-  name: types.optional(types.string, DEFAULT_BOOKMARK_COLOR),
+const BookmarkGroupDataModel = types.model('BookmarkGroupDataModel', {
+  id: types.string,
   sortedIndex: types.optional(types.number, -1),
 });
 
-export type BookmarkColorGroupModelType = Instance<
-  typeof BookmarkColorGroupModel
->;
-
-const BookmarkFileGroupModel = types.model('BookmarkFileGroupModel', {
+const BookmarkGroupInfoModel = types.model('BookmarkGroupInfoModel', {
   name: types.enumeration([
     TreeViewGroupEnum.FILE,
     TreeViewGroupEnum.DEFAULT,
@@ -40,29 +37,14 @@ const BookmarkFileGroupModel = types.model('BookmarkFileGroupModel', {
     TreeViewGroupEnum.WORKSPACE,
     TreeViewGroupEnum.FILE,
   ]),
-  sortedIndex: types.optional(types.number, -1),
+  data: types.array(BookmarkGroupDataModel),
 });
 
-export type BookmarkFileGroupModelType = Instance<
-  typeof BookmarkFileGroupModel
+export type BookmarkGroupDataModelType = Instance<
+  typeof BookmarkGroupDataModel
 >;
-
-const BookmarkWorkspaceGroupModel = types.model('BookmarkWorkspaceGroupModel', {
-  name: types.string,
-  sortedIndex: types.optional(types.number, -1),
-});
-
-export type BookmarkWorkspaceGroupModelType = Instance<
-  typeof BookmarkWorkspaceGroupModel
->;
-
-const BookmarkCustomGroupModel = types.model('BookmarkCustomGroupModel', {
-  name: types.string,
-  sortedIndex: types.optional(types.number, -1),
-});
-
-export type BookmarkCustomGroupModelType = Instance<
-  typeof BookmarkCustomGroupModel
+export type BookmarkGroupInfoModelType = Instance<
+  typeof BookmarkGroupInfoModel
 >;
 
 export const BookmarksStore = types
@@ -92,33 +74,19 @@ export const BookmarksStore = types
     ),
     sortedType: types.optional(
       types.enumeration([
-        TreeViewSortedTypeEnum.LINENUMBER,
-        TreeViewSortedTypeEnum.CUSTOM,
-        TreeViewSortedTypeEnum.CREATED_TIME,
-        TreeViewSortedTypeEnum.UPDATED_TIME,
+        TreeViewSortedEnum.LINENUMBER,
+        TreeViewSortedEnum.CUSTOM,
+        TreeViewSortedEnum.CREATED_TIME,
+        TreeViewSortedEnum.UPDATED_TIME,
       ]),
-      TreeViewSortedTypeEnum.LINENUMBER,
+      TreeViewSortedEnum.LINENUMBER,
     ),
     /**
      * 代表所有的group类型,暂时不考虑其他分组视图中再次以group分组的情况(后续可能会支持), 用户自定义的分组类型, 如果在工作区间
      */
     groups: types.optional(types.array(BookmarkGroup), []),
-    /**
-     * 按颜色分组的分组信息
-     */
-    colorsGroupInfo: types.array(BookmarkColorGroupModel),
-    /**
-     * 按工作区间分组的分组信息
-     */
-    workspaceGroupInfo: types.array(BookmarkWorkspaceGroupModel),
-    /**
-     * 按文件分组的分组信息
-     */
-    fileGroupInfo: types.array(BookmarkFileGroupModel),
-    /**
-     * 按自定义分组的分组信息
-     */
-    customGroupInfo: types.array(BookmarkCustomGroupModel),
+
+    groupInfo: types.array(BookmarkGroupInfoModel),
   })
   .views(self => {
     return {
@@ -149,7 +117,7 @@ export const BookmarksStore = types
           bookmarks: sortBookmarksByLineNumber(it.bookmarks),
         }));
       },
-      get bookmarksGroupedByColor() {
+      get bookmarksGroupedByColor(): BookmarksGroupedByColorType[] {
         const grouped: BookmarksGroupedByColorType[] = [];
         self.bookmarks.forEach(it => {
           const existed = grouped.find(item => item.color === it.color);
@@ -182,7 +150,7 @@ export const BookmarksStore = types
        *
        * }
        */
-      get bookmarksGroupedByWorkspace() {
+      get bookmarksGroupedByWorkspace(): BookmarksGroupedByWorkspaceType[] {
         const grouped: BookmarksGroupedByWorkspaceType[] = [];
         self.bookmarks.forEach(it => {
           const existed = grouped.find(
@@ -272,6 +240,23 @@ export const BookmarksStore = types
     };
   })
   .actions(self => {
+    function addGroupInfoHelper(
+      groupType: TreeViewGroupEnum,
+      item: BookmarkGroupDataModelType,
+    ) {
+      const existed = self.groupInfo.find(it => it.name === groupType);
+
+      if (!existed) {
+        self.groupInfo.push({
+          name: groupType,
+          data: [item],
+        });
+        return;
+      }
+
+      existed.data.push(item);
+    }
+
     function createBookmark(bookmark: any) {
       let _bookmark;
       const {
@@ -294,14 +279,42 @@ export const BookmarksStore = types
             sortedIndex: -1,
             bookmarkSortedIndex: -1,
           };
+      const fsPath = workspace.asRelativePath(fileUri.fsPath, false);
+
+      const idxInColorGroup =
+        self.bookmarksGroupedByColor.find(
+          it => it.color === bookmark.customColor.name,
+        )?.bookmarks.length || 0;
+
+      const idxInFileGroup =
+        self.bookmarksGroupedByFile.find(it => it.fileId === fsPath)?.bookmarks
+          .length || 0;
+
+      const idxInCustomGroup =
+        self.bookmarksGroupedByCustom.find(it => it.id === bookmark.groupId)
+          ?.bookmarks.length || 0;
+
+      let idxInWorkspaceGroup = 0;
+      const workspaceGroup = self.bookmarksGroupedByWorkspace.find(it =>
+        it.files.find(f => f.fileId === fsPath),
+      );
+      if (!workspaceGroup) {
+        idxInWorkspaceGroup = 0;
+      } else {
+        idxInWorkspaceGroup =
+          workspaceGroup.files.find(it => it.fileId === fsPath)?.bookmarks
+            .length || 0;
+      }
+
       rangesOrOptions.hoverMessage = createHoverMessage(bookmark, true, true);
+
       _bookmark = Bookmark.create({
         id: id || generateUUID(),
         label,
         description,
         customColor,
         fileUri: {
-          fsPath: workspace.asRelativePath(fileUri.fsPath, false),
+          fsPath,
         },
         type,
         selectionContent,
@@ -313,9 +326,61 @@ export const BookmarksStore = types
         rangesOrOptions: rangesOrOptions,
         createdAt,
         groupId: bookmark.groupId || DEFAULT_BOOKMARK_GROUP_ID,
+        sortedInfo: {
+          color: idxInColorGroup,
+          custom: idxInCustomGroup,
+          default: idxInFileGroup,
+          file: idxInFileGroup,
+          workspace: idxInWorkspaceGroup,
+        },
       });
+
+      const colorGroupInfo = self.groupInfo.find(
+        it => it.name === TreeViewGroupEnum.COLOR,
+      );
+
+      // 表示当前颜色组信息中不存在, 或则颜色组信息不存在此颜色, 需要追加到颜色组信息
+      if (
+        !colorGroupInfo ||
+        !colorGroupInfo.data.find(it => it.id === _bookmark.customColor?.name)
+      ) {
+        addColorsGroupInfo({
+          id: _bookmark.customColor.name,
+          sortedIndex: colorGroupInfo ? colorGroupInfo.data.length : 0,
+        });
+      }
+
+      const fileGroupInfo = self.groupInfo.find(
+        it => it.name === TreeViewGroupEnum.FILE,
+      );
+
+      if (
+        !fileGroupInfo ||
+        !fileGroupInfo.data.find(it => it.id === _bookmark.fileId)
+      ) {
+        addFileGroupInfo({
+          id: _bookmark.fileId,
+          sortedIndex: fileGroupInfo ? fileGroupInfo.data.length : 0,
+        });
+      }
+
+      const wsGroupInfo = self.groupInfo.find(
+        it => it.name === TreeViewGroupEnum.WORKSPACE,
+      );
+
+      if (
+        !wsGroupInfo ||
+        !wsGroupInfo.data.find(it => it.id === _bookmark.workspaceFolder.name)
+      ) {
+        addFileGroupInfo({
+          id: _bookmark.workspaceFolder.name,
+          sortedIndex: wsGroupInfo ? wsGroupInfo.data.length : 0,
+        });
+      }
+
       return _bookmark;
     }
+
     function add(bookmark: IBookmark) {
       if (self.bookmarks.find(it => it.id === bookmark.id)) {
         return;
@@ -352,10 +417,15 @@ export const BookmarksStore = types
     function addBookmarks(bookmarks: any[]) {
       let _bookmarks: IBookmark[] = [];
       for (let bookmark of bookmarks) {
-        if (_bookmarks.find(it => it.id === bookmark.id)) {
+        if (self.bookmarks.find(it => it.id === bookmark.id)) {
           continue;
         }
-        _bookmarks.push(createBookmark(bookmark));
+
+        if (isProxy(bookmark)) {
+          _bookmarks.push(bookmark);
+        } else {
+          _bookmarks.push(createBookmark(bookmark));
+        }
       }
 
       self.bookmarks.push(..._bookmarks);
@@ -473,7 +543,7 @@ export const BookmarksStore = types
       self.groupView = groupView;
     }
 
-    function updateSortedType(sortedType: TreeViewSortedTypeEnum) {
+    function updateSortedType(sortedType: TreeViewSortedEnum) {
       if (self.sortedType === sortedType) {
         return;
       }
@@ -567,40 +637,30 @@ export const BookmarksStore = types
 
     function addGroupInfo(
       groupType: TreeViewGroupEnum,
-      info:
-        | BookmarkColorGroupModelType[]
-        | BookmarkWorkspaceGroupModelType[]
-        | BookmarkFileGroupModelType[]
-        | BookmarkCustomGroupModelType[],
+      data: BookmarkGroupDataModelType[],
     ) {
-      switch (groupType) {
-        case TreeViewGroupEnum.COLOR:
-          break;
-        case TreeViewGroupEnum.DEFAULT:
-        case TreeViewGroupEnum.FILE:
-          break;
-        case TreeViewGroupEnum.WORKSPACE:
-          break;
-        case TreeViewGroupEnum.CUSTOM:
-          break;
-      }
+      self.groupInfo.push({
+        name: groupType,
+        data,
+      });
     }
 
-    function addColorsGroupInfo(item: BookmarkColorGroupModelType) {
-      self.colorsGroupInfo.push(item);
+    function addColorsGroupInfo(info: BookmarkGroupDataModelType) {
+      addGroupInfoHelper(TreeViewGroupEnum.COLOR, info);
     }
 
-    function addWorkspaceGroupInfo(item: BookmarkWorkspaceGroupModelType) {
-      self.workspaceGroupInfo.push(item);
+    function addWorkspaceGroupInfo(info: BookmarkGroupDataModelType) {
+      addGroupInfoHelper(TreeViewGroupEnum.WORKSPACE, info);
     }
 
-    function addFileGroupInfo(item: BookmarkFileGroupModelType) {
-      self.fileGroupInfo.push(item);
+    function addFileGroupInfo(info: BookmarkGroupDataModelType) {
+      addGroupInfoHelper(TreeViewGroupEnum.FILE, info);
     }
 
-    function addCustomroupInfo(item: BookmarkCustomGroupModelType) {
-      self.customGroupInfo.push(item);
-    }
+    /**
+     * 已经通过之前groups字段实现
+     */
+    function addCustomroupInfo(info: BookmarkGroupDataModelType) {}
 
     function afterCreate() {}
 

@@ -1,11 +1,5 @@
-import {
-  BookmarkColorGroupModelType,
-  BookmarkCustomGroupModelType,
-  BookmarkFileGroupModelType,
-  BookmarkWorkspaceGroupModelType,
-  IBookmark,
-  IBookmarkGroup,
-} from '../stores';
+import {BookmarkGroupInfoModelType, IBookmark, IBookmarkGroup} from '../stores';
+import {TreeViewGroupEnum} from './common';
 
 /**
  * 表示保存到`bookmark-manager.json`文件类型
@@ -33,6 +27,7 @@ export interface IBookmarkStoreInfo {
    * 排序类型
    */
   sortedType: string;
+
   /**
    * @deprecated 使用bookmarks字段代替
    */
@@ -51,13 +46,7 @@ export interface IBookmarkStoreInfo {
     'id' | 'label' | 'sortedIndex' | 'activeStatus' | 'workspace'
   >[];
 
-  colorsGroupInfo: BookmarkColorGroupModelType[];
-
-  workspaceGroupInfo: BookmarkFileGroupModelType[];
-
-  fileGroupInfo: BookmarkWorkspaceGroupModelType[];
-
-  customGroupInfo: BookmarkCustomGroupModelType[];
+  groupInfo?: BookmarkGroupInfoModelType[];
 }
 
 /**
