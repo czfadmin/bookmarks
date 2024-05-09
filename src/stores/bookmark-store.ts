@@ -23,7 +23,6 @@ import {
 import {BookmarkGroup, IBookmarkGroup} from './bookmark-group';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
 import {isProxy} from 'util/types';
-import {DEFAULT_BOOKMARK_COLOR} from '../constants';
 
 const BookmarkGroupDataModel = types.model('BookmarkGroupDataModel', {
   id: types.string,
@@ -277,7 +276,6 @@ export const BookmarksStore = types
         ? bookmark.customColor
         : {
             name: bookmark.color || 'default',
-            sortedIndex: -1,
           };
       const fsPath = workspace.asRelativePath(fileUri.fsPath, false);
 
@@ -287,8 +285,8 @@ export const BookmarksStore = types
         )?.bookmarks.length || 0;
 
       const idxInFileGroup =
-        self.bookmarksGroupedByFile.find(it => it.fileId === fsPath)?.bookmarks
-          .length || 0;
+        self.bookmarksGroupedByFile.find(it => it.fileUri.fsPath === fsPath)
+          ?.bookmarks.length || 0;
 
       const idxInCustomGroup =
         self.bookmarksGroupedByCustom.find(it => it.id === bookmark.groupId)
@@ -296,17 +294,15 @@ export const BookmarksStore = types
 
       let idxInWorkspaceGroup = 0;
       const workspaceGroup = self.bookmarksGroupedByWorkspace.find(it =>
-        it.files.find(f => f.fileId === fsPath),
+        it.files.find(f => f.fileUri.fsPath === fsPath),
       );
       if (!workspaceGroup) {
         idxInWorkspaceGroup = 0;
       } else {
         idxInWorkspaceGroup =
-          workspaceGroup.files.find(it => it.fileId === fsPath)?.bookmarks
-            .length || 0;
+          workspaceGroup.files.find(it => it.fileUri.fsPath === fsPath)
+            ?.bookmarks.length || 0;
       }
-
-      rangesOrOptions.hoverMessage = createHoverMessage(bookmark, true, true);
 
       _bookmark = BookmarkProcessorModel.create({
         id: id || generateUUID(),
@@ -354,12 +350,9 @@ export const BookmarksStore = types
         it => it.name === TreeViewGroupEnum.FILE,
       );
 
-      if (
-        !fileGroupInfo ||
-        !fileGroupInfo.data.find(it => it.id === _bookmark.fileId)
-      ) {
+      if (!fileGroupInfo || !fileGroupInfo.data.find(it => it.id === fsPath)) {
         addFileGroupInfo({
-          id: _bookmark.fileId,
+          id: fsPath,
           sortedIndex: fileGroupInfo ? fileGroupInfo.data.length : 0,
         });
       }

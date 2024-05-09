@@ -168,7 +168,7 @@ export const Bookmark = types
      * @param idx
      */
     function updateColorSortedIndex(idx: number) {
-      // self.customColor.sortedIndex = idx;
+      self.sortedInfo.color = idx;
     }
 
     /**
@@ -176,7 +176,7 @@ export const Bookmark = types
      * @param idx
      */
     function updateWorkspaceSortedIndex(idx: number) {
-      // self.workspaceFolder.sortedIndex = idx;
+      self.sortedInfo.workspace = idx;
     }
 
     /**
@@ -184,7 +184,8 @@ export const Bookmark = types
      * @param idx
      */
     function updateFileSortedIndex(idx: number) {
-      // self.fileUri.sortedIndex = idx;
+      self.sortedInfo.file = idx;
+      self.sortedInfo.default = idx;
     }
 
     /**
@@ -199,13 +200,7 @@ export const Bookmark = types
       }
     }
 
-    function afterCreate() {
-      // self.rangesOrOptions.hoverMessage = createHoverMessage(
-      //   self as IBookmark,
-      //   true,
-      //   true,
-      // );
-    }
+    function afterCreate() {}
 
     return {
       afterCreate,
@@ -234,7 +229,7 @@ export const BookmarkProcessorModel: ISnapshotProcessor<
   SnapshotIn<typeof Bookmark>,
   SnapshotOut<typeof Bookmark>
 > = types.snapshotProcessor(Bookmark, {
-  preProcessor(snapshot: SnapshotIn<typeof Bookmark>) {
+  preProcessor(snapshot: SnapshotIn<IBookmark>) {
     console.log(snapshot);
     return {
       ...snapshot,
@@ -243,6 +238,9 @@ export const BookmarkProcessorModel: ISnapshotProcessor<
         hoverMessage: createHoverMessage(snapshot as IBookmark, true, true),
       },
     } as unknown as SnapshotOut<typeof Bookmark>;
+  },
+  postProcessor(snapshot: SnapshotOut<IBookmark>, node) {
+    return snapshot;
   },
 });
 
