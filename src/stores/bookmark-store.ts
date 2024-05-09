@@ -599,6 +599,7 @@ export const BookmarksStore = types
           }),
         );
       }
+      self.groupInfo.clear();
     }
 
     /**

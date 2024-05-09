@@ -13,7 +13,14 @@ import {
   window,
   workspace,
 } from 'vscode';
-import {IDisposer, destroy, onSnapshot} from 'mobx-state-tree';
+
+import {
+  IDisposer,
+  applySnapshot,
+  destroy,
+  getSnapshot,
+  onSnapshot,
+} from 'mobx-state-tree';
 import {fileURLToPath} from 'node:url';
 
 import {IDisposable} from '../utils';
@@ -46,6 +53,8 @@ import {
   BookmarksGroupedByFileType,
 } from '../types';
 import IController from './IController';
+import {isProxy} from 'node:util/types';
+import {LoggerService} from '../services';
 
 export default class BookmarksController implements IController {
   private _context: ExtensionContext;
@@ -62,6 +71,8 @@ export default class BookmarksController implements IController {
   private _configService: ConfigService;
 
   private _serviceManager: ServiceManager;
+
+  private _logger: LoggerService;
 
   /**
    * 表示第一次创建存储文件
@@ -141,6 +152,7 @@ export default class BookmarksController implements IController {
     this._serviceManager = serviceManager;
     this._configService = this._serviceManager.configService;
     this._configuration = this._configService.configuration;
+    this._logger = new LoggerService(BookmarksController.name);
     this._initial();
   }
 
@@ -175,34 +187,47 @@ export default class BookmarksController implements IController {
 
     if (
       (!workspace.workspaceFolders || workspace.workspaceFolders!.length < 2) &&
-      this.groupView !== TreeViewGroupEnum.DEFAULT
+      this.groupView === TreeViewGroupEnum.WORKSPACE
     ) {
       this._store.updateGroupView(TreeViewGroupEnum.DEFAULT);
     }
 
-    this._resolveDatastoreFromStoreFile();
+    this._resolveDataFromStoreFile();
     // 当从 `bookmark-manager.json`文件中读取, 直接刷新返回
     if (!this._configuration.createJsonFile) {
       // 从state中读取数据
-      store = this.workspaceState.get<any>(EXTENSION_ID);
-      if (!store) {
-        store = this._store;
-      } else if (store.bookmarks && store.bookmarks.length) {
-        this._store.addBookmarks(store.bookmarks);
+      try {
+        store = this.workspaceState.get<any>(EXTENSION_ID);
+        if (!store) {
+          store = this._store;
+        }
+
+        applySnapshot(this._store, isProxy(store) ? getSnapshot(store) : store);
+        if (!this._store.groups.length) {
+          this._store.addGroups([]);
+        }
+
+        this._logger.log(getSnapshot(this._store));
+      } catch (error) {
+        this._logger.error(error);
       }
 
       // 删除 存储文件
       this._deleteStoreFiles();
     } else {
-      // 从state中读取数据, 并移除state中的数据
       store = this.workspaceState.get<any>(EXTENSION_ID);
-      this.workspaceState.update(EXTENSION_ID, null);
+      // 从state中读取数据, 并移除state中的数据
+      if (store) {
+        this.workspaceState.update(EXTENSION_ID, null);
+      }
     }
-    // 手动调用一次保存, 因为此时store的快照未被监听
+
     this.save();
+
     // 监听mst的store的快照, 当快照发生变化时, 将数据保存到存储文件中
     this._storeDisposer = onSnapshot(this._store, snapshot => {
       this.save();
+      this._logger.log(getSnapshot(this._store));
     });
   }
 
@@ -482,7 +507,7 @@ export default class BookmarksController implements IController {
    * 从文件中读取书签数据
    * @returns []
    */
-  private _resolveDatastoreFromStoreFile() {
+  private _resolveDataFromStoreFile() {
     let ws;
     const wsFolders = workspace.workspaceFolders || [];
     let firstInit = true;

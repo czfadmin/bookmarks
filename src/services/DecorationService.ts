@@ -11,7 +11,6 @@ import {IDisposable} from '../utils';
 import resolveServiceManager, {ServiceManager} from './ServiceManager';
 import {resolveBookmarkController} from '../bootstrap';
 import BookmarksController from '../controllers/BookmarksController';
-import logger from '../utils/logger';
 import {IBookmark} from '../stores/bookmark';
 import {DEFAULT_BOOKMARK_COLOR} from '../constants';
 
