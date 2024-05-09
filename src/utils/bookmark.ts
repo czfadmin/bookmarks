@@ -313,7 +313,6 @@ export async function toggleBookmark(
     customColor: {
       name: chosenColor,
       sortedIndex: -1,
-      bookmarkSortedIndex: -1,
     },
     description: '',
     fileUri: editor.document.uri,

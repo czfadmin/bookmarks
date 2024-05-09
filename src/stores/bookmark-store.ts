@@ -15,6 +15,7 @@ import {
 import {registerExtensionCustomContextByKey} from '../context';
 import {
   Bookmark,
+  BookmarkProcessorModel,
   BookmarksGroupedByColorType,
   BookmarksGroupedByWorkspaceType,
   IBookmark,
@@ -49,7 +50,7 @@ export type BookmarkGroupInfoModelType = Instance<
 
 export const BookmarksStore = types
   .model('BookmarksStore', {
-    bookmarks: types.optional(types.array(Bookmark), []),
+    bookmarks: types.optional(types.array(BookmarkProcessorModel), []),
     viewType: types.optional(
       types.enumeration([TreeViewStyleEnum.TREE, TreeViewStyleEnum.LIST]),
       TreeViewStyleEnum.TREE,
@@ -277,7 +278,6 @@ export const BookmarksStore = types
         : {
             name: bookmark.color || 'default',
             sortedIndex: -1,
-            bookmarkSortedIndex: -1,
           };
       const fsPath = workspace.asRelativePath(fileUri.fsPath, false);
 
@@ -308,7 +308,7 @@ export const BookmarksStore = types
 
       rangesOrOptions.hoverMessage = createHoverMessage(bookmark, true, true);
 
-      _bookmark = Bookmark.create({
+      _bookmark = BookmarkProcessorModel.create({
         id: id || generateUUID(),
         label,
         description,
@@ -372,7 +372,7 @@ export const BookmarksStore = types
         !wsGroupInfo ||
         !wsGroupInfo.data.find(it => it.id === _bookmark.workspaceFolder.name)
       ) {
-        addFileGroupInfo({
+        addWorkspaceGroupInfo({
           id: _bookmark.workspaceFolder.name,
           sortedIndex: wsGroupInfo ? wsGroupInfo.data.length : 0,
         });

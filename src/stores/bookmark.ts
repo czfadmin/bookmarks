@@ -1,4 +1,12 @@
-import {Instance, SnapshotIn, types} from 'mobx-state-tree';
+import {
+  IModelType,
+  Instance,
+  ISnapshotProcessor,
+  IType,
+  SnapshotIn,
+  SnapshotOut,
+  types,
+} from 'mobx-state-tree';
 import {DEFAULT_BOOKMARK_COLOR} from '../constants';
 import {Selection, Uri, WorkspaceFolder, workspace} from 'vscode';
 import {createHoverMessage} from '../utils';
@@ -191,7 +199,16 @@ export const Bookmark = types
       }
     }
 
+    function afterCreate() {
+      // self.rangesOrOptions.hoverMessage = createHoverMessage(
+      //   self as IBookmark,
+      //   true,
+      //   true,
+      // );
+    }
+
     return {
+      afterCreate,
       setProp,
       update,
       updateLabel,
@@ -208,5 +225,27 @@ export const Bookmark = types
       updateFileSortedIndex,
     };
   });
+
+/**
+ * 增加hooks, 将bookmark数据转换
+ */
+export const BookmarkProcessorModel: ISnapshotProcessor<
+  typeof Bookmark,
+  SnapshotIn<typeof Bookmark>,
+  SnapshotOut<typeof Bookmark>
+> = types.snapshotProcessor(Bookmark, {
+  preProcessor(snapshot: SnapshotIn<typeof Bookmark>) {
+    console.log(snapshot);
+    return {
+      ...snapshot,
+      rangesOrOptions: {
+        ...snapshot.rangesOrOptions,
+        hoverMessage: createHoverMessage(snapshot as IBookmark, true, true),
+      },
+    } as unknown as SnapshotOut<typeof Bookmark>;
+  },
+});
+
+export type IBookmarkProcessorModel = Instance<typeof BookmarkProcessorModel>;
 
 export type IBookmark = Instance<typeof Bookmark>;

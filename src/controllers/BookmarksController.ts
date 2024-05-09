@@ -203,6 +203,7 @@ export default class BookmarksController implements IController {
         }
 
         applySnapshot(this._store, isProxy(store) ? getSnapshot(store) : store);
+
         if (!this._store.groups.length) {
           this._store.addGroups([]);
         }

@@ -6,6 +6,6 @@ import {ServiceManager} from './ServiceManager';
  */
 export class MigrateService extends BaseService {
   constructor(sm: ServiceManager) {
-    super(sm);
+    super(MigrateService.name, sm);
   }
 }
