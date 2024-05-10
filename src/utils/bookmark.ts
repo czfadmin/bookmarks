@@ -29,6 +29,7 @@ import {IBookmark} from '../stores/bookmark';
 import {IBookmarkGroup} from '../stores';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
 import BookmarkTreeItem from '../providers/BookmarksTreeItem';
+import {EXTENSION_NAME} from '../constants';
 
 const REGEXP_NEWLINE = /(\r\n)|(\n)/g;
 /**
@@ -490,14 +491,35 @@ function appendMarkdown(
   markdownString: MarkdownString,
   showExtIcon: boolean = false,
 ) {
+  appendExtensionName(bookmark, markdownString, showExtIcon);
+  appendGroupInfo(bookmark, markdownString);
+  appendLabelOrDescription(bookmark, markdownString);
+  appendSelectionContent(bookmark, markdownString);
+}
+
+function appendExtensionName(
+  bookmark: Omit<IBookmark, 'id'>,
+  markdownString: MarkdownString,
+  showExtIcon: boolean = false,
+) {
   markdownString.appendMarkdown(
-    `### ${showExtIcon ? `$(bookmark~sync) Bookmarks\n#### ` : ''}${
-      bookmark.label || ''
-    }`,
+    `### ${showExtIcon ? `${bookmark.label || bookmark.description ? '$(tag-add)' : '$(bookmark~sync)'} ${EXTENSION_NAME}\n#### ` : ''}`,
   );
+}
+function appendLabelOrDescription(
+  bookmark: Omit<IBookmark, 'id'>,
+  markdownString: MarkdownString,
+) {
+  markdownString.appendMarkdown(`${bookmark.label || ''}`);
   if (bookmark.description) {
     markdownString.appendMarkdown(`\n${bookmark.description} `);
   }
+}
+
+function appendSelectionContent(
+  bookmark: Omit<IBookmark, 'id'>,
+  markdownString: MarkdownString,
+) {
   if (bookmark.selectionContent) {
     const code = resolveMarkdownLineNumber(
       bookmark.rangesOrOptions.range,
@@ -505,6 +527,19 @@ function appendMarkdown(
     );
     markdownString.appendCodeblock(code, bookmark.languageId || 'javascript');
   }
+}
+
+function appendGroupInfo(
+  bookmark: Omit<IBookmark, 'id'>,
+  markdownString: MarkdownString,
+) {
+  if (!bookmark.group) {
+    return;
+  }
+
+  markdownString.appendMarkdown(
+    `\t [${bookmark.group.label}](command:bookmark-manager.revealGroup?${bookmark.group.id}) `,
+  );
 }
 
 /**
@@ -751,7 +786,6 @@ export function updateLineBookmarkRangeWhenDocumentChange(
     rangesOrOptions: {
       ...bookmark.rangesOrOptions,
       range: selection as Range,
-      hoverMessage: createHoverMessage(bookmark, true, true),
     },
   });
 }

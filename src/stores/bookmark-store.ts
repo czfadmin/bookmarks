@@ -1,10 +1,12 @@
-import {IMapType, Instance, types} from 'mobx-state-tree';
-import {l10n, Uri, window, workspace, WorkspaceFolder} from 'vscode';
 import {
-  createHoverMessage,
-  generateUUID,
-  sortBookmarksByLineNumber,
-} from '../utils';
+  Instance,
+  ISnapshotProcessor,
+  SnapshotIn,
+  SnapshotOut,
+  types,
+} from 'mobx-state-tree';
+import {l10n, Uri, window, workspace, WorkspaceFolder} from 'vscode';
+import {generateUUID, sortBookmarksByLineNumber} from '../utils';
 import {
   BookmarksGroupedByCustomType,
   BookmarksGroupedByFileType,
@@ -14,7 +16,6 @@ import {
 } from '../types';
 import {registerExtensionCustomContextByKey} from '../context';
 import {
-  Bookmark,
   BookmarkProcessorModel,
   BookmarksGroupedByColorType,
   BookmarksGroupedByWorkspaceType,
@@ -304,6 +305,8 @@ export const BookmarksStore = types
             ?.bookmarks.length || 0;
       }
 
+      const groupId = bookmark.groupId || DEFAULT_BOOKMARK_GROUP_ID;
+
       _bookmark = BookmarkProcessorModel.create({
         id: id || generateUUID(),
         label,
@@ -321,7 +324,8 @@ export const BookmarksStore = types
         },
         rangesOrOptions: rangesOrOptions,
         createdAt,
-        groupId: bookmark.groupId || DEFAULT_BOOKMARK_GROUP_ID,
+        groupId,
+        group: groupId,
         sortedInfo: {
           color: idxInColorGroup,
           custom: idxInCustomGroup,
@@ -685,3 +689,32 @@ export const BookmarksStore = types
   });
 
 export type IBookmarksStore = Instance<typeof BookmarksStore>;
+
+export const BookmarksStoreProcessorModel: ISnapshotProcessor<
+  typeof BookmarksStore,
+  SnapshotIn<typeof BookmarksStore>,
+  SnapshotOut<typeof BookmarksStore>
+> = types.snapshotProcessor(BookmarksStore, {
+  preProcessor(
+    snapshot: SnapshotIn<IBookmarksStore>,
+  ): SnapshotOut<typeof BookmarksStore> {
+    if (!snapshot) {
+      return {
+        bookmarks: [],
+        viewType: TreeViewStyleEnum.TREE,
+        groupView: TreeViewGroupEnum.DEFAULT,
+        sortedType: TreeViewSortedEnum.LINENUMBER,
+        groups: [],
+        groupInfo: [],
+      };
+    }
+    return snapshot as SnapshotOut<IBookmarksStore>;
+  },
+  postProcessor(snapshot, node) {
+    return snapshot;
+  },
+});
+
+export type IBookmarksStoreProcessorModel = Instance<
+  typeof BookmarksStoreProcessorModel
+>;

@@ -365,3 +365,5 @@ export function showWalkthroughs(args: any) {
     '@ext:czfadmin.bookmark-manager',
   );
 }
+
+export function revealExplorer(args: any) {}

@@ -103,7 +103,7 @@ export default class BookmarkTreeItem extends BaseTreeItem {
    */
   private _createTooltips() {
     const meta = this.meta as IBookmark;
-    const hoverMessage = meta.rangesOrOptions.hoverMessage as
+    const hoverMessage = meta.prettierRangesOrOptions.hoverMessage as
       | MarkdownString
       | MarkdownString[]
       | string;

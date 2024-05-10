@@ -1,8 +1,8 @@
+import {BookmarkGroup} from './bookmark-group';
 import {
-  IModelType,
+  getParent,
   Instance,
   ISnapshotProcessor,
-  IType,
   SnapshotIn,
   SnapshotOut,
   types,
@@ -71,6 +71,21 @@ export const Bookmark = types
       file: -1,
       workspace: -1,
     }),
+
+    group: types.maybeNull(
+      types.reference(BookmarkGroup, {
+        get(identifier, parent: any) {
+          return (
+            (getParent(parent, 2) as any).groups.find(
+              (it: any) => it.id === identifier,
+            ) || null
+          );
+        },
+        set(value, parent) {
+          return value.id;
+        },
+      }),
+    ),
   })
   .views(self => {
     return {
@@ -105,6 +120,18 @@ export const Bookmark = types
           end.character,
         );
       },
+      /**
+       * 当label, range 以及description发生改变时, 调用此计算属性, 获取最新的hoverMessage
+       */
+      get prettierRangesOrOptions() {
+        const rangesOrOptions = {...self.rangesOrOptions};
+        rangesOrOptions.hoverMessage = createHoverMessage(
+          self as IBookmark,
+          true,
+          true,
+        );
+        return rangesOrOptions;
+      },
     };
   })
   .actions(self => {
@@ -114,35 +141,23 @@ export const Bookmark = types
     >(key: K, value: V) {
       self[key] = value;
     }
+
     function update(dto: Partial<Omit<IBookmark, 'id'>>) {
       Object.keys(dto).forEach(key => {
         // @ts-ignore
         setProp(key, dto[key]);
       });
+    }
 
-      updateRangesOrOptionsHoverMessage();
-    }
-    function updateRangesOrOptionsHoverMessage() {
-      const rangesOrOptions = {...self.rangesOrOptions};
-      rangesOrOptions.hoverMessage = createHoverMessage(
-        self as IBookmark,
-        true,
-        true,
-      );
-      self.rangesOrOptions = rangesOrOptions;
-    }
     function updateLabel(label: string) {
       self.label = label;
-      updateRangesOrOptionsHoverMessage();
     }
     function updateDescription(desc: string) {
       self.description = desc;
-      updateRangesOrOptionsHoverMessage();
     }
 
     function updateRangesOrOptions(rangesOrOptions: IDecorationOptionsType) {
       self.rangesOrOptions = rangesOrOptions;
-      updateRangesOrOptionsHoverMessage();
     }
 
     function updateColor(newColor: IMyColorType) {
@@ -209,7 +224,6 @@ export const Bookmark = types
       updateLabel,
       updateDescription,
       updateRangesOrOptions,
-      updateRangesOrOptionsHoverMessage,
       updateSelectionContent,
       updateFileUri,
       updateColor,
@@ -229,15 +243,8 @@ export const BookmarkProcessorModel: ISnapshotProcessor<
   SnapshotIn<typeof Bookmark>,
   SnapshotOut<typeof Bookmark>
 > = types.snapshotProcessor(Bookmark, {
-  preProcessor(snapshot: SnapshotIn<IBookmark>) {
-    console.log(snapshot);
-    return {
-      ...snapshot,
-      rangesOrOptions: {
-        ...snapshot.rangesOrOptions,
-        hoverMessage: createHoverMessage(snapshot as IBookmark, true, true),
-      },
-    } as unknown as SnapshotOut<typeof Bookmark>;
+  preProcessor(snapshot: SnapshotIn<IBookmark>): SnapshotOut<IBookmark> {
+    return snapshot as SnapshotOut<IBookmark>;
   },
   postProcessor(snapshot: SnapshotOut<IBookmark>, node) {
     return snapshot;

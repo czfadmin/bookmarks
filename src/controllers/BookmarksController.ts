@@ -41,7 +41,7 @@ import {
   IBookmarkGroup,
   IBookmarksStore,
 } from '../stores';
-import {BookmarksStore} from '../stores/bookmark-store';
+import {BookmarksStoreProcessorModel} from '../stores/bookmark-store';
 
 import {IBookmarkManagerConfigure} from '../stores/configure';
 import {
@@ -183,7 +183,7 @@ export default class BookmarksController implements IController {
 
   private async _initStore() {
     let store;
-    this._store = BookmarksStore.create();
+    this._store = BookmarksStoreProcessorModel.create();
 
     if (
       (!workspace.workspaceFolders || workspace.workspaceFolders!.length < 2) &&
@@ -527,6 +527,7 @@ export default class BookmarksController implements IController {
             viewType: TreeViewStyleEnum.TREE,
             groupView: TreeViewGroupEnum.DEFAULT,
             sortedType: TreeViewSortedEnum.LINENUMBER,
+            groupInfo: [],
           });
         }
         const storeContent = JSON.parse(content) as IBookmarkStoreInfo;
