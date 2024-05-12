@@ -313,10 +313,7 @@ export async function toggleBookmark(
   const bookmark: any = {
     type: bookmarkType,
     label,
-    customColor: {
-      name: chosenColor,
-      sortedIndex: -1,
-    },
+    color: chosenColor,
     description: '',
     fileUri: editor.document.uri,
     languageId: editor.document.languageId,

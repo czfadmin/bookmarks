@@ -452,7 +452,7 @@ export default class BookmarksController implements IController {
 
     // 3. 更新当前书签
     bookmark.updateSortedInfo(this.groupView, idx);
-    this._logger.debug(bookmarks.map(it => it.sortedInfo[this.groupView]));
+    this._logger.info(bookmarks.map(it => it.sortedInfo[this.groupView]));
   }
   /**
    * 将数据写入到`.vscode/bookmark.json`中
@@ -510,10 +510,12 @@ export default class BookmarksController implements IController {
         it.workspace === workspace.name ||
         _usedGroupdIds.includes(it.id),
     );
+    const updatedDate = new Date();
     const storeInfo: IBookmarkStoreInfo = {
       version: process.env.version!,
       workspace: workspace.name,
-      updatedDate: new Date().toLocaleDateString(),
+      updatedDate: updatedDate.toLocaleString(),
+      updatedDateTimespan: updatedDate.getTime(),
       viewType: this._store.viewType,
       groupView: this._store.groupView,
       sortedType: this._store.sortedType,

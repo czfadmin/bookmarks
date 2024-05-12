@@ -287,7 +287,7 @@ export const BookmarksStore = types
         label,
         description,
         type,
-        color = 'default',
+        color,
         selectionContent,
         languageId,
         workspaceFolder,
@@ -295,6 +295,11 @@ export const BookmarksStore = types
         createdAt,
         fileUri,
       } = bookmark;
+
+      let _color = color;
+      if (!color && bookmark.customColor) {
+        _color = bookmark.customColor.name;
+      }
       const fsPath = workspace.asRelativePath(fileUri.fsPath, false);
 
       const idxInColorGroup =
@@ -327,7 +332,7 @@ export const BookmarksStore = types
         id: id || generateUUID(),
         label,
         description,
-        color,
+        color: _color || 'default',
         fileUri: {
           fsPath,
         },
@@ -343,10 +348,10 @@ export const BookmarksStore = types
         groupId,
         group: groupId,
         sortedInfo: {
-          color: idxInColorGroup === 0 ? 0 : idxInColorGroup - 1,
-          custom: idxInCustomGroup === 0 ? 0 : idxInCustomGroup - 1,
-          default: idxInFileGroup === 0 ? 0 : idxInFileGroup - 1,
-          file: idxInFileGroup === 0 ? 0 : idxInFileGroup - 1,
+          color: idxInColorGroup,
+          custom: idxInCustomGroup,
+          default: idxInFileGroup,
+          file: idxInFileGroup,
           workspace: idxInWorkspaceGroup,
         },
       });
@@ -615,7 +620,7 @@ export const BookmarksStore = types
     }
 
     /**
-     * 根据分组类型对拖拽的内容进行更新索引
+     * TODO:根据分组类型对拖拽的内容进行更新索引
      * @param type
      * @param source
      * @param newIdx
@@ -634,18 +639,18 @@ export const BookmarksStore = types
         case TreeViewGroupEnum.COLOR:
         case TreeViewGroupEnum.DEFAULT:
         case TreeViewGroupEnum.FILE:
-        case TreeViewGroupEnum.CUSTOM:
-          bookmarks = (source as BookmarksGroupedByColorType).bookmarks;
+          // bookmarks = (source as BookmarksGroupedByColorType).bookmarks;
           break;
         case TreeViewGroupEnum.WORKSPACE:
           // TODO: 工作区间排序
-          return;
+          break;
+        case TreeViewGroupEnum.CUSTOM:
         default:
           return;
       }
-      if (!bookmarks) {
-        return;
-      }
+      // if (!bookmarks) {
+      //   return;
+      // }
     }
 
     function addGroupInfo(

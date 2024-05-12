@@ -249,6 +249,10 @@ export const BookmarkProcessorModel: ISnapshotProcessor<
 > = types.snapshotProcessor(Bookmark, {
   preProcessor(snapshot: SnapshotIn<IBookmark>): SnapshotOut<IBookmark> {
     return snapshot as SnapshotOut<IBookmark>;
+    // return {
+    //   ...snapshot,
+    //   color: snapshot.color || snapshot.customColor?.name || 'default',
+    // } as SnapshotOut<IBookmark>;
   },
   postProcessor(snapshot: SnapshotOut<IBookmark>, node) {
     return snapshot;

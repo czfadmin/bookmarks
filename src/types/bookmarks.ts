@@ -14,6 +14,11 @@ export interface IBookmarkStoreInfo {
   updatedDate: string;
 
   /**
+   * 更新日期时间戳
+   */
+  updatedDateTimespan: number;
+
+  /**
    * 视图样式
    */
   viewType: string;
