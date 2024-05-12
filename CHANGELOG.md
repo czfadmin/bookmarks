@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.0.34
+
+### Patch Changes
+
+- 支持自定义分组排序功能
+
 ## 0.0.33
 
 ### Patch Changes
