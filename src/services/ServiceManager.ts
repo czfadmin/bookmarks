@@ -21,7 +21,6 @@ let _serviceManager: ServiceManager;
 export class ServiceManager implements IServiceManager, IDisposable {
   readonly configService: ConfigService;
   readonly decorationService: DecorationService;
-
   readonly gutterService: GutterService;
   readonly workspaceService: WorkspaceService;
   readonly gitService: GitService;

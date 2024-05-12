@@ -13,12 +13,20 @@ import {
   window,
   workspace,
 } from 'vscode';
-import {IDisposer, destroy, onSnapshot} from 'mobx-state-tree';
+
+import {
+  IDisposer,
+  applySnapshot,
+  destroy,
+  getSnapshot,
+  onSnapshot,
+} from 'mobx-state-tree';
 import {fileURLToPath} from 'node:url';
 
 import {IDisposable} from '../utils';
 import {
   DEFAULT_BOOKMARK_COLOR,
+  DEFAULT_BOOKMARK_GROUP_ID,
   EXTENSION_ID,
   EXTENSION_STORE_FILE_NAME,
   EXTENSION_STORE_PATH,
@@ -28,23 +36,25 @@ import ConfigService from '../services/ConfigService';
 import {ServiceManager} from '../services/ServiceManager';
 import {
   BookmarksGroupedByColorType,
-  BookmarksGroupedByFileWithSortType,
   BookmarksGroupedByWorkspaceType,
   IBookmark,
   IBookmarkGroup,
   IBookmarksStore,
 } from '../stores';
-import {BookmarksStore} from '../stores/bookmark-store';
+import {BookmarksStoreProcessorModel} from '../stores/bookmark-store';
 
 import {IBookmarkManagerConfigure} from '../stores/configure';
 import {
-  TreeViewType,
-  TreeViewGroupType,
-  TreeViewSortedType,
+  TreeViewStyleEnum,
+  TreeViewSortedEnum,
   IBookmarkStoreInfo,
   BookmarksGroupedByCustomType,
+  TreeViewGroupEnum,
+  BookmarksGroupedByFileType,
 } from '../types';
 import IController from './IController';
+import {isProxy} from 'node:util/types';
+import {LoggerService} from '../services';
 
 export default class BookmarksController implements IController {
   private _context: ExtensionContext;
@@ -52,38 +62,6 @@ export default class BookmarksController implements IController {
   private _onDidChangeEvent = new EventEmitter<void>();
 
   private _store!: IBookmarksStore;
-
-  public get viewType(): TreeViewType {
-    return this._store.viewType as TreeViewType;
-  }
-
-  public get groupView(): TreeViewGroupType {
-    return this._store.groupView as TreeViewGroupType;
-  }
-
-  public get sortedType(): TreeViewSortedType {
-    return this._store.sortedType as TreeViewSortedType;
-  }
-
-  public get groupedBookmarks():
-    | BookmarksGroupedByFileWithSortType[]
-    | BookmarksGroupedByCustomType[]
-    | BookmarksGroupedByColorType[]
-    | BookmarksGroupedByWorkspaceType[] {
-    switch (this._store.groupView) {
-      case 'file':
-      case 'default':
-        return this._store.bookmarksGroupedByFile;
-      case 'color':
-        return this._store.bookmarksGroupedByColor;
-      case 'workspace':
-        return this._store.bookmarksGroupedByWorkspace;
-      case 'custom':
-        return this._store.getBookmarksGroupedByCustom;
-    }
-    return [];
-  }
-
   private _disposables: IDisposable[] = [];
 
   private _watcher: FileSystemWatcher | undefined;
@@ -93,6 +71,8 @@ export default class BookmarksController implements IController {
   private _configService: ConfigService;
 
   private _serviceManager: ServiceManager;
+
+  private _logger: LoggerService;
 
   /**
    * 表示第一次创建存储文件
@@ -135,11 +115,44 @@ export default class BookmarksController implements IController {
     return this._store?.groups || [];
   }
 
+  public get viewType(): TreeViewStyleEnum {
+    return this._store.viewType as TreeViewStyleEnum;
+  }
+
+  public get groupView(): TreeViewGroupEnum {
+    return this._store.groupView as TreeViewGroupEnum;
+  }
+
+  public get sortedType(): TreeViewSortedEnum {
+    return this._store.sortedType as TreeViewSortedEnum;
+  }
+
+  public get groupedBookmarks():
+    | BookmarksGroupedByFileType[]
+    | BookmarksGroupedByCustomType[]
+    | BookmarksGroupedByColorType[]
+    | BookmarksGroupedByWorkspaceType[] {
+    switch (this._store.groupView) {
+      case TreeViewGroupEnum.FILE:
+      case TreeViewGroupEnum.DEFAULT:
+        return this._store.bookmarksGroupedByFile;
+      case TreeViewGroupEnum.COLOR:
+        return this._store.bookmarksGroupedByColor;
+      case TreeViewGroupEnum.WORKSPACE:
+        return this._store.bookmarksGroupedByWorkspace;
+      case TreeViewGroupEnum.CUSTOM:
+        return this._store.bookmarksGroupedByCustom;
+      default:
+        return [];
+    }
+  }
+
   constructor(context: ExtensionContext, serviceManager: ServiceManager) {
     this._context = context;
     this._serviceManager = serviceManager;
     this._configService = this._serviceManager.configService;
     this._configuration = this._configService.configuration;
+    this._logger = new LoggerService(BookmarksController.name);
     this._initial();
   }
 
@@ -170,103 +183,53 @@ export default class BookmarksController implements IController {
 
   private async _initStore() {
     let store;
-    this._store = BookmarksStore.create();
+    this._store = BookmarksStoreProcessorModel.create();
 
     if (
       (!workspace.workspaceFolders || workspace.workspaceFolders!.length < 2) &&
-      this.groupView !== 'default'
+      this.groupView === TreeViewGroupEnum.WORKSPACE
     ) {
-      this._store.updateGroupView('default');
+      this._store.updateGroupView(TreeViewGroupEnum.DEFAULT);
     }
 
-    this._resolveDatastoreFromStoreFile();
+    this._resolveDataFromStoreFile();
     // 当从 `bookmark-manager.json`文件中读取, 直接刷新返回
     if (!this._configuration.createJsonFile) {
       // 从state中读取数据
-      store = this.workspaceState.get<any>(EXTENSION_ID);
-      if (!store) {
-        store = this._store;
-      } else if (store.bookmarks && store.bookmarks.length) {
-        for (let bookmark of store.bookmarks) {
-          const _bookmark = this._store.createBookmark(bookmark);
-          this._store.add(_bookmark);
+      try {
+        store = this.workspaceState.get<any>(EXTENSION_ID);
+        if (!store) {
+          store = this._store;
         }
+
+        applySnapshot(this._store, isProxy(store) ? getSnapshot(store) : store);
+
+        if (!this._store.groups.length) {
+          this._store.addGroups([]);
+        }
+
+        this._logger.log(getSnapshot(this._store));
+      } catch (error) {
+        this._logger.error(error);
+      }
+
+      // 删除 存储文件
+      this._deleteStoreFiles();
+    } else {
+      store = this.workspaceState.get<any>(EXTENSION_ID);
+      // 从state中读取数据, 并移除state中的数据
+      if (store) {
+        this.workspaceState.update(EXTENSION_ID, null);
       }
     }
+
+    this.save();
+
     // 监听mst的store的快照, 当快照发生变化时, 将数据保存到存储文件中
     this._storeDisposer = onSnapshot(this._store, snapshot => {
       this.save();
+      this._logger.debug(getSnapshot(this._store));
     });
-  }
-
-  /**
-   * 初始化文件监听器, 监听`bookmark-manager.json`的文件变化
-   */
-  private async _initialWatcher() {
-    const existedStoreFile = await workspace.findFiles(
-      '**/bookmark-manager.json',
-      '**​/node_modules/**',
-      10,
-    );
-    if (existedStoreFile.length && this._configuration.createJsonFile) {
-      if (this._watcher) {
-        this._watcher.dispose();
-      }
-      this._watcher = workspace.createFileSystemWatcher(
-        '**/.vscode/bookmark-manager.json',
-      );
-      this._watcher.onDidDelete(uri => {
-        if (!uri) {return;}
-        const wsFolder = workspace.getWorkspaceFolder(uri);
-        /**
-         * 清除指定的工作区间的书签
-         */
-        this._store.clearAll(wsFolder);
-      });
-      this._disposables.push(this._watcher);
-    }
-  }
-
-  /**
-   * 从文件中读取书签数据
-   * @returns []
-   */
-  private _resolveDatastoreFromStoreFile() {
-    let ws;
-    const wsFolders = workspace.workspaceFolders || [];
-    let firstInit = true;
-    for (ws of wsFolders) {
-      const storeFilePath = path.join(
-        ws.uri.fsPath,
-        `./${EXTENSION_STORE_PATH}`,
-      );
-      if (fs.existsSync(storeFilePath)) {
-        let content = fs.readFileSync(storeFilePath, 'utf-8');
-        if (!content || !content.length) {
-          content = JSON.stringify({
-            content: [],
-            bookmarks: [],
-            groups: [],
-            viewType: 'tree',
-            groupView: 'default',
-            sortedType: 'linenumber',
-          });
-        }
-        const storeContent = JSON.parse(content) as IBookmarkStoreInfo;
-        // 这时候要添加每个工作区间的文件夹中的书签和分组信息
-        if (firstInit) {
-          this._store.initStore(storeContent);
-          firstInit = false;
-        }
-        this._store.addGroups(storeContent.groups || []);
-        this._store.addBookmarks(
-          storeContent.content || storeContent.bookmarks || [],
-        );
-      }
-    }
-    this._needWarning = true;
-    // 手动调用一次保存, 因为此时store的快照未被监听
-    this.save();
   }
 
   add(bookmark: Partial<Omit<IBookmark, 'id'>>) {
@@ -276,7 +239,6 @@ export default class BookmarksController implements IController {
       ...bookmark,
       groupId: activedGroup?.id,
     });
-
     this._store.add(newBookmark);
   }
 
@@ -370,17 +332,17 @@ export default class BookmarksController implements IController {
     this._fire();
   }
 
-  changeSortType(sortType: TreeViewSortedType): void {
+  changeSortType(sortType: TreeViewSortedEnum): void {
     this._store.updateSortedType(sortType);
     this.refresh();
   }
 
-  changeViewType(viewType: TreeViewType) {
+  changeViewType(viewType: TreeViewStyleEnum) {
     this._store.udpateViewType(viewType);
     this.refresh();
   }
 
-  changeGroupView(groupType: TreeViewGroupType) {
+  changeGroupView(groupType: TreeViewGroupEnum) {
     this._store.updateGroupView(groupType);
     this.refresh();
   }
@@ -418,6 +380,84 @@ export default class BookmarksController implements IController {
     prevActivedGroup?.setActiveStatus(false);
 
     meta.setActiveStatus(true);
+  }
+
+  /**
+   * 更新指定书签的排序索引
+   * @param bookmark
+   * @param idx
+   */
+  updateBookmarkSortedInfo(bookmark: IBookmark, idx: number) {
+    let group:
+      | BookmarksGroupedByCustomType
+      | BookmarksGroupedByColorType
+      | BookmarksGroupedByFileType
+      | undefined;
+    switch (this._store.groupView) {
+      case TreeViewGroupEnum.CUSTOM:
+        group = (this.groupedBookmarks as BookmarksGroupedByCustomType[]).find(
+          it => it.id === bookmark.groupId,
+        );
+
+        break;
+
+      case TreeViewGroupEnum.COLOR:
+        group = (this.groupedBookmarks as BookmarksGroupedByColorType[]).find(
+          it => it.color === bookmark.color,
+        );
+        break;
+      case TreeViewGroupEnum.FILE:
+      case TreeViewGroupEnum.DEFAULT:
+        group = (this.groupedBookmarks as BookmarksGroupedByFileType[]).find(
+          it => it.fileUri.fsPath === bookmark.fileUri.fsPath,
+        );
+        break;
+      case TreeViewGroupEnum.WORKSPACE:
+        const ws = (
+          this.groupedBookmarks as BookmarksGroupedByWorkspaceType[]
+        ).find(it => it.workspace.name === bookmark.workspaceFolder.name);
+
+        group = ws?.files?.find(
+          it => it.fileUri.fsPath === bookmark.fileUri.fsPath,
+        );
+        break;
+      default:
+        break;
+    }
+
+    if (
+      !group ||
+      this.groupView === TreeViewGroupEnum.FILE ||
+      this.groupView === TreeViewGroupEnum.DEFAULT ||
+      this.groupView === TreeViewGroupEnum.WORKSPACE
+    ) {
+      return;
+    }
+
+    this._updateBookmarkSortedInfo(bookmark, group.bookmarks, idx);
+  }
+
+  private _updateBookmarkSortedInfo(
+    bookmark: IBookmark,
+    bookmarks: IBookmark[],
+    targetIdx: number,
+  ) {
+    const currentIdx = bookmark.sortedInfo[this.groupView];
+    if (currentIdx < targetIdx) {
+      for (let i = targetIdx; i > currentIdx; i--) {
+        const current = bookmarks[i];
+        current.updateSortedInfo(this.groupView, i - 1);
+      }
+    } else {
+      for (let i = targetIdx; i < currentIdx; i++) {
+        const current = bookmarks[i];
+        current.updateSortedInfo(this.groupView, i + 1);
+      }
+    }
+
+    // 3. 更新当前书签
+    bookmark.updateSortedInfo(this.groupView, targetIdx);
+    this._logger.warn(bookmarks.map(it => it.sortedInfo[this.groupView]));
   }
   /**
    * 将数据写入到`.vscode/bookmark.json`中
@@ -461,23 +501,32 @@ export default class BookmarksController implements IController {
     const saveBookmarks = this._store.bookmarks.filter(
       it => it.wsFolder?.uri.fsPath === workspace.uri.fsPath,
     );
-    // 可能使用了在其他公共区间船创建的分组
+    // 可能使用了在其他工作区间船创建的分组
     const _usedGroupdIds = saveBookmarks.map(it => it.groupId);
+
+    // 默认都要带上默认的分组, 避免首次切换到自定义分组的时候失败
+    if (!_usedGroupdIds.includes(DEFAULT_BOOKMARK_GROUP_ID)) {
+      _usedGroupdIds.push(DEFAULT_BOOKMARK_GROUP_ID);
+    }
+
     const groups = this._store.groups.filter(
       it =>
         !it.workspace ||
         it.workspace === workspace.name ||
         _usedGroupdIds.includes(it.id),
     );
+    const updatedDate = new Date();
     const storeInfo: IBookmarkStoreInfo = {
       version: process.env.version!,
       workspace: workspace.name,
-      updatedDate: new Date().toLocaleDateString(),
+      updatedDate: updatedDate.toLocaleString(),
+      updatedDateTimespan: updatedDate.getTime(),
       viewType: this._store.viewType,
       groupView: this._store.groupView,
       sortedType: this._store.sortedType,
       bookmarks: saveBookmarks,
       groups,
+      groupInfo: this._store.groupInfo,
     };
     return JSON.stringify(storeInfo);
   }
@@ -528,6 +577,94 @@ export default class BookmarksController implements IController {
     }
   }
 
+  /**
+   * 从文件中读取书签数据
+   * @returns []
+   */
+  private _resolveDataFromStoreFile() {
+    let ws;
+    const wsFolders = workspace.workspaceFolders || [];
+    let firstInit = true;
+    for (ws of wsFolders) {
+      const storeFilePath = path.join(
+        ws.uri.fsPath,
+        `./${EXTENSION_STORE_PATH}`,
+      );
+      if (fs.existsSync(storeFilePath)) {
+        let content = fs.readFileSync(storeFilePath, 'utf-8');
+
+        if (!content) {
+          content = JSON.stringify({
+            content: [],
+            bookmarks: [],
+            groups: [],
+            viewType: TreeViewStyleEnum.TREE,
+            groupView: TreeViewGroupEnum.DEFAULT,
+            sortedType: TreeViewSortedEnum.LINENUMBER,
+            groupInfo: [],
+          });
+        }
+
+        const storeContent = JSON.parse(content) as IBookmarkStoreInfo;
+        // const {version, updatedDate, updatedDateTimespan, ...rest} =
+        //   storeContent;
+
+        applySnapshot(this._store, {
+          ...storeContent,
+          bookmarks: storeContent.bookmarks || [],
+          groups: storeContent.groups || [],
+          groupInfo: storeContent.groupInfo || [],
+        } as any);
+
+        // 这时候要添加每个工作区间的文件夹中的书签和分组信息
+        if (firstInit) {
+          this._store.initStore(storeContent);
+          firstInit = false;
+        }
+      }
+    }
+    this._needWarning = true;
+  }
+
+  /**
+   * 初始化文件监听器, 监听`bookmark-manager.json`的文件变化
+   */
+  private async _initialWatcher() {
+    const existedStoreFile = await workspace.findFiles(
+      '**/bookmark-manager.json',
+      '**​/node_modules/**',
+      10,
+    );
+    if (existedStoreFile.length && this._configuration.createJsonFile) {
+      if (this._watcher) {
+        this._watcher.dispose();
+      }
+      this._watcher = workspace.createFileSystemWatcher(
+        '**/.vscode/bookmark-manager.json',
+      );
+      this._watcher.onDidDelete(uri => {
+        if (!uri) {
+          return;
+        }
+        const wsFolder = workspace.getWorkspaceFolder(uri);
+        /**
+         * 清除指定的工作区间的书签
+         */
+        this._store.clearAll(wsFolder);
+      });
+      this._disposables.push(this._watcher);
+    }
+  }
+
+  private _deleteStoreFiles() {
+    const workspaces = workspace.workspaceFolders || [];
+    for (let ws of workspaces) {
+      const file = path.join(ws.uri.fsPath, './.vscode/bookmark-manager.json');
+      if (fs.existsSync(file)) {
+        fs.rmSync(file);
+      }
+    }
+  }
   dispose(): void {
     this._disposables.filter(it => it).forEach(it => it.dispose());
     this._storeDisposer?.();

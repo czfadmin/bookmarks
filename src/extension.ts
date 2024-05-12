@@ -1,6 +1,5 @@
 import {EXTENSION_ID} from './constants';
 import {disableAllEvents} from './events';
-import logger from './utils/logger';
 import {ExtensionContext} from 'vscode';
 import bootstrap from './bootstrap';
 /**
@@ -24,7 +23,6 @@ export async function activate(context: ExtensionContext) {
  */
 function disposeAll() {
   disableAllEvents();
-  logger.log(`${EXTENSION_ID} is now deactivate!`);
 }
 
 export function deactivate() {

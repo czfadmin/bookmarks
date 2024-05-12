@@ -1,9 +1,11 @@
 import {ExtensionContext} from 'vscode';
 import {registerCommand} from '../utils';
-import logger from '../utils/logger';
+import {LoggerService} from '../services';
+
+const logger = new LoggerService('Commands');
 
 function log(name: string) {
-  logger.log(`command: ${name} has registered successfully!`);
+  logger.log(`${name} has registered successfully!`);
 }
 
 /**

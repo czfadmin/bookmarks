@@ -4,7 +4,7 @@ import {DEFAULT_BOOKMARK_GROUP_COLOR} from '../constants';
 export const BookmarkGroup = types
   .model('BookmarkGroup', {
     /**
-     * 书签ID
+     * 书签分组ID
      */
     id: types.string,
 

@@ -11,7 +11,11 @@ import {
 import {resolveBookmarkController} from '../../bootstrap';
 import resolveServiceManager from '../../services/ServiceManager';
 import {BookmarksGroupedByColorType, IBookmark} from '../../stores';
-import {BookmarksGroupedByFileType, LineBookmarkContext} from '../../types';
+import {
+  BookmarksGroupedByFileType,
+  BookmarkTypeEnum,
+  LineBookmarkContext,
+} from '../../types';
 import {
   checkIfBookmarksIsInCurrentEditor,
   chooseBookmarkColor,
@@ -30,7 +34,7 @@ import {
  * 开启行书签, 使用默认颜色且无标签等相关信息
  */
 export function toggleLineBookmark(args: LineBookmarkContext) {
-  toggleBookmark(args, {type: 'line'});
+  toggleBookmark(args, {type: BookmarkTypeEnum.LINE});
 }
 
 /**
@@ -50,7 +54,7 @@ export async function toggleLineBookmarkWithLabel(
   }
   toggleBookmark(context, {
     label,
-    type: 'line',
+    type: BookmarkTypeEnum.LINE,
   });
 }
 
@@ -60,7 +64,7 @@ export async function toggleLineBookmarkWithLabel(
 export function toggleLineBookmarkWithColor(context: LineBookmarkContext) {
   toggleBookmark(context, {
     withColor: true,
-    type: 'line',
+    type: BookmarkTypeEnum.LINE,
   });
 }
 
@@ -111,7 +115,7 @@ export async function editLabel(context: LineBookmarkContext) {
   if (!bookmark) {
     toggleBookmark(context as LineBookmarkContext | undefined, {
       label,
-      type: 'line',
+      type: BookmarkTypeEnum.LINE,
     });
   } else {
     bookmark.updateLabel(label);
@@ -176,10 +180,7 @@ export async function changeBookmarkColor(ctx: LineBookmarkContext) {
   if (!controller) {
     return;
   }
-  bookmark.updateColor({
-    ...bookmark.customColor,
-    name: newColor,
-  });
+  bookmark.updateColor(newColor);
 }
 
 export async function changeBookmarkColorName(ctx: LineBookmarkContext) {
@@ -205,10 +206,7 @@ export async function changeBookmarkColorName(ctx: LineBookmarkContext) {
   if (!controller) {
     return;
   }
-  bookmark.updateColor({
-    ...bookmark.customColor,
-    name: newColorName,
-  });
+  bookmark.updateColor(newColorName);
 }
 
 /**
@@ -361,3 +359,5 @@ export function showWalkthroughs(args: any) {
     '@ext:czfadmin.bookmark-manager',
   );
 }
+
+export function revealInExplorer(args: any) {}

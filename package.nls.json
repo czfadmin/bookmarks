@@ -64,5 +64,12 @@
   "bookmark-manager.changeBookmarkGroup": "Change group",
   "bookmark-manager.listBookmarksInSelectedGroup": "List the bookmarks in the selected group",
   "bookmark-manager.showWalkthroughs": "Show walkthroughs",
-  "bookmark-manager.changeSetting": "Change setting"
+  "bookmark-manager.changeSetting": "Change setting",
+  "bookmark-manager.ignoreFolders": "When this is set, the creation of the storage file `bookmark-manager.json` in the `.vscode` directory under the folder directory in this array will be automatically ignored.",
+  "bookmark-manager.logLevel": "Log level",
+  "bookmark-manager.revealInExplorer": "Reveal in explorer",
+  "bookmark-manager.sortMenu": "Sort",
+  "bookmark-manager.sortedByCustom": "Sorted by custom",
+  "bookmark-manager.sortedByLineNumber": "Sorted by line number",
+  "bookmark-manager.sortedByCreateTime": "Sorted by create time"
 }

@@ -54,7 +54,7 @@ export default class ConfigService implements Disposable {
   }
 
   get customColors() {
-    return this._store.configure!.customColor;
+    return this._store.configure!.customColors;
   }
 
   get configuration() {

@@ -3,7 +3,6 @@ import BookmarksController from './controllers/BookmarksController';
 import UniversalBookmarkController from './controllers/UniversalBookmarkController';
 import {BookmarksTreeView} from './views/BookmarksTreeView';
 import {UniversalBookmarksTreeView} from './views/UniversalBookmarksTreeView';
-import {EXTENSION_ID} from './constants';
 import {
   updateCursorChangeListener,
   updateChangeActiveTextEditorListener,
@@ -12,8 +11,6 @@ import {
   updateFilesRenameAndDeleteListeners,
   updateTextEditorSelectionListener,
 } from './events';
-import {registerTelemetryLogger} from './utils';
-import logger from './utils/logger';
 
 import {
   ServiceManager,
@@ -22,6 +19,8 @@ import {
 } from './services/ServiceManager';
 
 import registerAllBookmarksCommands from './commands';
+import {LoggerService, registerTelemetryLogger} from './services';
+import {EXTENSION_ID} from './constants';
 
 let controllerManager: {
   bookmarks?: BookmarksController;
@@ -77,7 +76,7 @@ export default async function bootstrap(context: ExtensionContext) {
     return;
   }
   context.subscriptions.push(registerTelemetryLogger());
-
+  const logger = new LoggerService('Bootstrap');
   logger.log(`${EXTENSION_ID} is now active!`);
   try {
     const sm = await initServiceManager(context, updateEverything);

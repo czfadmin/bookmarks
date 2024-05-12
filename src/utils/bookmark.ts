@@ -15,7 +15,13 @@ import {
   l10n,
   ThemeIcon,
 } from 'vscode';
-import {LineBookmarkContext} from '../types';
+import {
+  BookmarkTreeItemCtxValueEnum,
+  BookmarkTypeEnum,
+  LineBookmarkContext,
+  TreeViewGroupEnum,
+  TreeViewSortedEnum,
+} from '../types';
 import {resolveBookmarkController} from '../bootstrap';
 import resolveServiceManager, {
   ServiceManager,
@@ -25,6 +31,7 @@ import {IBookmark} from '../stores/bookmark';
 import {IBookmarkGroup} from '../stores';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
 import BookmarkTreeItem from '../providers/BookmarksTreeItem';
+import {EXTENSION_NAME} from '../constants';
 
 const REGEXP_NEWLINE = /(\r\n)|(\n)/g;
 /**
@@ -224,7 +231,7 @@ export async function openDocumentAndGotoLocation(fileUri: Uri, range: Range) {
  */
 export async function toggleBookmarksWithSelections(label: string) {
   toggleBookmark(undefined, {
-    type: 'selection',
+    type: BookmarkTypeEnum.SELECTION,
     label,
   });
 }
@@ -237,7 +244,7 @@ export async function toggleBookmarksWithSelections(label: string) {
 export async function toggleBookmark(
   context: LineBookmarkContext,
   extra: {
-    type: 'line' | 'selection';
+    type: BookmarkTypeEnum;
     label?: string;
     withColor?: boolean;
   },
@@ -268,7 +275,7 @@ export async function toggleBookmark(
 
   let range, selectionContent;
   const activeLine = editor.document.lineAt(selection.active.line);
-  if (bookmarkType === 'line') {
+  if (bookmarkType === BookmarkTypeEnum.LINE) {
     const startPos = activeLine.text.indexOf(activeLine.text.trim());
     range = new Selection(
       activeLine.lineNumber,
@@ -287,7 +294,7 @@ export async function toggleBookmark(
   }
 
   if (
-    bookmarkType === 'line' &&
+    bookmarkType === BookmarkTypeEnum.LINE &&
     checkIfBookmarkIsInGivenSelectionAndRemove(editor, range)
   ) {
     return;
@@ -306,11 +313,7 @@ export async function toggleBookmark(
   const bookmark: any = {
     type: bookmarkType,
     label,
-    customColor: {
-      name: chosenColor,
-      sortedIndex: -1,
-      bookmarkSortedIndex: -1,
-    },
+    color: chosenColor,
     description: '',
     fileUri: editor.document.uri,
     languageId: editor.document.languageId,
@@ -487,14 +490,35 @@ function appendMarkdown(
   markdownString: MarkdownString,
   showExtIcon: boolean = false,
 ) {
+  appendExtensionName(bookmark, markdownString, showExtIcon);
+  appendGroupInfo(bookmark, markdownString);
+  appendLabelOrDescription(bookmark, markdownString);
+  appendSelectionContent(bookmark, markdownString);
+}
+
+function appendExtensionName(
+  bookmark: Omit<IBookmark, 'id'>,
+  markdownString: MarkdownString,
+  showExtIcon: boolean = false,
+) {
   markdownString.appendMarkdown(
-    `### ${showExtIcon ? `$(bookmark~sync) Bookmarks\n#### ` : ''}${
-      bookmark.label || ''
-    }`,
+    `### ${showExtIcon ? `${bookmark.label || bookmark.description ? '$(tag-add)' : '$(bookmark~sync)'} ${EXTENSION_NAME}\n#### ` : ''}`,
   );
+}
+function appendLabelOrDescription(
+  bookmark: Omit<IBookmark, 'id'>,
+  markdownString: MarkdownString,
+) {
+  markdownString.appendMarkdown(`${bookmark.label || ''}`);
   if (bookmark.description) {
     markdownString.appendMarkdown(`\n${bookmark.description} `);
   }
+}
+
+function appendSelectionContent(
+  bookmark: Omit<IBookmark, 'id'>,
+  markdownString: MarkdownString,
+) {
   if (bookmark.selectionContent) {
     const code = resolveMarkdownLineNumber(
       bookmark.rangesOrOptions.range,
@@ -502,6 +526,35 @@ function appendMarkdown(
     );
     markdownString.appendCodeblock(code, bookmark.languageId || 'javascript');
   }
+}
+
+function appendGroupInfo(
+  bookmark: Omit<IBookmark, 'id'>,
+  markdownString: MarkdownString,
+) {
+  if (!bookmark.group) {
+    return;
+  }
+
+  const customParams = {
+    type: TreeViewGroupEnum.CUSTOM,
+    id: bookmark.groupId,
+  };
+
+  const colorParams = {
+    type: TreeViewGroupEnum.COLOR,
+    id: bookmark.color,
+  };
+
+  markdownString.isTrusted = true;
+
+  markdownString.appendMarkdown(
+    `[${bookmark.group.label}](command:bookmark-manager.revealInExplorer?${generateCMDArgs(customParams)}) | [${bookmark.color}](command:bookmark-manager.revealInExplorer?${generateCMDArgs(colorParams)}) | ${bookmark.createdAt.toLocaleString()}\n`,
+  );
+}
+
+function generateCMDArgs(params: any) {
+  return encodeURI(JSON.stringify(params));
 }
 
 /**
@@ -563,7 +616,7 @@ export function updateBookmarksGroupByChangedLine(
     const originalSelection = bookmarkInCurrentLine.selection;
     // 只在当前行上进行编辑操作, 未进行换行操作
     if (!isNewLine) {
-      if (isDeleteLine && bookmarkType === 'selection') {
+      if (isDeleteLine && bookmarkType === BookmarkTypeEnum.SELECTION) {
         const startLineNumber =
           originalSelection.start.line < changedLine.lineNumber
             ? originalSelection.start.line
@@ -583,7 +636,7 @@ export function updateBookmarksGroupByChangedLine(
         );
         selectionContent = document.getText(selection);
         hasChanged = true;
-      } else if (bookmarkType !== 'selection') {
+      } else if (bookmarkType !== BookmarkTypeEnum.SELECTION) {
         // 当在行标签上发生编辑时
         selection = new Selection(
           new Position(changedLine.lineNumber, startPos),
@@ -591,7 +644,7 @@ export function updateBookmarksGroupByChangedLine(
         );
         selectionContent = changedLine.text.trim();
         hasChanged = true;
-      } else if (!isDeleteLine && bookmarkType === 'selection') {
+      } else if (!isDeleteLine && bookmarkType === BookmarkTypeEnum.SELECTION) {
         // 更新区域标签内容
         const startLine = originalSelection.start.line;
         const startText = document.lineAt(startLine).text;
@@ -619,7 +672,7 @@ export function updateBookmarksGroupByChangedLine(
           ? originalSelection.start.line + newLines
           : originalSelection.start.line;
         endLine += newLines;
-        bookmarkType = 'selection';
+        bookmarkType = BookmarkTypeEnum.SELECTION;
         endCharacter = document.lineAt(endLine).range.end.character;
       } else {
         // 如果从行的开头进行换行
@@ -651,7 +704,11 @@ export function updateBookmarksGroupByChangedLine(
   }
 
   // 如果改动的当前行不存在书签,但是光标移动到新的行存在标签的时候, 需要将当前行的标签range 补充全(要求是单行书签情况下)
-  if (bookmarkInCursor && bookmarkInCursor.type === 'line' && !isLineStart) {
+  if (
+    bookmarkInCursor &&
+    bookmarkInCursor.type === BookmarkTypeEnum.LINE &&
+    !isLineStart
+  ) {
     const selection = new Selection(
       new Position(
         bookmarkInCursor.selection.start.line,
@@ -665,7 +722,7 @@ export function updateBookmarksGroupByChangedLine(
     // 更新当前行的书签信息
     updateLineBookmarkRangeWhenDocumentChange(bookmarkInCursor, {
       selection,
-      type: 'line',
+      type: BookmarkTypeEnum.LINE,
       selectionContent: document.getText(selection),
     });
 
@@ -699,7 +756,7 @@ export function updateBookmarksGroupByChangedLine(
       startPos = line.text.indexOf(line.text.trim());
       selection = rangesOrOptions.range;
       // 当书签为行标签时
-      if (bookmark.type === 'line') {
+      if (bookmark.type === BookmarkTypeEnum.LINE) {
         selection = new Selection(
           new Position(startLine, rangesOrOptions.range.start.character),
           new Position(startLine, line.range.end.character),
@@ -744,7 +801,6 @@ export function updateLineBookmarkRangeWhenDocumentChange(
     rangesOrOptions: {
       ...bookmark.rangesOrOptions,
       range: selection as Range,
-      hoverMessage: createHoverMessage(bookmark, true, true),
     },
   });
 }
@@ -756,7 +812,7 @@ export function updateLineBookmarkRangeWhenDocumentChange(
  */
 export function getLineInfoFromBookmark(bookmark: IBookmark) {
   const {start, end} = bookmark.selection;
-  if (bookmark.type === 'line') {
+  if (bookmark.type === BookmarkTypeEnum.LINE) {
     return {
       line: start.line + 1,
     };
@@ -773,9 +829,47 @@ export function getLineInfoFromBookmark(bookmark: IBookmark) {
 
 export function getLineInfoStrFromBookmark(bookmark: IBookmark) {
   const lineInfo = getLineInfoFromBookmark(bookmark);
-  return bookmark.type === 'line'
+  return bookmark.type === BookmarkTypeEnum.LINE
     ? `Ln: ${lineInfo.line}`
     : `Start { Ln: ${lineInfo.start?.line}, Col: ${lineInfo.start?.col} }. End { Ln: ${lineInfo.end?.line}, Col: ${lineInfo.end?.col} }`;
+}
+
+export function sortBookmarks(
+  bookmarks: IBookmark[],
+  sortedType: TreeViewSortedEnum,
+  groupViewType: TreeViewGroupEnum,
+) {
+  switch (sortedType) {
+    case TreeViewSortedEnum.CUSTOM:
+      return bookmarks.sort((a, b) => {
+        if (groupViewType === TreeViewGroupEnum.CUSTOM) {
+          return a.sortedInfo.custom - b.sortedInfo.custom;
+        }
+        if (groupViewType === TreeViewGroupEnum.COLOR) {
+          return a.sortedInfo.color - b.sortedInfo.color;
+        }
+
+        if (
+          groupViewType === TreeViewGroupEnum.DEFAULT ||
+          groupViewType === TreeViewGroupEnum.FILE
+        ) {
+          return a.sortedInfo.file - b.sortedInfo.file;
+        }
+
+        if (groupViewType === TreeViewGroupEnum.WORKSPACE) {
+          return a.sortedInfo.workspace - b.sortedInfo.workspace;
+        }
+        return a.selection.start.line - b.selection.start.line;
+      });
+
+    case TreeViewSortedEnum.CREATED_TIME:
+      return bookmarks.sort(
+        (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+      );
+    case TreeViewSortedEnum.LINENUMBER:
+    default:
+      return sortBookmarksByLineNumber(bookmarks);
+  }
 }
 
 /**
@@ -837,7 +931,7 @@ export function getBookmarkFromCtx(
   if (
     context &&
     'contextValue' in context &&
-    context.contextValue === 'bookmark'
+    context.contextValue === BookmarkTreeItemCtxValueEnum.BOOKMARK
   ) {
     bookmark = context.meta as IBookmark;
   } else {
@@ -864,7 +958,7 @@ export function getBookmarkColorFromCtx(
   if (
     context &&
     'contextValue' in context &&
-    context.contextValue === 'color'
+    context.contextValue === BookmarkTreeItemCtxValueEnum.COLOR
   ) {
     bookmark = context.meta as IBookmark;
   }

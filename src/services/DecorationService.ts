@@ -11,9 +11,9 @@ import {IDisposable} from '../utils';
 import resolveServiceManager, {ServiceManager} from './ServiceManager';
 import {resolveBookmarkController} from '../bootstrap';
 import BookmarksController from '../controllers/BookmarksController';
-import logger from '../utils/logger';
 import {IBookmark} from '../stores/bookmark';
 import {DEFAULT_BOOKMARK_COLOR} from '../constants';
+import {LoggerService} from './LoggerService';
 
 /**
  * 装饰器服务类
@@ -24,8 +24,10 @@ export default class DecorationService implements IDisposable {
   tagDecorations: Record<BookmarkDecorationKey, TextEditorDecorationType> = {};
 
   private _serviceManager: ServiceManager;
+  private _logger: LoggerService;
   constructor(sm: ServiceManager) {
     this._serviceManager = sm;
+    this._logger = new LoggerService(DecorationService.name);
   }
 
   setupAllDecorations() {
@@ -175,8 +177,8 @@ export default class DecorationService implements IDisposable {
    * @param bookmarks
    * @returns
    */
-  createRangeOrOptions(bookmarks: IBookmark[]) {
-    return bookmarks.map(bookmark => bookmark.rangesOrOptions);
+  getBookmarkRangeOrOptions(bookmarks: IBookmark[]) {
+    return bookmarks.map(bookmark => bookmark.prettierRangesOrOptions);
   }
 
   /**
@@ -195,21 +197,22 @@ export default class DecorationService implements IDisposable {
       const hasLabelBookmarks = options.bookmarks.filter(it => it.label);
       const noLabelBookmarks = options.bookmarks.filter(it => !it.label);
 
-      const tagRangeOrOptions = this.createRangeOrOptions(hasLabelBookmarks);
+      const tagRangeOrOptions =
+        this.getBookmarkRangeOrOptions(hasLabelBookmarks);
+      const noTagRangeOrOptions =
+        this.getBookmarkRangeOrOptions(noLabelBookmarks);
 
       editor?.setDecorations(
         this.tagDecorations[options.color] || this.tagDecorations['default'],
         tagRangeOrOptions,
       );
-      const noTagRangeOrOptions = this.createRangeOrOptions(noLabelBookmarks);
 
       editor?.setDecorations(
         this.decorations[options.color] || this.decorations['default'],
         noTagRangeOrOptions,
       );
     } catch (error) {
-      // @ts-ignore
-      logger.error(error);
+      this._logger.error(error);
     }
   }
 

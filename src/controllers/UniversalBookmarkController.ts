@@ -2,13 +2,14 @@ import {Event, EventEmitter, ExtensionContext, Uri} from 'vscode';
 import {
   BaseMeta,
   BookmarkColor,
-  TreeViewGroupType,
-  TreeViewSortedType,
-  TreeViewType,
+  TreeViewGroupEnum,
+  TreeViewSortedEnum,
+  TreeViewStyleEnum,
 } from '../types';
 import {generateUUID} from '../utils';
 import IController from './IController';
 import {ServiceManager} from '../services/ServiceManager';
+import {_NotCustomized} from 'mobx-state-tree';
 export const UNIVERSAL_STORE_KEY = 'bookmark-manager.universal';
 export type UniversalBookmarkType = 'file' | 'link' | 'command' | 'code';
 
@@ -63,7 +64,8 @@ export default class UniversalBookmarkController implements IController {
   private _onDidChangeEvent: EventEmitter<void> = new EventEmitter<void>();
 
   private _serviceManager: ServiceManager;
-  public sortedType: Omit<TreeViewSortedType, 'linenumber'> = 'linenumber';
+  public sortedType: Omit<TreeViewSortedEnum, TreeViewSortedEnum.LINENUMBER> =
+    TreeViewSortedEnum.CREATED_TIME;
   public onDidChangeEvent: Event<void> = this._onDidChangeEvent.event;
 
   get globalState() {
@@ -96,11 +98,14 @@ export default class UniversalBookmarkController implements IController {
     }
     this._initial();
   }
-  get viewType(): TreeViewType {
-    return 'list';
+  updateBookmarkSortedInfo(bookmark: any, idx: number): void {
+    throw new Error('Method not implemented.');
   }
-  get groupView(): TreeViewGroupType {
-    return 'default';
+  get viewType(): TreeViewStyleEnum {
+    return TreeViewStyleEnum.LIST;
+  }
+  get groupView(): TreeViewGroupEnum {
+    return TreeViewGroupEnum.DEFAULT;
   }
 
   dispose() {}
@@ -174,9 +179,9 @@ export default class UniversalBookmarkController implements IController {
   refresh() {
     this._onDidChangeEvent.fire();
   }
-  changeViewType(viewType: TreeViewType): void {}
+  changeViewType(viewType: TreeViewStyleEnum): void {}
 
-  changeSortType(sortType: TreeViewSortedType): void {
+  changeSortType(sortType: TreeViewSortedEnum): void {
     this.sortedType = sortType;
   }
 }

@@ -6,8 +6,12 @@ import IController from '../controllers/IController';
 import resolveServiceManager, {
   ServiceManager,
 } from '../services/ServiceManager';
-import {IBookmark, IBookmarkGroup} from '../stores';
-import {BookmarksGroupedByCustomType} from '../types';
+import {IBookmark} from '../stores';
+import {
+  BookmarksGroupedByCustomType,
+  BookmarkTreeItemCtxValueEnum,
+  TreeViewGroupEnum,
+} from '../types';
 export enum TreeViewEnum {
   BASE = 0,
   UNIVERSAL,
@@ -31,7 +35,7 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
 
   private _draggingSource: T[] = [];
 
-  private _serviceManager: ServiceManager;
+  private _sm: ServiceManager;
   get disposables() {
     return this._disposables;
   }
@@ -51,14 +55,14 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
   constructor(viewName: string, provider: BaseTreeProvider<T, C>) {
     this._controller = provider.controller;
     this._provider = provider;
-    this._serviceManager = resolveServiceManager();
+    this._sm = resolveServiceManager();
 
     this._dndController = this._buildDndController();
     this._bookmarkTreeView = window.createTreeView(viewName, {
       treeDataProvider: this._provider,
       showCollapseAll: true,
       canSelectMany: false,
-      dragAndDropController: this._dndController,
+      dragAndDropController: this._buildDndController(),
     });
   }
 
@@ -77,7 +81,7 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
         }
 
         // 按照颜色进行分类时 支持拖拽调整颜色, 拖拽调整顺序
-        if (self._controller.groupView === 'color') {
+        if (self._controller.groupView === TreeViewGroupEnum.COLOR) {
           // 整个树进行拖拽
           if (
             draggedSource.meta.bookmarks &&
@@ -85,10 +89,7 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
             draggedSource.meta.color !== target.meta.color
           ) {
             for (let bookmark of draggedSource.meta.bookmarks) {
-              (bookmark as IBookmark).updateColor({
-                ...bookmark.customColor,
-                name: target.meta.color,
-              });
+              (bookmark as IBookmark).updateColor(target.meta.color);
             }
             return;
           }
@@ -96,35 +97,45 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
           // 不同树的之间拖拽
           if (draggedSource.meta.color !== target.meta.color) {
             const bookmark = draggedSource.meta as IBookmark;
-            bookmark.updateColor({
-              ...bookmark.customColor,
-              name: target.meta.color,
-            });
+            bookmark.updateColor(target.meta.color);
             return;
           }
+          // 相同直接返回
+          if (draggedSource.meta.id === target.meta.id) {
+            return;
+          }
+
           // 同层级的书签多拽
           if (draggedSource.meta.color === target.meta.color) {
-            return;
+            self._controller.updateBookmarkSortedInfo(
+              draggedSource.meta,
+              target.meta.sortedInfo[self._controller.groupView],
+            );
           }
         } else {
           // groupView 为default, workspace 以及 file情况下, 第二级 支持拖拽排序, 第一级支持拖拽排序
-          const sourceContextValue = draggedSource.contextValue;
-          const targetContextValue = target.contextValue;
+          const sourceContextValue =
+            draggedSource.contextValue as BookmarkTreeItemCtxValueEnum;
+          const targetContextValue =
+            target.contextValue as BookmarkTreeItemCtxValueEnum;
           if (!sourceContextValue || !targetContextValue) {
             return;
           }
 
           if (
-            targetContextValue === 'bookmark' &&
-            ['file', 'workspace'].includes(sourceContextValue)
+            targetContextValue === BookmarkTreeItemCtxValueEnum.BOOKMARK &&
+            [
+              BookmarkTreeItemCtxValueEnum.FILE,
+              BookmarkTreeItemCtxValueEnum.WORKSPACE,
+            ].includes(sourceContextValue)
           ) {
             return;
           }
 
           // 分组情况下进行拖拽操作
           if (
-            sourceContextValue === 'bookmark' &&
-            targetContextValue === 'custom'
+            sourceContextValue === BookmarkTreeItemCtxValueEnum.BOOKMARK &&
+            targetContextValue === BookmarkTreeItemCtxValueEnum.CUSTOM
           ) {
             const meta = draggedSource.meta as IBookmark;
             const targetMeta = target.meta as BookmarksGroupedByCustomType;
@@ -137,8 +148,8 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
 
           // 分组拖拽调整顺序
           if (
-            sourceContextValue === 'custom' &&
-            targetContextValue === 'custom'
+            sourceContextValue === BookmarkTreeItemCtxValueEnum.CUSTOM &&
+            targetContextValue === BookmarkTreeItemCtxValueEnum.CUSTOM
           ) {
             const sourceMeta =
               draggedSource.meta as BookmarksGroupedByCustomType;
@@ -150,10 +161,23 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
             sourceMeta.group.setSortedIndex(targetMeta.group.sortedIndex);
             targetMeta.group.setSortedIndex(sourceGroupIndex);
           }
+          const sourceMeta = draggedSource.meta as IBookmark;
+          const targetMeta = target.meta as IBookmark;
 
-          // 1. 对于顶层级进行拖拽, 顶层进行排序
-          // 2. 第二层级中 进行排序
-          // console.log(draggedSource, target);
+          if (sourceMeta.id === targetMeta.id) {
+            return;
+          }
+          if (
+            targetContextValue === BookmarkTreeItemCtxValueEnum.BOOKMARK &&
+            sourceContextValue === BookmarkTreeItemCtxValueEnum.BOOKMARK
+          ) {
+            if (sourceMeta.groupId === targetMeta.groupId) {
+              self._controller.updateBookmarkSortedInfo(
+                sourceMeta,
+                targetMeta.sortedInfo[self._controller.groupView],
+              );
+            }
+          }
         }
       },
     };
