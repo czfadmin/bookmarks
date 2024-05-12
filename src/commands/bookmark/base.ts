@@ -180,10 +180,7 @@ export async function changeBookmarkColor(ctx: LineBookmarkContext) {
   if (!controller) {
     return;
   }
-  bookmark.updateColor({
-    ...bookmark.customColor,
-    name: newColor,
-  });
+  bookmark.updateColor(newColor);
 }
 
 export async function changeBookmarkColorName(ctx: LineBookmarkContext) {
@@ -209,10 +206,7 @@ export async function changeBookmarkColorName(ctx: LineBookmarkContext) {
   if (!controller) {
     return;
   }
-  bookmark.updateColor({
-    ...bookmark.customColor,
-    name: newColorName,
-  });
+  bookmark.updateColor(newColorName);
 }
 
 /**
@@ -366,4 +360,4 @@ export function showWalkthroughs(args: any) {
   );
 }
 
-export function revealExplorer(args: any) {}
+export function revealInExplorer(args: any) {}

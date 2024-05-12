@@ -89,10 +89,7 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
             draggedSource.meta.color !== target.meta.color
           ) {
             for (let bookmark of draggedSource.meta.bookmarks) {
-              (bookmark as IBookmark).updateColor({
-                ...bookmark.customColor,
-                name: target.meta.color,
-              });
+              (bookmark as IBookmark).updateColor(target.meta.color);
             }
             return;
           }
@@ -100,15 +97,20 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
           // 不同树的之间拖拽
           if (draggedSource.meta.color !== target.meta.color) {
             const bookmark = draggedSource.meta as IBookmark;
-            bookmark.updateColor({
-              ...bookmark.customColor,
-              name: target.meta.color,
-            });
+            bookmark.updateColor(target.meta.color);
             return;
           }
+          // 相同直接返回
+          if (draggedSource.meta.id === target.meta.id) {
+            return;
+          }
+
           // 同层级的书签多拽
           if (draggedSource.meta.color === target.meta.color) {
-            return;
+            self._controller.updateBookmarkSortedInfo(
+              draggedSource.meta,
+              target.meta.sortedInfo[self._controller.groupView],
+            );
           }
         } else {
           // groupView 为default, workspace 以及 file情况下, 第二级 支持拖拽排序, 第一级支持拖拽排序
@@ -159,10 +161,12 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
             sourceMeta.group.setSortedIndex(targetMeta.group.sortedIndex);
             targetMeta.group.setSortedIndex(sourceGroupIndex);
           }
-          // TODO: 同组进行排序
           const sourceMeta = draggedSource.meta as IBookmark;
           const targetMeta = target.meta as IBookmark;
 
+          if (sourceMeta.id === targetMeta.id) {
+            return;
+          }
           if (
             targetContextValue === BookmarkTreeItemCtxValueEnum.BOOKMARK &&
             sourceContextValue === BookmarkTreeItemCtxValueEnum.BOOKMARK

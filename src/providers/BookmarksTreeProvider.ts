@@ -13,7 +13,6 @@ import {resolveBookmarkController} from '../bootstrap';
 import BookmarksController from '../controllers/BookmarksController';
 import {
   BookmarksGroupedByColorType,
-  BookmarksGroupedByFileWithSortType,
   BookmarksGroupedByWorkspaceType,
   IBookmark,
 } from '../stores/bookmark';
@@ -66,7 +65,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
   getChildrenByFile(element?: BookmarkTreeItem | undefined) {
     if (!element) {
       const bookmarkRootStoreArr = this.controller
-        .groupedBookmarks as BookmarksGroupedByFileWithSortType[];
+        .groupedBookmarks as BookmarksGroupedByFileType[];
       const children = bookmarkRootStoreArr.map(it => {
         let label = this.isRelativePath
           ? this.getRelativePath(it.fileName)

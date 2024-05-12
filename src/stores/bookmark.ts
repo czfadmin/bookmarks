@@ -21,10 +21,8 @@ import {
   MyWorkspaceFolderType,
   DecorationOptionsType,
   TagType,
-  IDecorationOptionsType,
   IMyColorType,
   TSortedInfo,
-  SortedInfoType,
 } from './custom';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
 
@@ -38,14 +36,34 @@ export type BookmarksGroupedByWorkspaceType = {
   files: BookmarksGroupedByFileType[];
 };
 
+export const SortedInfoType = types
+  .model('SortedInfoType', {
+    color: types.number,
+    custom: types.number,
+    default: types.number,
+    file: types.number,
+    workspace: types.number,
+  })
+  .actions(self => {
+    function setProp<
+      K extends keyof SnapshotIn<typeof self>,
+      V extends SnapshotIn<typeof self>[K],
+    >(key: K, value: V) {
+      self[key] = value;
+    }
+    return {
+      update: setProp,
+    };
+  });
+
+export type ISortedInfoType = Instance<typeof SortedInfoType>;
+
 export const Bookmark = types
   .model('Boomkmark', {
     id: types.string,
     label: types.optional(types.string, ''),
     description: types.optional(types.string, ''),
-    customColor: types.optional(MyColorType, {
-      name: DEFAULT_BOOKMARK_COLOR,
-    }),
+    color: types.optional(types.string, DEFAULT_BOOKMARK_COLOR),
     fileUri: MyUriType,
     type: types.optional(
       types.enumeration([BookmarkTypeEnum.LINE, BookmarkTypeEnum.SELECTION]),
@@ -103,9 +121,7 @@ export const Bookmark = types
         const arr = self.fileUri.fsPath.split('/');
         return arr[arr.length - 1];
       },
-      get color() {
-        return self.customColor.name;
-      },
+
       get wsFolder() {
         return workspace.workspaceFolders?.find(
           it => it.name === self.workspaceFolder.name,
@@ -156,18 +172,9 @@ export const Bookmark = types
       self.description = desc;
     }
 
-    function updateRangesOrOptions(rangesOrOptions: IDecorationOptionsType) {
-      self.rangesOrOptions = rangesOrOptions;
+    function updateColor(newColor: string) {
+      self.color = newColor;
     }
-
-    function updateColor(newColor: IMyColorType) {
-      self.customColor = newColor;
-    }
-
-    function updateSelectionContent(content: string) {
-      self.selectionContent = content;
-    }
-
     function updateFileUri(uri: Uri) {
       self.fileUri = {
         fsPath: uri.fsPath,
@@ -210,8 +217,7 @@ export const Bookmark = types
      */
     function updateSortedInfo(key: keyof TSortedInfo, value: number) {
       if (self.sortedInfo) {
-        self.sortedInfo[key] = value;
-        // 更新同组中数据排序索引
+        self.sortedInfo.update(key, value);
       }
     }
 
@@ -223,8 +229,6 @@ export const Bookmark = types
       update,
       updateLabel,
       updateDescription,
-      updateRangesOrOptions,
-      updateSelectionContent,
       updateFileUri,
       updateColor,
       changeGroupId,

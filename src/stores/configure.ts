@@ -52,7 +52,7 @@ export const BookmarkManagerConfigureModel = types
   .views(self => {
     const configuration = workspace.getConfiguration(EXTENSION_ID);
     return {
-      get customColor() {
+      get customColors() {
         const _customColors: StringIndexType<string> = {};
         Object.entries(configuration.get('colors') as object).filter(
           ([key, value]) => {

@@ -228,7 +228,7 @@ export default class BookmarksController implements IController {
     // 监听mst的store的快照, 当快照发生变化时, 将数据保存到存储文件中
     this._storeDisposer = onSnapshot(this._store, snapshot => {
       this.save();
-      this._logger.log(getSnapshot(this._store));
+      this._logger.debug(getSnapshot(this._store));
     });
   }
 
@@ -387,7 +387,73 @@ export default class BookmarksController implements IController {
    * @param bookmark
    * @param idx
    */
-  updateBookmarkSortedInfo(bookmark: IBookmark, idx: number) {}
+  updateBookmarkSortedInfo(bookmark: IBookmark, idx: number) {
+    let group:
+      | BookmarksGroupedByCustomType
+      | BookmarksGroupedByColorType
+      | BookmarksGroupedByFileType
+      | undefined;
+    switch (this._store.groupView) {
+      case TreeViewGroupEnum.CUSTOM:
+        group = (this.groupedBookmarks as BookmarksGroupedByCustomType[]).find(
+          it => it.id === bookmark.groupId,
+        );
+
+        break;
+
+      case TreeViewGroupEnum.COLOR:
+        group = (this.groupedBookmarks as BookmarksGroupedByColorType[]).find(
+          it => it.color === bookmark.color,
+        );
+        break;
+      case TreeViewGroupEnum.FILE:
+      case TreeViewGroupEnum.DEFAULT:
+        group = (this.groupedBookmarks as BookmarksGroupedByFileType[]).find(
+          it => it.fileUri.fsPath === bookmark.fileUri.fsPath,
+        );
+        break;
+      case TreeViewGroupEnum.WORKSPACE:
+        const ws = (
+          this.groupedBookmarks as BookmarksGroupedByWorkspaceType[]
+        ).find(it => it.workspace.name === bookmark.workspaceFolder.name);
+
+        group = ws?.files?.find(
+          it => it.fileUri.fsPath === bookmark.fileUri.fsPath,
+        );
+        break;
+      default:
+        break;
+    }
+
+    if (!group) {
+      return;
+    }
+
+    this._updateBookmarkSortedInfo(bookmark, group.bookmarks, idx);
+  }
+
+  private _updateBookmarkSortedInfo(
+    bookmark: IBookmark,
+    bookmarks: IBookmark[],
+    idx: number,
+  ) {
+    const currentIdx = bookmark.sortedInfo[this.groupView];
+    if (currentIdx < idx) {
+      for (let i = idx; i > currentIdx; i--) {
+        const current = bookmarks[i];
+        current.updateSortedInfo(this.groupView, i - 1);
+      }
+    } else {
+      for (let i = idx; i < currentIdx; i++) {
+        const current = bookmarks[i];
+        current.updateSortedInfo(this.groupView, i + 1);
+      }
+    }
+
+    // 3. 更新当前书签
+    bookmark.updateSortedInfo(this.groupView, idx);
+    this._logger.debug(bookmarks.map(it => it.sortedInfo[this.groupView]));
+  }
   /**
    * 将数据写入到`.vscode/bookmark.json`中
    * @returns

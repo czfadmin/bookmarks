@@ -130,6 +130,7 @@ export const DecorationOptionsType = types.custom<
     return '';
   },
 });
+
 export type IDecorationOptionsType = Instance<typeof DecorationOptionsType>;
 
 export const MyColorType = types.custom<MyColor, MyColor>({
@@ -171,19 +172,3 @@ export type IMySelectionType = Instance<typeof MySelectionType>;
 export type TSortedInfo = {
   [key in (typeof TreeViewGroupEnum)[keyof typeof TreeViewGroupEnum]]: number;
 };
-
-export const SortedInfoType = types.custom<TSortedInfo, TSortedInfo>({
-  name: 'SortedInfoType',
-  fromSnapshot: function (snapshot: TSortedInfo, env?: any): TSortedInfo {
-    return snapshot;
-  },
-  toSnapshot: function (value: TSortedInfo): TSortedInfo {
-    return value;
-  },
-  isTargetType: function (value: TSortedInfo): boolean {
-    return true;
-  },
-  getValidationMessage: function (snapshot: TSortedInfo): string {
-    return '';
-  },
-});

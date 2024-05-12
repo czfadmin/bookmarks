@@ -83,58 +83,58 @@ export class LoggerService {
       ] || LogLevel.Warning;
   }
 
-  info(msg: any) {
+  info(...msg: any[]) {
     if (LoggerService.logLevel > LogLevel.Info) {
       return;
     }
-    logger.output.info(this.prefix, msg);
+    logger.output.info(this.prefix, ...msg);
     logger.telemetry.logUsage('info', {
       info: msg,
     });
   }
 
-  log(msg: any) {
+  log(...msg: any[]) {
     if (LoggerService.logLevel > LogLevel.Info) {
       return;
     }
-    logger.output.info(this.prefix, msg);
+    logger.output.info(this.prefix, ...msg);
     logger.telemetry.logUsage('log', {
       info: msg,
     });
   }
 
-  warn(msg: any) {
+  warn(...msg: any[]) {
     if (LoggerService.logLevel > LogLevel.Warning) {
       return;
     }
-    logger.output.warn(this.prefix, msg);
+    logger.output.warn(this.prefix, ...msg);
     logger.telemetry.logUsage('warn', {
       info: msg,
     });
   }
 
-  trace(msg: any) {
+  trace(...msg: any[]) {
     if (LoggerService.logLevel > LogLevel.Trace) {
       return;
     }
-    logger.output.warn(this.prefix, msg);
+    logger.output.warn(this.prefix, ...msg);
     logger.telemetry.logUsage('warn', {
       info: msg,
     });
   }
 
-  debug(msg: string) {
+  debug(...msg: any[]) {
     if (LoggerService.logLevel > LogLevel.Debug) {
       return;
     }
-    logger.output.debug(this.prefix, msg);
+    logger.output.debug(this.prefix, ...msg);
     logger.telemetry.logUsage('debug', {
       info: msg,
     });
   }
 
-  error(msg: any) {
-    logger.output.error(this.prefix, msg);
+  error(...msg: any[]) {
+    logger.output.error(this.prefix, ...msg);
     logger.telemetry.logError('error', {
       info: msg,
     });

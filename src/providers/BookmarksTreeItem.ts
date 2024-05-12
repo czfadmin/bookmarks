@@ -91,7 +91,7 @@ export default class BookmarkTreeItem extends BaseTreeItem {
       this.iconPath = (gutters[_meta.color] || gutters['default']).iconPath;
     } else if (this.contextValue === BookmarkTreeItemCtxValueEnum.BOOKMARK) {
       const meta = this.meta as IBookmark;
-      const color = meta.color || meta.customColor.name;
+      const color = meta.color;
       this.iconPath = meta.label
         ? (tagGutters[color] || tagGutters['default']).iconPath
         : (gutters[color] || gutters['default']).iconPath;

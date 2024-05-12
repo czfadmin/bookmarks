@@ -19,6 +19,8 @@ import {
   BookmarkTreeItemCtxValueEnum,
   BookmarkTypeEnum,
   LineBookmarkContext,
+  TreeViewGroupEnum,
+  TreeViewSortedEnum,
 } from '../types';
 import {resolveBookmarkController} from '../bootstrap';
 import resolveServiceManager, {
@@ -537,9 +539,25 @@ function appendGroupInfo(
     return;
   }
 
+  const customParams = {
+    type: TreeViewGroupEnum.CUSTOM,
+    id: bookmark.groupId,
+  };
+
+  const colorParams = {
+    type: TreeViewGroupEnum.COLOR,
+    id: bookmark.color,
+  };
+
+  markdownString.isTrusted = true;
+
   markdownString.appendMarkdown(
-    `\t [${bookmark.group.label}](command:bookmark-manager.revealGroup?${bookmark.group.id}) `,
+    `[${bookmark.group.label}](command:bookmark-manager.revealInExplorer?${generateCMDArgs(customParams)}) | [${bookmark.color}](command:bookmark-manager.revealInExplorer?${generateCMDArgs(colorParams)}) | ${bookmark.createdAt.toLocaleString()}\n`,
   );
+}
+
+function generateCMDArgs(params: any) {
+  return encodeURI(JSON.stringify(params));
 }
 
 /**
@@ -817,6 +835,44 @@ export function getLineInfoStrFromBookmark(bookmark: IBookmark) {
   return bookmark.type === BookmarkTypeEnum.LINE
     ? `Ln: ${lineInfo.line}`
     : `Start { Ln: ${lineInfo.start?.line}, Col: ${lineInfo.start?.col} }. End { Ln: ${lineInfo.end?.line}, Col: ${lineInfo.end?.col} }`;
+}
+
+export function sortBookmarks(
+  bookmarks: IBookmark[],
+  sortedType: TreeViewSortedEnum,
+  groupViewType: TreeViewGroupEnum,
+) {
+  switch (sortedType) {
+    case TreeViewSortedEnum.CUSTOM:
+      return bookmarks.sort((a, b) => {
+        if (groupViewType === TreeViewGroupEnum.CUSTOM) {
+          return a.sortedInfo.custom - b.sortedInfo.custom;
+        }
+        if (groupViewType === TreeViewGroupEnum.COLOR) {
+          return a.sortedInfo.color - b.sortedInfo.color;
+        }
+
+        if (
+          groupViewType === TreeViewGroupEnum.DEFAULT ||
+          groupViewType === TreeViewGroupEnum.FILE
+        ) {
+          return a.sortedInfo.file - b.sortedInfo.file;
+        }
+
+        if (groupViewType === TreeViewGroupEnum.WORKSPACE) {
+          return a.sortedInfo.workspace - b.sortedInfo.workspace;
+        }
+        return a.selection.start.line - b.selection.start.line;
+      });
+
+    case TreeViewSortedEnum.CREATED_TIME:
+      return bookmarks.sort(
+        (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+      );
+    case TreeViewSortedEnum.LINENUMBER:
+    default:
+      return sortBookmarksByLineNumber(bookmarks);
+  }
 }
 
 /**

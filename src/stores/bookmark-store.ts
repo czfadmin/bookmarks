@@ -6,7 +6,7 @@ import {
   types,
 } from 'mobx-state-tree';
 import {l10n, Uri, window, workspace, WorkspaceFolder} from 'vscode';
-import {generateUUID, sortBookmarksByLineNumber} from '../utils';
+import {generateUUID, sortBookmarks} from '../utils';
 import {
   BookmarksGroupedByCustomType,
   BookmarksGroupedByFileType,
@@ -24,6 +24,7 @@ import {
 import {BookmarkGroup, IBookmarkGroup} from './bookmark-group';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
 import {isProxy} from 'util/types';
+import {LoggerService} from '../services';
 
 const BookmarkGroupDataModel = types.model('BookmarkGroupDataModel', {
   id: types.string,
@@ -40,7 +41,7 @@ const BookmarkGroupInfoModel = types.model('BookmarkGroupInfoModel', {
   ]),
   data: types.array(BookmarkGroupDataModel),
 });
-
+const logger = new LoggerService('BookmarkStore');
 export type BookmarkGroupDataModelType = Instance<
   typeof BookmarkGroupDataModel
 >;
@@ -115,7 +116,11 @@ export const BookmarksStore = types
         });
         return grouped.map(it => ({
           ...it,
-          bookmarks: sortBookmarksByLineNumber(it.bookmarks),
+          bookmarks: sortBookmarks(
+            it.bookmarks,
+            self.sortedType,
+            self.groupView,
+          ),
         }));
       },
       get bookmarksGroupedByColor(): BookmarksGroupedByColorType[] {
@@ -133,7 +138,11 @@ export const BookmarksStore = types
         });
         return grouped.map(it => ({
           ...it,
-          bookmarks: sortBookmarksByLineNumber(it.bookmarks),
+          bookmarks: sortBookmarks(
+            it.bookmarks,
+            self.sortedType,
+            self.groupView,
+          ),
         }));
       },
 
@@ -190,7 +199,11 @@ export const BookmarksStore = types
           it.files = it.files.map(file => {
             return {
               ...file,
-              bookmarks: sortBookmarksByLineNumber(file.bookmarks),
+              bookmarks: sortBookmarks(
+                file.bookmarks,
+                self.sortedType,
+                self.groupView,
+              ),
             };
           });
           return it;
@@ -219,9 +232,18 @@ export const BookmarksStore = types
           }
         }
 
-        return grouped.sort(
-          (a, b) => a.group.sortedIndex - b.group.sortedIndex,
-        );
+        return grouped
+          .sort((a, b) => a.group.sortedIndex - b.group.sortedIndex)
+          .map(it => {
+            return {
+              ...it,
+              bookmarks: sortBookmarks(
+                it.bookmarks,
+                self.sortedType,
+                self.groupView,
+              ),
+            };
+          });
       },
       get totalCount() {
         return self.bookmarks.length;
@@ -230,7 +252,7 @@ export const BookmarksStore = types
         return self.bookmarks.filter(it => it.label.length).length;
       },
       get colors() {
-        return self.bookmarks.map(it => it.color || it.customColor.name);
+        return self.bookmarks.map(it => it.color);
       },
       get activedGroup() {
         return (
@@ -265,6 +287,7 @@ export const BookmarksStore = types
         label,
         description,
         type,
+        color = 'default',
         selectionContent,
         languageId,
         workspaceFolder,
@@ -272,18 +295,11 @@ export const BookmarksStore = types
         createdAt,
         fileUri,
       } = bookmark;
-
-      const customColor = bookmark.customColor
-        ? bookmark.customColor
-        : {
-            name: bookmark.color || 'default',
-          };
       const fsPath = workspace.asRelativePath(fileUri.fsPath, false);
 
       const idxInColorGroup =
-        self.bookmarksGroupedByColor.find(
-          it => it.color === bookmark.customColor.name,
-        )?.bookmarks.length || 0;
+        self.bookmarksGroupedByColor.find(it => it.color === bookmark.color)
+          ?.bookmarks.length || 0;
 
       const idxInFileGroup =
         self.bookmarksGroupedByFile.find(it => it.fileUri.fsPath === fsPath)
@@ -311,7 +327,7 @@ export const BookmarksStore = types
         id: id || generateUUID(),
         label,
         description,
-        customColor,
+        color,
         fileUri: {
           fsPath,
         },
@@ -327,10 +343,10 @@ export const BookmarksStore = types
         groupId,
         group: groupId,
         sortedInfo: {
-          color: idxInColorGroup,
-          custom: idxInCustomGroup,
-          default: idxInFileGroup,
-          file: idxInFileGroup,
+          color: idxInColorGroup === 0 ? 0 : idxInColorGroup - 1,
+          custom: idxInCustomGroup === 0 ? 0 : idxInCustomGroup - 1,
+          default: idxInFileGroup === 0 ? 0 : idxInFileGroup - 1,
+          file: idxInFileGroup === 0 ? 0 : idxInFileGroup - 1,
           workspace: idxInWorkspaceGroup,
         },
       });
@@ -342,10 +358,10 @@ export const BookmarksStore = types
       // 表示当前颜色组信息中不存在, 或则颜色组信息不存在此颜色, 需要追加到颜色组信息
       if (
         !colorGroupInfo ||
-        !colorGroupInfo.data.find(it => it.id === _bookmark.customColor?.name)
+        !colorGroupInfo.data.find(it => it.id === _bookmark.color)
       ) {
         addColorsGroupInfo({
-          id: _bookmark.customColor.name,
+          id: _bookmark.color,
           sortedIndex: colorGroupInfo ? colorGroupInfo.data.length : 0,
         });
       }
@@ -375,6 +391,7 @@ export const BookmarksStore = types
         });
       }
 
+      logger.info('add bookmark', _bookmark);
       return _bookmark;
     }
 
@@ -558,9 +575,7 @@ export const BookmarksStore = types
     }
 
     function clearBookmarksByColor(color: string) {
-      const bookmarks = self.bookmarks.filter(
-        it => it.customColor.name === color,
-      );
+      const bookmarks = self.bookmarks.filter(it => it.color === color);
       for (let bookmark of bookmarks) {
         self.bookmarks.remove(bookmark);
       }

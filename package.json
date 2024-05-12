@@ -271,6 +271,30 @@
         "title": "%bookmark-manager.changeSetting%",
         "icon": "$(bookmark)",
         "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.revealInExplorer",
+        "title": "%bookmark-manager.revealInExplorer%",
+        "icon": "$(bookmark)",
+        "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.sortedByCustom",
+        "title": "%bookmark-manager.sortedByCustom%",
+        "icon": "$(bookmark)",
+        "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.sortedByLineNumber",
+        "title": "%bookmark-manager.sortedByLineNumber%",
+        "icon": "$(bookmark)",
+        "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.sortedByCreateTime",
+        "title": "%bookmark-manager.sortedByCreateTime%",
+        "icon": "$(bookmark)",
+        "category": "Bookmark Manager (BM)"
       }
     ],
     "views": {
@@ -510,6 +534,20 @@
           "group": "bookmarksActionsGroup2@1"
         }
       ],
+      "bookmark-manager.codeSortedSubmenu": [
+        {
+          "command": "bookmark-manager.sortedByLineNumber",
+          "group": "group@1"
+        },
+        {
+          "command": "bookmark-manager.sortedByCustom",
+          "group": "group@2"
+        },
+        {
+          "command": "bookmark-manager.sortedByCreateTime",
+          "group": "group@3"
+        }
+      ],
       "bookmark-manager.codeGroupSubmenu": [
         {
           "command": "bookmark-manager.groupedByDefault",
@@ -568,6 +606,10 @@
         },
         {
           "submenu": "bookmark-manager.codeGroupSubmenu",
+          "when": "view === bookmark-manager"
+        },
+        {
+          "submenu": "bookmark-manager.codeSortedSubmenu",
           "when": "view === bookmark-manager"
         }
       ],
@@ -707,6 +749,10 @@
       {
         "id": "bookmark-manager.codeGroupSubmenu",
         "label": "%bookmark-manager.group%"
+      },
+      {
+        "id": "bookmark-manager.codeSortedSubmenu",
+        "label": "%bookmark-manager.sortMenu%"
       }
     ],
     "keybindings": {
