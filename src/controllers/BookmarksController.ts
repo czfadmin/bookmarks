@@ -425,7 +425,12 @@ export default class BookmarksController implements IController {
         break;
     }
 
-    if (!group) {
+    if (
+      !group ||
+      this.groupView === TreeViewGroupEnum.FILE ||
+      this.groupView === TreeViewGroupEnum.DEFAULT ||
+      this.groupView === TreeViewGroupEnum.WORKSPACE
+    ) {
       return;
     }
 
@@ -435,24 +440,24 @@ export default class BookmarksController implements IController {
   private _updateBookmarkSortedInfo(
     bookmark: IBookmark,
     bookmarks: IBookmark[],
-    idx: number,
+    targetIdx: number,
   ) {
     const currentIdx = bookmark.sortedInfo[this.groupView];
-    if (currentIdx < idx) {
-      for (let i = idx; i > currentIdx; i--) {
+    if (currentIdx < targetIdx) {
+      for (let i = targetIdx; i > currentIdx; i--) {
         const current = bookmarks[i];
         current.updateSortedInfo(this.groupView, i - 1);
       }
     } else {
-      for (let i = idx; i < currentIdx; i++) {
+      for (let i = targetIdx; i < currentIdx; i++) {
         const current = bookmarks[i];
         current.updateSortedInfo(this.groupView, i + 1);
       }
     }
 
     // 3. 更新当前书签
-    bookmark.updateSortedInfo(this.groupView, idx);
-    this._logger.info(bookmarks.map(it => it.sortedInfo[this.groupView]));
+    bookmark.updateSortedInfo(this.groupView, targetIdx);
+    this._logger.warn(bookmarks.map(it => it.sortedInfo[this.groupView]));
   }
   /**
    * 将数据写入到`.vscode/bookmark.json`中
@@ -587,7 +592,8 @@ export default class BookmarksController implements IController {
       );
       if (fs.existsSync(storeFilePath)) {
         let content = fs.readFileSync(storeFilePath, 'utf-8');
-        if (!content || !content.length) {
+
+        if (!content) {
           content = JSON.stringify({
             content: [],
             bookmarks: [],
@@ -598,16 +604,23 @@ export default class BookmarksController implements IController {
             groupInfo: [],
           });
         }
+
         const storeContent = JSON.parse(content) as IBookmarkStoreInfo;
+        // const {version, updatedDate, updatedDateTimespan, ...rest} =
+        //   storeContent;
+
+        applySnapshot(this._store, {
+          ...storeContent,
+          bookmarks: storeContent.bookmarks || [],
+          groups: storeContent.groups || [],
+          groupInfo: storeContent.groupInfo || [],
+        } as any);
+
         // 这时候要添加每个工作区间的文件夹中的书签和分组信息
         if (firstInit) {
           this._store.initStore(storeContent);
           firstInit = false;
         }
-        this._store.addGroups(storeContent.groups || []);
-        this._store.addBookmarks(
-          storeContent.content || storeContent.bookmarks || [],
-        );
       }
     }
     this._needWarning = true;

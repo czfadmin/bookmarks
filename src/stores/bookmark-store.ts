@@ -223,27 +223,31 @@ export const BookmarksStore = types
               id: group.id,
               label: group.label,
               group,
-              bookmarks: self.bookmarks.filter(it => it.groupId === group.id),
+              bookmarks: sortBookmarks(
+                self.bookmarks.filter(it => it.groupId === group.id),
+                self.sortedType,
+                self.groupView,
+              ),
             });
           } else {
             _group.bookmarks.push(
-              ...self.bookmarks.filter(it => it.groupId === group.id),
+              ...sortBookmarks(
+                self.bookmarks.filter(it => it.groupId === group.id),
+                self.sortedType,
+                self.groupView,
+              ),
             );
           }
         }
 
-        return grouped
-          .sort((a, b) => a.group.sortedIndex - b.group.sortedIndex)
-          .map(it => {
-            return {
-              ...it,
-              bookmarks: sortBookmarks(
-                it.bookmarks,
-                self.sortedType,
-                self.groupView,
-              ),
-            };
-          });
+        logger.warn(
+          'get bookmarksGroupedByCustom',
+          grouped.sort((a, b) => a.group.sortedIndex - b.group.sortedIndex),
+        );
+
+        return grouped.sort(
+          (a, b) => a.group.sortedIndex - b.group.sortedIndex,
+        );
       },
       get totalCount() {
         return self.bookmarks.length;
@@ -396,7 +400,7 @@ export const BookmarksStore = types
         });
       }
 
-      logger.info('add bookmark', _bookmark);
+      logger.debug('add bookmark', _bookmark);
       return _bookmark;
     }
 
@@ -451,11 +455,6 @@ export const BookmarksStore = types
     }
 
     function initStore(data: any) {
-      const {sortedType, viewType, groupView} = data;
-      self.groupView = groupView;
-      self.sortedType = sortedType;
-      self.viewType = viewType;
-
       // 注册对应的上下文
       registerExtensionCustomContextByKey(
         'code.viewAsTree',

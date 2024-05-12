@@ -61,11 +61,9 @@ export function registerTelemetryLogger() {
 workspace.onDidChangeConfiguration(e => {
   const logLevelId = `${EXTENSION_ID}.logLevel`;
   if (e.affectsConfiguration(logLevelId)) {
-    LoggerService.logLevel =
-      LogLevel[
-        // @ts-ignore
-        workspace.getConfiguration(EXTENSION_ID).get('logLevel') || 'Warning'
-      ] || LogLevel.Warning;
+    const levelStr =
+      workspace.getConfiguration(EXTENSION_ID).get('logLevel') || 'Warning';
+    LoggerService.logLevel = LogLevel[levelStr as keyof typeof LogLevel];
   }
 });
 
@@ -84,7 +82,7 @@ export class LoggerService {
   }
 
   info(...msg: any[]) {
-    if (LoggerService.logLevel > LogLevel.Info) {
+    if (this._disableLog(LogLevel.Info)) {
       return;
     }
     logger.output.info(this.prefix, ...msg);
@@ -94,7 +92,7 @@ export class LoggerService {
   }
 
   log(...msg: any[]) {
-    if (LoggerService.logLevel > LogLevel.Info) {
+    if (this._disableLog(LogLevel.Info)) {
       return;
     }
     logger.output.info(this.prefix, ...msg);
@@ -104,7 +102,7 @@ export class LoggerService {
   }
 
   warn(...msg: any[]) {
-    if (LoggerService.logLevel > LogLevel.Warning) {
+    if (this._disableLog(LogLevel.Warning)) {
       return;
     }
     logger.output.warn(this.prefix, ...msg);
@@ -114,7 +112,7 @@ export class LoggerService {
   }
 
   trace(...msg: any[]) {
-    if (LoggerService.logLevel > LogLevel.Trace) {
+    if (this._disableLog(LogLevel.Trace)) {
       return;
     }
     logger.output.warn(this.prefix, ...msg);
@@ -124,7 +122,7 @@ export class LoggerService {
   }
 
   debug(...msg: any[]) {
-    if (LoggerService.logLevel > LogLevel.Debug) {
+    if (this._disableLog(LogLevel.Debug)) {
       return;
     }
     logger.output.debug(this.prefix, ...msg);
@@ -134,9 +132,18 @@ export class LoggerService {
   }
 
   error(...msg: any[]) {
+    if (this._disableLog(LogLevel.Error)) {
+      return;
+    }
     logger.output.error(this.prefix, ...msg);
     logger.telemetry.logError('error', {
       info: msg,
     });
+  }
+
+  private _disableLog(level: LogLevel): boolean {
+    return (
+      LoggerService.logLevel === LogLevel.Off || LoggerService.logLevel > level
+    );
   }
 }

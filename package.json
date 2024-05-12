@@ -471,6 +471,7 @@
           "type": "string",
           "default": "Warning",
           "enum": [
+            "Off",
             "Trace",
             "Debug",
             "Info",
