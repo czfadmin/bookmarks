@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.0.35
+
+### Patch Changes
+
+- 6cc2de6: fix(textDecoration): 修改配置中的showTextDecoratin选项的默认值
+
 ## 0.0.34
 
 ### Patch Changes
