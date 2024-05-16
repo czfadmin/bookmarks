@@ -75,7 +75,8 @@ export const CreateDecorationOptionsModel = types
         configuration.get('showGutterInOverviewRuler') || false;
       self.alwaysUseDefaultColor =
         configuration.get('alwaysUseDefaultColor') || false;
-      self.showTextDecoration = configuration.get('showTextDecoration') || true;
+      self.showTextDecoration =
+        configuration.get('showTextDecoration') || false;
       self.fontWeight = configuration.get('fontWeight') || 'bold';
       self.wholeLine = configuration.get('wholeLine') || false;
       self.textDecorationLine =
