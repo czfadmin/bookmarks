@@ -172,9 +172,12 @@ export default class BaseTreeView<T extends BaseTreeItem, C extends IController>
             sourceContextValue === BookmarkTreeItemCtxValueEnum.BOOKMARK
           ) {
             if (sourceMeta.groupId === targetMeta.groupId) {
+              const targetIdx =
+                targetMeta.sortedInfo[self._controller.groupView];
+              self._controller.updateBookmarkSortedInfo(sourceMeta, targetIdx);
               self._controller.updateBookmarkSortedInfo(
-                sourceMeta,
-                targetMeta.sortedInfo[self._controller.groupView],
+                targetMeta,
+                targetIdx + 1,
               );
             }
           }

@@ -240,7 +240,7 @@ export const Bookmark = types
   });
 
 /**
- * 增加hooks, 将bookmark数据转换
+ * 增加hooks, 将bookmark数据转换, PS: 暂时未使用到此hooks
  */
 export const BookmarkProcessorModel: ISnapshotProcessor<
   typeof Bookmark,
