@@ -647,9 +647,6 @@ export const BookmarksStore = types
         default:
           return;
       }
-      // if (!bookmarks) {
-      //   return;
-      // }
     }
 
     function addGroupInfo(
