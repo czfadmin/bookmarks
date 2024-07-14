@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.0.36
+
+### Patch Changes
+
+- fix(sort): 修复分组中只有两个排序时,无法正常排序问题
+
 ## 0.0.35
 
 ### Patch Changes
