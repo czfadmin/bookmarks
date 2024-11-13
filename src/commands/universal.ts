@@ -78,7 +78,7 @@ export async function addUniversalBookmark(ctx: UniversalContext) {
   controller.add(newBookmark as UniversalBookmarkMeta);
 }
 
-function deleteUniversalBookmark(ctx: UniversalContext) {
+export function deleteUniversalBookmark(ctx: UniversalContext) {
   const {meta} = ctx;
   if (!meta) {
     return;
