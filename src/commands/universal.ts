@@ -100,11 +100,10 @@ export async function changeUniversalBookmarkColor(ctx: UniversalContext) {
     return;
   }
   const colors = sm.configService.colors;
-  const gutters = sm.gutterService.gutters;
   const pickItems = Object.keys(colors).map(color => {
     return {
       label: color,
-      iconPath: (gutters[color] || gutters['default']).iconPath,
+      iconPath: sm.gutterService.getGutter(color).iconPath,
     } as QuickPickItem;
   });
   const chosenColor = await window.showQuickPick(pickItems, {

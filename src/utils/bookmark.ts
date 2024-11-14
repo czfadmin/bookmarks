@@ -409,26 +409,14 @@ export async function chooseBookmarkColor() {
   const sm = resolveServiceManager();
   const gutterService = sm.gutterService;
   const colors = {...sm.configService.colors};
-  if (
-    !sm.configService.configuration.useBuiltInColors &&
-    Object.keys(sm.configService.customColors).length
-  ) {
-    Object.keys(defaultColors).forEach(it => delete colors[it]);
-  }
 
-  const controller = resolveBookmarkController();
-  const userColors = controller.store!.colors;
-
-  const allUsedColors = Array.from(
-    new Set([...Object.keys(colors), ...userColors]),
-  );
-
-  const pickItems = allUsedColors.map(color => {
+  const pickItems = Object.keys(colors).map(color => {
     return {
       label: color,
+      description: colors[color] || color,
       iconPath: (
-        gutterService.gutters[color] || gutterService.gutters['default']
-      ).iconPath,
+        gutterService.gutters.get(color) || gutterService.gutters.get('default')
+      )?.iconPath,
     } as QuickPickItem;
   });
   const chosenColor = await window.showQuickPick(pickItems, {
@@ -596,7 +584,7 @@ export function updateBookmarksGroupByChangedLine(
   const isDeleteLine = change.range.end.line > change.range.start.line;
   const isLineStart = change.range.start.character === 0;
   const bookmarkInCurrentLine = getBookmarkFromLineNumber();
-  const {autoSwitchSingleToMultiWhenLineWrapping} = configService.configuration;
+  const {autoSwitchSingleToMultiWhenLineWrap} = configService.configuration;
   const cursorLine = document.lineAt(change.range.start.line);
   const bookmarkInCursor = getBookmarkFromLineNumber(
     cursorLine.range.start.line,
@@ -667,7 +655,7 @@ export function updateBookmarksGroupByChangedLine(
       let endLine = originalSelection.end.line;
       let startChar = originalSelection.start.character;
       let endCharacter = changedLine.range.end.character;
-      if (autoSwitchSingleToMultiWhenLineWrapping) {
+      if (autoSwitchSingleToMultiWhenLineWrap) {
         startLine = isLineStart
           ? originalSelection.start.line + newLines
           : originalSelection.start.line;
@@ -971,12 +959,9 @@ export function getBookmarkColorFromCtx(
 }
 
 export function getBookmarkIcon(sm: ServiceManager, bookmark: IBookmark) {
-  const gutters = sm.gutterService.gutters;
-  const tagGutters = sm.gutterService.tagGutters;
-
   return bookmark.label
-    ? (tagGutters[bookmark.color] || tagGutters['default']).iconPath
-    : (gutters[bookmark.color] || (tagGutters['default'] as any)).iconPath;
+    ? sm.gutterService.getGutter(bookmark.color).iconPath
+    : sm.gutterService.getTagGutter(bookmark.color).iconPath;
 }
 
 export async function showBookmarksQuickPick(bookmarks?: IBookmark[]) {
@@ -985,6 +970,7 @@ export async function showBookmarksQuickPick(bookmarks?: IBookmark[]) {
   if (!_bookmarks) {
     _bookmarks = resolveBookmarkController().store.bookmarks;
   }
+
   const quickItems = _bookmarks.map(it => ({
     label:
       it.label || it.description || it.selectionContent?.slice(0, 120) || '',

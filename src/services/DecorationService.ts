@@ -69,12 +69,12 @@ export default class DecorationService implements IDisposable {
    */
   createDecoration(colorLabel: string, hasTag: boolean = false) {
     const colors = this._serviceManager.configService.colors;
-    const gutters = this._serviceManager.gutterService.gutters;
-    const tagGutters = this._serviceManager.gutterService.tagGutters;
     let color = colors[colorLabel] || colors['default'];
-    let gutterIconPath = (gutters[colorLabel] || gutters['default']).iconPath;
-    let tagGutterIconPath = (tagGutters[colorLabel] || tagGutters['default'])
-      .iconPath;
+
+    let gutterIconPath =
+      this._serviceManager.gutterService.getGutter(colorLabel).iconPath;
+    let tagGutterIconPath =
+      this._serviceManager.gutterService.getTagGutter(colorLabel).iconPath;
     // 用户配置
     const {
       fontWeight,

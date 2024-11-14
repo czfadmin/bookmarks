@@ -63,6 +63,9 @@ export const Bookmark = types
     id: types.string,
     label: types.optional(types.string, ''),
     description: types.optional(types.string, ''),
+    /**
+     * 书签颜色键名(key), 不是配置的颜色值
+     */
     color: types.optional(types.string, DEFAULT_BOOKMARK_COLOR),
     fileUri: MyUriType,
     type: types.optional(

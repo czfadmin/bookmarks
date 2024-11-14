@@ -27,14 +27,17 @@ export const BookmarkManagerConfigureModel = types
     /**
      * 设置默认书签颜色
      */
-    defaultBookmarkIconColor: types.optional(types.string, ''),
+    defaultBookmarkIconColor: types.optional(
+      types.string,
+      DEFAULT_BOOKMARK_COLOR,
+    ),
     /**
      * 是否在`.vscode`文件中创建`bookmark-manager.json`
      * 建议将`bookmark-manager.json`添加到.gitignore,避免提交到代码仓库中,引起不必要的麻烦
      */
     createJsonFile: types.optional(types.boolean, false),
     /**
-     * 使用内置的颜色
+     * 使用内置的颜色列表来进行选择书签的颜色
      */
     useBuiltInColors: types.optional(types.boolean, false),
     /**
@@ -44,10 +47,7 @@ export const BookmarkManagerConfigureModel = types
     /**
      * 自动将单行书签切换为多行书签
      */
-    autoSwitchSingleToMultiWhenLineWrapping: types.optional(
-      types.boolean,
-      false,
-    ),
+    autoSwitchSingleToMultiWhenLineWrap: types.optional(types.boolean, false),
   })
   .views(self => {
     const configuration = workspace.getConfiguration(EXTENSION_ID);
@@ -66,30 +66,24 @@ export const BookmarkManagerConfigureModel = types
     };
   })
   .actions(self => {
-    function resolveCustomColors(configuration: WorkspaceConfiguration) {
-      const _customColors: StringIndexType<string> = {};
-      Object.entries(configuration.get('colors') as object).filter(
+    function resolveColors(configuration: WorkspaceConfiguration) {
+      const _colors = {} as any;
+      Object.entries(configuration.get('colors') as object).forEach(
         ([key, value]) => {
           if (typeof value === 'string') {
-            _customColors[key] = value;
+            _colors[key] = value;
           }
         },
       );
-      return _customColors;
-    }
 
-    function resolveColors(configuration: WorkspaceConfiguration) {
-      const _colors = {} as any;
-      const customColors = resolveCustomColors(configuration);
-      Object.entries(customColors).forEach(([key, value]) => {
-        if (typeof value === 'string') {
-          _colors[key] = value;
-        }
-      });
+      if (self.useBuiltInColors) {
+        Object.entries(defaultColors).forEach(([key, color]) => {
+          if (!_colors[key]) {
+            _colors[key] = color;
+          }
+        });
+      }
 
-      Object.entries(defaultColors).filter(([key, color]) => {
-        _colors[key] = color;
-      });
       _colors['default'] =
         configuration.get('defaultBookmarkIconColor') || DEFAULT_BOOKMARK_COLOR;
       if ((self as IBookmarkManagerConfigure).updateColors) {
@@ -98,17 +92,22 @@ export const BookmarkManagerConfigureModel = types
     }
     function resolveConfiguration() {
       const configuration = workspace.getConfiguration(EXTENSION_ID);
+
+      Object.keys(self).forEach(k => {
+        // @ts-ignore
+        if (typeof self[k] !== 'function') {
+          if (k === 'colors') {
+            return;
+          }
+          const v = configuration.get(k);
+          if (v !== undefined || v !== null) {
+            // @ts-ignore
+            self[k] = v;
+          }
+        }
+      });
+
       resolveColors(configuration);
-      self.lineBlame = configuration.get('lineBlame') || false;
-      self.relativePath = configuration.get('relativePath') || false;
-      self.defaultBookmarkIconColor =
-        configuration.get('defaultBookmarkIconColor') || DEFAULT_BOOKMARK_COLOR;
-      self.enableClick = configuration.get('enableClick') || false;
-      self.createJsonFile = configuration.get('createJsonFile') || false;
-      self.useBuiltInColors = configuration.get('useBuiltInColors') || false;
-      self.alwaysIgnore = configuration.get('alwaysIgnore') || false;
-      self.autoSwitchSingleToMultiWhenLineWrapping =
-        configuration.get('autoSwitchSingleToMultiWithLineWrap') || false;
     }
     return {
       updateColors(colors: StringIndexType<string>) {

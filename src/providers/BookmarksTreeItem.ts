@@ -88,13 +88,13 @@ export default class BookmarkTreeItem extends BaseTreeItem {
       this.resourceUri = Uri.parse(meta.fileName);
     } else if (this.contextValue === BookmarkTreeItemCtxValueEnum.COLOR) {
       const _meta = this.meta as BookmarksGroupedByColorType;
-      this.iconPath = (gutters[_meta.color] || gutters['default']).iconPath;
+      this.iconPath = this._sm.gutterService.getTagGutter(_meta.color).iconPath;
     } else if (this.contextValue === BookmarkTreeItemCtxValueEnum.BOOKMARK) {
       const meta = this.meta as IBookmark;
       const color = meta.color;
       this.iconPath = meta.label
-        ? (tagGutters[color] || tagGutters['default']).iconPath
-        : (gutters[color] || gutters['default']).iconPath;
+        ? this._sm.gutterService.getTagGutter(color).iconPath
+        : this._sm.gutterService.getGutter(color).iconPath;
     }
   }
 

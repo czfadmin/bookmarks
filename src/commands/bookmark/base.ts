@@ -280,8 +280,8 @@ export async function listBookmarksInCurrentFile(ctx: LineBookmarkContext) {
   const gutters = sm.gutterService.gutters;
   const pickItems = bookmarks.map((it: any) => {
     const iconPath = it.label
-      ? tagGutters[it.color] || tagGutters['default']
-      : gutters[it.color] || gutters['default'];
+      ? sm.gutterService.getTagGutter(it.color)
+      : sm.gutterService.getGutter(it.color);
     return {
       label:
         it.label || it.description || it.selectionContent?.slice(0, 120) || '',
