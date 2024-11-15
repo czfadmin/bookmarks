@@ -14,7 +14,7 @@ import {
   IRootConfigureModel,
   RootConfigureModel,
 } from '../stores/configure';
-import {ICreateDecorationOptions} from '../stores/decoration';
+import {CreateDecorationOptionsType} from '../stores/decoration';
 import {StringIndexType} from '../types';
 import {destroy} from 'mobx-state-tree';
 
@@ -23,7 +23,7 @@ import {destroy} from 'mobx-state-tree';
  */
 export default class ConfigService implements Disposable {
   private _onDecorationConfigChangeEvent =
-    new EventEmitter<ICreateDecorationOptions>();
+    new EventEmitter<CreateDecorationOptionsType>();
 
   private _onExtensionConfigChangeEvent =
     new EventEmitter<IBookmarkManagerConfigure>();
@@ -32,7 +32,7 @@ export default class ConfigService implements Disposable {
     new EventEmitter<ConfigurationChangeEvent>();
   private _configuration: IBookmarkManagerConfigure | undefined;
 
-  private _decorationConfiguration: ICreateDecorationOptions | undefined;
+  private _decorationConfiguration: CreateDecorationOptionsType | undefined;
 
   private _serviceManager: ServiceManager;
 
@@ -109,7 +109,7 @@ export default class ConfigService implements Disposable {
    * 获取用户自定义的书签装饰器配置
    * @returns 返回一个书签装饰的配置
    */
-  private _getCreateDecorationOptions(): ICreateDecorationOptions {
+  private _getCreateDecorationOptions(): CreateDecorationOptionsType {
     return this._store.decoration!;
   }
 

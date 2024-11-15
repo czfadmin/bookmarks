@@ -5,3 +5,4 @@ export * from './custom';
 export * from './bookmark';
 export * from './bookmark-group';
 export * from './bookmark-store';
+export * from './icons';

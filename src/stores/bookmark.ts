@@ -107,6 +107,11 @@ export const Bookmark = types
         },
       }),
     ),
+
+    /**
+     * @zh 书签的gutter图像名称 - 和gutter模型中的name相对应
+     */
+    gutterName: types.optional(types.string, ''),
   })
   .views(self => {
     return {
@@ -150,6 +155,13 @@ export const Bookmark = types
           true,
         );
         return rangesOrOptions;
+      },
+
+      /**
+       * 获取书签的装饰器图标
+       */
+      get iconPath() {
+        return '';
       },
     };
   })
@@ -224,6 +236,14 @@ export const Bookmark = types
       }
     }
 
+    /**
+     *  更新gutter信息
+     * @param name
+     */
+    function updateGutter(name: string) {
+      self.gutterName = name;
+    }
+
     function afterCreate() {}
 
     return {
@@ -239,6 +259,7 @@ export const Bookmark = types
       updateColorSortedIndex,
       updateWorkspaceSortedIndex,
       updateFileSortedIndex,
+      updateGutter,
     };
   });
 

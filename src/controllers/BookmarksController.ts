@@ -208,7 +208,7 @@ export default class BookmarksController implements IController {
           this._store.addGroups([]);
         }
 
-        this._logger.log(getSnapshot(this._store));
+        this._logger.debug(getSnapshot(this._store));
       } catch (error) {
         this._logger.error(error);
       }
@@ -606,8 +606,6 @@ export default class BookmarksController implements IController {
         }
 
         const storeContent = JSON.parse(content) as IBookmarkStoreInfo;
-        // const {version, updatedDate, updatedDateTimespan, ...rest} =
-        //   storeContent;
 
         applySnapshot(this._store, {
           ...storeContent,

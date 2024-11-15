@@ -2,8 +2,8 @@ import {workspace} from 'vscode';
 import {Instance, types} from 'mobx-state-tree';
 import {EXTENSION_ID} from '../constants';
 
-export const CreateDecorationOptionsModel = types
-  .model('CreateDecorationOptionsModel', {
+export const CreateDecorationOptions = types
+  .model('CreateDecorationOptions', {
     /**
      * 是否在行号出现时指示图标
      */
@@ -99,6 +99,6 @@ export const CreateDecorationOptionsModel = types
     return {afterCreate, resolveDecorationOptions};
   });
 
-export type ICreateDecorationOptions = Instance<
-  typeof CreateDecorationOptionsModel
+export type CreateDecorationOptionsType = Instance<
+  typeof CreateDecorationOptions
 >;

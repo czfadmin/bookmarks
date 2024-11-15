@@ -79,4 +79,10 @@ export function postInitController() {
 }
 
 const resolveServiceManager = () => _serviceManager;
+export const resolveGutterService = () => _serviceManager.gutterService;
+export const resolveConfigurationService = () => _serviceManager.configService;
+export const resolveDecorationService = () => _serviceManager.decorationService;
+export const resolveWorkspaceService = () => _serviceManager.workspaceService;
+export const resolveGitService = () => _serviceManager.gitService;
+
 export default resolveServiceManager;

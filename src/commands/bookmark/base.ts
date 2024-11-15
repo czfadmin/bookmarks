@@ -276,8 +276,6 @@ export async function listBookmarksInCurrentFile(ctx: LineBookmarkContext) {
   if (!bookmarks.length) {
     return;
   }
-  const tagGutters = sm.gutterService.tagGutters;
-  const gutters = sm.gutterService.gutters;
   const pickItems = bookmarks.map((it: any) => {
     const iconPath = it.label
       ? sm.gutterService.getTagGutter(it.color)

@@ -2,7 +2,7 @@ import {Instance, applySnapshot, cast, types} from 'mobx-state-tree';
 import {WorkspaceConfiguration, workspace} from 'vscode';
 import {DEFAULT_BOOKMARK_COLOR, EXTENSION_ID} from '../constants';
 import {defaultColors} from '../constants/colors';
-import {CreateDecorationOptionsModel} from './decoration';
+import {CreateDecorationOptions} from './decoration';
 
 export type StringIndexType<T> = {[key: string]: T};
 
@@ -126,13 +126,13 @@ export const BookmarkManagerConfigureModel = types
 
 export const RootConfigureModel = types
   .model('RootConfigureMode', {
-    decoration: types.maybeNull(CreateDecorationOptionsModel),
+    decoration: types.maybeNull(CreateDecorationOptions),
     configure: types.maybeNull(BookmarkManagerConfigureModel),
   })
   .actions(self => {
     return {
       afterCreate() {
-        self.decoration = CreateDecorationOptionsModel.create();
+        self.decoration = CreateDecorationOptions.create();
         self.configure = BookmarkManagerConfigureModel.create({
           colors: {},
         });

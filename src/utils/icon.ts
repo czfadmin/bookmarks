@@ -26,6 +26,6 @@ export function createTagIcon(color: string): string {
 /**
  * `%23` is encoded `#` sign (need it to work).
  */
-function escapeColor(color: string): string {
+export function escapeColor(color: string): string {
   return `%23${color.slice(1)}`;
 }
