@@ -41,7 +41,6 @@ import {
   IBookmarkGroup,
   IBookmarksStore,
 } from '../stores';
-import {BookmarksStoreProcessorModel} from '../stores/bookmark-store';
 
 import {IBookmarkManagerConfigure} from '../stores/configure';
 import {
@@ -67,10 +66,7 @@ export default class BookmarksController implements IController {
   private _watcher: FileSystemWatcher | undefined;
 
   private _configuration: IBookmarkManagerConfigure;
-
-  private _configService: ConfigService;
-
-  private _serviceManager: ServiceManager;
+  private _sm: ServiceManager;
 
   private _logger: LoggerService;
 
@@ -147,26 +143,29 @@ export default class BookmarksController implements IController {
     }
   }
 
+
+  public get configService() {
+    return this._sm.configService
+  }
   constructor(context: ExtensionContext, serviceManager: ServiceManager) {
     this._context = context;
-    this._serviceManager = serviceManager;
-    this._configService = this._serviceManager.configService;
-    this._configuration = this._configService.configuration;
+    this._sm = serviceManager;
+    this._configuration = this.configService.configuration;
     this._logger = new LoggerService(BookmarksController.name);
     this._initial();
   }
 
   private async _initial() {
-    this._needWarning = this._configService.getGlobalValue(
+    this._needWarning = this.configService.getGlobalValue(
       '_needWarning',
       true,
     );
 
-    this._configService.onExtensionConfigChange(configuration => {
+    this.configService.onExtensionConfigChange(configuration => {
       this._configuration = configuration;
     });
 
-    this._configService.onDidChangeConfiguration(ev => {
+    this.configService.onDidChangeConfiguration(ev => {
       if (!ev.affectsConfiguration(`${EXTENSION_ID}.createJsonFile`)) {
         return;
       }
@@ -183,7 +182,7 @@ export default class BookmarksController implements IController {
 
   private async _initStore() {
     let store;
-    this._store = BookmarksStoreProcessorModel.create();
+    this._store = this._sm.store.bookmarksStore
 
     if (
       (!workspace.workspaceFolders || workspace.workspaceFolders!.length < 2) &&
@@ -558,14 +557,14 @@ export default class BookmarksController implements IController {
         ),
       );
 
-      this._configService.updateGlobalValue('needWarning', false);
+      this.configService.updateGlobalValue('needWarning', false);
       this._needWarning = false;
 
       return;
     }
 
     if (!this._needWarning && this.store?.bookmarks.length) {
-      this._configService.updateGlobalValue('needWarning', true);
+      this.configService.updateGlobalValue('needWarning', true);
       this._needWarning = true;
     }
 

@@ -845,6 +845,9 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.26.2",
+    "@commitlint/cli": "^19.2.1",
+    "@commitlint/config-angular": "^19.1.0",
+    "@release-it/conventional-changelog": "^8.0.1",
     "@swc/core": "^1.4.8",
     "@types/glob": "^8.1.0",
     "@types/lodash": "^4.14.199",
@@ -866,17 +869,16 @@
     "ts-loader": "^9.4.2",
     "typescript": "^5.0.4",
     "webpack": "^5.81.0",
-    "webpack-cli": "^5.0.2",
-    "@commitlint/cli": "^19.2.1",
-    "@commitlint/config-angular": "^19.1.0",
-    "@release-it/conventional-changelog": "^8.0.1"
+    "webpack-cli": "^5.0.2"
   },
   "dependencies": {
     "@vscode/l10n": "^0.0.16",
     "lodash": "^4.17.21",
     "mobx": "^6.12.0",
     "mobx-state-tree": "^5.4.1",
-    "uuid": "^9.0.1"
+    "ofetch": "^1.4.1",
+    "uuid": "^9.0.1",
+    "vsc-extension-helper": "^0.0.7"
   },
   "lint-staged": {
     "*.{ts,js}": "eslint --fix",

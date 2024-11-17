@@ -6,8 +6,8 @@ import {CreateDecorationOptions} from './decoration';
 
 export type StringIndexType<T> = {[key: string]: T};
 
-export const BookmarkManagerConfigureModel = types
-  .model('BookmarkManagerConfigureModel', {
+export const BookmarkManagerConfigure = types
+  .model('BookmarkManagerConfigure', {
     /**
      * 配置书签的颜色
      */
@@ -48,6 +48,16 @@ export const BookmarkManagerConfigureModel = types
      * 自动将单行书签切换为多行书签
      */
     autoSwitchSingleToMultiWhenLineWrap: types.optional(types.boolean, false),
+
+    /**
+     * @zh 默认书签图标 (mdi:bookmark)
+     */
+    defaultBookmarkIcon: types.optional(types.string, 'mdi:bookmark'),
+
+    /**
+     * @zh 默认带有标签的书签图标 (mdi:tag)
+     */
+    defaultLabeledBookmarkIcon: types.optional(types.string, "mdi:tag")
   })
   .views(self => {
     const configuration = workspace.getConfiguration(EXTENSION_ID);
@@ -124,16 +134,16 @@ export const BookmarkManagerConfigureModel = types
     };
   });
 
-export const RootConfigureModel = types
-  .model('RootConfigureMode', {
+export const RootConfigure = types
+  .model('RootConfigure', {
     decoration: types.maybeNull(CreateDecorationOptions),
-    configure: types.maybeNull(BookmarkManagerConfigureModel),
+    configure: types.maybeNull(BookmarkManagerConfigure),
   })
   .actions(self => {
     return {
       afterCreate() {
         self.decoration = CreateDecorationOptions.create();
-        self.configure = BookmarkManagerConfigureModel.create({
+        self.configure = BookmarkManagerConfigure.create({
           colors: {},
         });
       },
@@ -145,7 +155,7 @@ export const RootConfigureModel = types
   });
 
 export type IBookmarkManagerConfigure = Instance<
-  typeof BookmarkManagerConfigureModel
+  typeof BookmarkManagerConfigure
 >;
 
-export type IRootConfigureModel = Instance<typeof RootConfigureModel>;
+export type IRootConfigureModel = Instance<typeof RootConfigure>;

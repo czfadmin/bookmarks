@@ -16,10 +16,10 @@ import {
 } from '../types';
 import {registerExtensionCustomContextByKey} from '../context';
 import {
-  BookmarkProcessorModel,
   BookmarksGroupedByColorType,
   BookmarksGroupedByWorkspaceType,
   IBookmark,
+  Bookmark,
 } from './bookmark';
 import {BookmarkGroup, IBookmarkGroup} from './bookmark-group';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
@@ -41,7 +41,10 @@ const BookmarkGroupInfoModel = types.model('BookmarkGroupInfoModel', {
   ]),
   data: types.array(BookmarkGroupDataModel),
 });
+
+
 const logger = new LoggerService('BookmarkStore');
+
 export type BookmarkGroupDataModelType = Instance<
   typeof BookmarkGroupDataModel
 >;
@@ -51,7 +54,7 @@ export type BookmarkGroupInfoModelType = Instance<
 
 export const BookmarksStore = types
   .model('BookmarksStore', {
-    bookmarks: types.optional(types.array(BookmarkProcessorModel), []),
+    bookmarks: types.array(Bookmark),
     viewType: types.optional(
       types.enumeration([TreeViewStyleEnum.TREE, TreeViewStyleEnum.LIST]),
       TreeViewStyleEnum.TREE,
@@ -332,7 +335,7 @@ export const BookmarksStore = types
 
       const groupId = bookmark.groupId || DEFAULT_BOOKMARK_GROUP_ID;
 
-      _bookmark = BookmarkProcessorModel.create({
+      _bookmark = Bookmark.create({
         id: id || generateUUID(),
         label,
         description,
@@ -705,32 +708,3 @@ export const BookmarksStore = types
   });
 
 export type IBookmarksStore = Instance<typeof BookmarksStore>;
-
-export const BookmarksStoreProcessorModel: ISnapshotProcessor<
-  typeof BookmarksStore,
-  SnapshotIn<typeof BookmarksStore>,
-  SnapshotOut<typeof BookmarksStore>
-> = types.snapshotProcessor(BookmarksStore, {
-  preProcessor(
-    snapshot: SnapshotIn<IBookmarksStore>,
-  ): SnapshotOut<typeof BookmarksStore> {
-    if (!snapshot) {
-      return {
-        bookmarks: [],
-        viewType: TreeViewStyleEnum.TREE,
-        groupView: TreeViewGroupEnum.DEFAULT,
-        sortedType: TreeViewSortedEnum.LINENUMBER,
-        groups: [],
-        groupInfo: [],
-      };
-    }
-    return snapshot as SnapshotOut<IBookmarksStore>;
-  },
-  postProcessor(snapshot, node) {
-    return snapshot;
-  },
-});
-
-export type IBookmarksStoreProcessorModel = Instance<
-  typeof BookmarksStoreProcessorModel
->;

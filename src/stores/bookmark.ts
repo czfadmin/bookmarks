@@ -25,6 +25,7 @@ import {
   TSortedInfo,
 } from './custom';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
+import { Icon } from './icons';
 
 export type BookmarksGroupedByColorType = {
   color: BookmarkColor;
@@ -61,29 +62,63 @@ export type ISortedInfoType = Instance<typeof SortedInfoType>;
 export const Bookmark = types
   .model('Boomkmark', {
     id: types.string,
+    /**
+     * @zh 书签的自定义标签
+     */
     label: types.optional(types.string, ''),
+    /**
+     * @zh 书签的自定义描述
+     */
     description: types.optional(types.string, ''),
     /**
-     * 书签颜色键名(key), 不是配置的颜色值
+     * @zh 书签颜色键名(key), 不是配置的具体的颜色值
      */
     color: types.optional(types.string, DEFAULT_BOOKMARK_COLOR),
+    /**
+     * @zh 数千所在的文件URI
+     */
     fileUri: MyUriType,
+    /**
+     * @zh 书签的类型
+     */
     type: types.optional(
       types.enumeration([BookmarkTypeEnum.LINE, BookmarkTypeEnum.SELECTION]),
       BookmarkTypeEnum.LINE,
     ),
+    /**
+     * @zh 选择的内容数据
+     */
     selectionContent: types.optional(types.string, ''),
+    /**
+     * @zh 书签所在的文件的语言ID
+     */
     languageId: types.optional(types.string, 'javascript'),
+    /**
+     * @zh 书签的工作区间
+     */
     workspaceFolder: MyWorkspaceFolderType,
+    /**
+     * @zh 记录书签的选择区域信息
+     */
     rangesOrOptions: DecorationOptionsType,
+    /**
+     * @zh 代表书签的创建日期
+     */
     createdAt: types.optional(types.Date, () => new Date()),
+
+    /**
+     * @zh 代表书签Tag 信息, 暂时未用到
+     */
     tag: types.optional(TagType, {
       name: 'default',
       sortedIndex: -1,
     }),
+    /**
+     * @zh 代表书签的分组ID
+     */
     groupId: types.optional(types.string, DEFAULT_BOOKMARK_GROUP_ID),
     /**
-     * 用于存储在各个分组情况下的分组中的排序索引
+     * @zh 用于存储在各个分组情况下的分组中的排序索引
      */
     sortedInfo: types.optional(SortedInfoType, {
       color: -1,
@@ -109,9 +144,10 @@ export const Bookmark = types
     ),
 
     /**
-     * @zh 书签的gutter图像名称 - 和gutter模型中的name相对应
+     * @zh 书签的图标引用
      */
-    gutterName: types.optional(types.string, ''),
+    icon:types.maybeNull( types.reference(Icon)),
+    
   })
   .views(self => {
     return {
@@ -145,7 +181,7 @@ export const Bookmark = types
         );
       },
       /**
-       * 当label, range 以及description发生改变时, 调用此计算属性, 获取最新的hoverMessage
+       *@zh 当label, range 以及description发生改变时, 调用此计算属性, 获取最新的hoverMessage
        */
       get prettierRangesOrOptions() {
         const rangesOrOptions = {...self.rangesOrOptions};
@@ -158,7 +194,7 @@ export const Bookmark = types
       },
 
       /**
-       * 获取书签的装饰器图标
+       *@zh 获取书签的装饰器图标
        */
       get iconPath() {
         return '';
@@ -236,13 +272,6 @@ export const Bookmark = types
       }
     }
 
-    /**
-     *  更新gutter信息
-     * @param name
-     */
-    function updateGutter(name: string) {
-      self.gutterName = name;
-    }
 
     function afterCreate() {}
 
@@ -259,26 +288,25 @@ export const Bookmark = types
       updateColorSortedIndex,
       updateWorkspaceSortedIndex,
       updateFileSortedIndex,
-      updateGutter,
     };
   });
 
 /**
  * 增加hooks, 将bookmark数据转换, PS: 暂时未使用到此hooks
  */
-export const BookmarkProcessorModel: ISnapshotProcessor<
-  typeof Bookmark,
-  SnapshotIn<typeof Bookmark>,
-  SnapshotOut<typeof Bookmark>
-> = types.snapshotProcessor(Bookmark, {
-  preProcessor(snapshot: SnapshotIn<IBookmark>): SnapshotOut<IBookmark> {
-    return snapshot as SnapshotOut<IBookmark>;
-  },
-  postProcessor(snapshot: SnapshotOut<IBookmark>, node) {
-    return snapshot;
-  },
-});
+// export const BookmarkProcessorModel: ISnapshotProcessor<
+//   typeof Bookmark,
+//   SnapshotIn<typeof Bookmark>,
+//   SnapshotOut<typeof Bookmark>
+// > = types.snapshotProcessor(Bookmark, {
+//   preProcessor(snapshot: SnapshotIn<IBookmark>): SnapshotOut<IBookmark> {
+//     return snapshot as SnapshotOut<IBookmark>;
+//   },
+//   postProcessor(snapshot: SnapshotOut<IBookmark>, node) {
+//     return snapshot;
+//   },
+// });
 
-export type IBookmarkProcessorModel = Instance<typeof BookmarkProcessorModel>;
+// export type IBookmarkProcessorModel = Instance<typeof BookmarkProcessorModel>;
 
 export type IBookmark = Instance<typeof Bookmark>;

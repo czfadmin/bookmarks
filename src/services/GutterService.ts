@@ -2,19 +2,12 @@ import {Disposable, Uri} from 'vscode';
 import {ServiceManager} from './ServiceManager';
 import {createBookmarkIcon, createTagIcon, svgToUri} from '../utils';
 import {DEFAULT_BOOKMARK_COLOR, EXTENSION_ID} from '../constants';
-import {IconStore, IconStoreType} from '../stores';
 
 /**
  * Gutter 服务
  */
 export default class GutterService implements Disposable {
   private readonly _sm: ServiceManager;
-
-  private readonly _store: IconStoreType;
-
-  public get store() {
-    return this._store;
-  }
   private _gutters: Map<string, {color: string; iconPath: Uri | string}>;
   public get gutters(): Map<string, {color: string; iconPath: Uri | string}> {
     return this._gutters;
@@ -32,7 +25,6 @@ export default class GutterService implements Disposable {
     this._sm = sm;
     this._gutters = new Map();
     this._tagGutters = new Map();
-    this._store = IconStore.create();
     this._initial();
     this._sm.configService.onDidChangeConfiguration(ev => {
       if (

@@ -12,7 +12,7 @@ import {ServiceManager} from './ServiceManager';
 import {
   IBookmarkManagerConfigure,
   IRootConfigureModel,
-  RootConfigureModel,
+  RootConfigure,
 } from '../stores/configure';
 import {CreateDecorationOptionsType} from '../stores/decoration';
 import {StringIndexType} from '../types';
@@ -95,7 +95,7 @@ export default class ConfigService implements Disposable {
   }
 
   private _initStore() {
-    this._store = RootConfigureModel.create();
+    this._store = RootConfigure.create();
   }
   /**
    * 将用户配置的内容注册到`context`中

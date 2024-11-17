@@ -71,7 +71,16 @@ function initialController(
   controllerManager.universal = universalController;
 }
 
-export default async function bootstrap(context: ExtensionContext) {
+export function resolveBookmarkController(): BookmarksController {
+  return controllerManager.bookmarks!;
+}
+
+export function resolveUniversalController(): UniversalBookmarkController {
+  return controllerManager.universal!;
+}
+
+
+export default function bootstrap(context: ExtensionContext) {
   if (!workspace.workspaceFolders) {
     return;
   }
@@ -79,21 +88,14 @@ export default async function bootstrap(context: ExtensionContext) {
   const logger = new LoggerService('Bootstrap');
   logger.log(`${EXTENSION_ID} is now active!`);
   try {
-    const sm = await initServiceManager(context, updateEverything);
-    initialController(context, sm);
-    postInitController();
-    registerAllTreeView(context);
-    registerAllCommands(context);
-    updateEverything();
+    initServiceManager(context, updateEverything).then(sm => {
+      initialController(context, sm);
+      postInitController();
+      registerAllTreeView(context);
+      registerAllCommands(context);
+      updateEverything();
+    });
   } catch (error) {
     logger.error(error);
   }
-}
-
-export function resolveBookmarkController(): BookmarksController {
-  return controllerManager.bookmarks!;
-}
-
-export function resolveUniversalController(): UniversalBookmarkController {
-  return controllerManager.universal!;
 }

@@ -6,3 +6,5 @@ export * from './bookmark';
 export * from './bookmark-group';
 export * from './bookmark-store';
 export * from './icons';
+export * from './color';
+export * from './global';

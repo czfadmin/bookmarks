@@ -6,6 +6,10 @@ import StatusbarService from './StatusbarService';
 import GutterService from './GutterService';
 import WorkspaceService from './WorkspaceService';
 import GitService from './GitService';
+import {FileService} from './FileService';
+import {createGlobalStore, GlobalStoreType} from '../stores';
+import {IconsService} from './IconsService';
+import ColorsService from './ColorsService';
 
 export interface IServiceManager {
   readonly configService: ConfigService;
@@ -14,6 +18,9 @@ export interface IServiceManager {
   readonly workspaceService: WorkspaceService;
   readonly gitService: GitService;
   readonly statusbarService: StatusbarService | undefined;
+  readonly iconsService: IconsService;
+  readonly colorsService: ColorsService;
+  readonly fileService: FileService;
 }
 
 let _serviceManager: ServiceManager;
@@ -24,7 +31,13 @@ export class ServiceManager implements IServiceManager, IDisposable {
   readonly gutterService: GutterService;
   readonly workspaceService: WorkspaceService;
   readonly gitService: GitService;
+
+  readonly iconsService: IconsService;
+
+  readonly colorsService: ColorsService;
   private _statusbarService: StatusbarService | undefined;
+
+  public fileService: FileService;
   public get statusbarService(): StatusbarService | undefined {
     return this._statusbarService;
   }
@@ -34,13 +47,27 @@ export class ServiceManager implements IServiceManager, IDisposable {
     return this._context;
   }
 
+  private _store: GlobalStoreType;
+
+  public get store() {
+    if (!this._store) {
+      this._store = createGlobalStore();
+    }
+    return this._store;
+  }
+
   constructor(context: ExtensionContext) {
     this._context = context;
+    this._store = createGlobalStore();
+    this.iconsService = new IconsService(this);
     this.configService = new ConfigService(this);
+    this.colorsService = new ColorsService(this);
     this.gutterService = new GutterService(this);
     this.decorationService = new DecorationService(this);
     this.workspaceService = new WorkspaceService(this);
     this.gitService = new GitService(this);
+    this.fileService = new FileService(this);
+
   }
 
   registerStatusbarService() {
@@ -53,6 +80,8 @@ export class ServiceManager implements IServiceManager, IDisposable {
     this.workspaceService.dispose();
     this.gutterService.dispose();
     this.gitService.dispose();
+    this.iconsService.dispose();
+    this.colorsService.dispose();
   }
 }
 
