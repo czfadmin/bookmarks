@@ -32,7 +32,6 @@ import {
   EXTENSION_STORE_PATH,
 } from '../constants';
 
-import ConfigService from '../services/ConfigService';
 import {ServiceManager} from '../services/ServiceManager';
 import {
   BookmarksGroupedByColorType,
@@ -143,9 +142,8 @@ export default class BookmarksController implements IController {
     }
   }
 
-
   public get configService() {
-    return this._sm.configService
+    return this._sm.configService;
   }
   constructor(context: ExtensionContext, serviceManager: ServiceManager) {
     this._context = context;
@@ -156,10 +154,7 @@ export default class BookmarksController implements IController {
   }
 
   private async _initial() {
-    this._needWarning = this.configService.getGlobalValue(
-      '_needWarning',
-      true,
-    );
+    this._needWarning = this.configService.getGlobalValue('_needWarning', true);
 
     this.configService.onExtensionConfigChange(configuration => {
       this._configuration = configuration;
@@ -182,7 +177,7 @@ export default class BookmarksController implements IController {
 
   private async _initStore() {
     let store;
-    this._store = this._sm.store.bookmarksStore
+    this._store = this._sm.store.bookmarksStore;
 
     if (
       (!workspace.workspaceFolders || workspace.workspaceFolders!.length < 2) &&
@@ -267,7 +262,7 @@ export default class BookmarksController implements IController {
     bookmarkDto: Partial<Omit<IBookmark, 'id'>>,
   ) {
     let sameColorBookmarks = this._store.bookmarks.filter(
-      it => it.color === colorName,
+      it => it.color.label === colorName,
     );
     const {rangesOrOptions, ...rest} = bookmarkDto;
     for (const bookmark of sameColorBookmarks) {
@@ -402,7 +397,7 @@ export default class BookmarksController implements IController {
 
       case TreeViewGroupEnum.COLOR:
         group = (this.groupedBookmarks as BookmarksGroupedByColorType[]).find(
-          it => it.color === bookmark.color,
+          it => it.color === bookmark.color.label,
         );
         break;
       case TreeViewGroupEnum.FILE:
@@ -662,9 +657,18 @@ export default class BookmarksController implements IController {
       }
     }
   }
+
+  /**
+   * @zh 清理所有书签装饰器
+   */
+  disposeAllBookmarkTextDecorations() {
+    this._store.bookmarks.forEach(it => it.disposeTextDecoration());
+  }
+
   dispose(): void {
     this._disposables.filter(it => it).forEach(it => it.dispose());
     this._storeDisposer?.();
+    this.disposeAllBookmarkTextDecorations();
     destroy(this._store);
   }
 

@@ -9,19 +9,15 @@ import {
 import {EXTENSION_ID} from '../constants';
 import {registerExtensionCustomContextByKey} from '../context';
 import {ServiceManager} from './ServiceManager';
-import {
-  IBookmarkManagerConfigure,
-  IRootConfigureModel,
-  RootConfigure,
-} from '../stores/configure';
+import {IBookmarkManagerConfigure} from '../stores/configure';
 import {CreateDecorationOptionsType} from '../stores/decoration';
 import {StringIndexType} from '../types';
-import {destroy} from 'mobx-state-tree';
+import {BaseService} from './BaseService';
 
 /**
  * 插件的用户配置,以及全局配置, 并监听配置的改动
  */
-export default class ConfigService implements Disposable {
+export default class ConfigService extends BaseService {
   private _onDecorationConfigChangeEvent =
     new EventEmitter<CreateDecorationOptionsType>();
 
@@ -34,9 +30,9 @@ export default class ConfigService implements Disposable {
 
   private _decorationConfiguration: CreateDecorationOptionsType | undefined;
 
-  private _serviceManager: ServiceManager;
-
-  private _store!: IRootConfigureModel;
+  public get store() {
+    return this._sm.store.configure;
+  }
   onDidChangeConfiguration: Event<ConfigurationChangeEvent> =
     this._onDidChangeConfigurationEvent.event;
 
@@ -46,7 +42,7 @@ export default class ConfigService implements Disposable {
 
   get colors() {
     const _colors = {} as StringIndexType<string>;
-    this._store.configure!.colors.forEach((value, key) => {
+    this.store.configure!.colors.forEach((value, key) => {
       // @ts-ignore
       _colors[key as string] = value;
     });
@@ -54,7 +50,7 @@ export default class ConfigService implements Disposable {
   }
 
   get customColors() {
-    return this._store.configure!.customColors;
+    return this.store.configure!.customColors;
   }
 
   get configuration() {
@@ -72,16 +68,14 @@ export default class ConfigService implements Disposable {
   }
 
   constructor(sm: ServiceManager) {
-    this._serviceManager = sm;
-
-    this._initStore();
+    super(ConfigService.name, sm);
 
     workspace.onDidChangeConfiguration(ev => {
       if (!ev.affectsConfiguration(EXTENSION_ID)) {
         return;
       }
       // 需要手动刷新配置中的数据
-      this._store.refresh();
+      this.store.refresh();
       this._init();
       this.fire(ev);
     });
@@ -94,9 +88,6 @@ export default class ConfigService implements Disposable {
     this._registerContextKey();
   }
 
-  private _initStore() {
-    this._store = RootConfigure.create();
-  }
   /**
    * 将用户配置的内容注册到`context`中
    */
@@ -110,7 +101,7 @@ export default class ConfigService implements Disposable {
    * @returns 返回一个书签装饰的配置
    */
   private _getCreateDecorationOptions(): CreateDecorationOptionsType {
-    return this._store.decoration!;
+    return this.store.decoration!;
   }
 
   /**
@@ -120,7 +111,7 @@ export default class ConfigService implements Disposable {
    * @returns
    */
   private _getExtensionConfiguration(): IBookmarkManagerConfigure {
-    return this._store.configure!;
+    return this.store.configure!;
   }
 
   /**
@@ -145,7 +136,7 @@ export default class ConfigService implements Disposable {
    */
   getGlobalValue<T>(key: string, defaultValue: T) {
     return (
-      this._serviceManager.context.globalState.get<T>(
+      this._sm.context.globalState.get<T>(
         `bookmark-manager.global.configuration.${key}`,
       ) || defaultValue
     );
@@ -157,7 +148,7 @@ export default class ConfigService implements Disposable {
    * @param value
    */
   updateGlobalValue(key: string, value: any) {
-    this._serviceManager.context.globalState.update(
+    this._sm.context.globalState.update(
       `bookmark-manager.global.configuration.${key}`,
       value,
     );
@@ -176,6 +167,5 @@ export default class ConfigService implements Disposable {
     this._onDidChangeConfigurationEvent.dispose();
     this._onDecorationConfigChangeEvent.dispose();
     this._onExtensionConfigChangeEvent.dispose();
-    destroy(this._store);
   }
 }

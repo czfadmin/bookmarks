@@ -195,7 +195,7 @@ export async function changeBookmarkColorName(ctx: LineBookmarkContext) {
     title: l10n.t(
       'Bookmark Color Name (Press `Enter` to confirm or press `Escape` to cancel)',
     ),
-    value: bookmark.color,
+    value: bookmark.color.value,
   });
 
   if (!newColorName) {
@@ -276,16 +276,13 @@ export async function listBookmarksInCurrentFile(ctx: LineBookmarkContext) {
   if (!bookmarks.length) {
     return;
   }
-  const pickItems = bookmarks.map((it: any) => {
-    const iconPath = it.label
-      ? sm.gutterService.getTagGutter(it.color)
-      : sm.gutterService.getGutter(it.color);
+  const pickItems = bookmarks.map((it: IBookmark) => {
     return {
       label:
         it.label || it.description || it.selectionContent?.slice(0, 120) || '',
       description: getLineInfoStrFromBookmark(it),
       detail: it.fileUri.fsPath,
-      iconPath: iconPath.iconPath as any,
+      iconPath: it.iconPath,
       meta: {
         ...it,
         selection: new Selection(it.selection.anchor, it.selection.active),

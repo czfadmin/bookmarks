@@ -1,17 +1,14 @@
 import {ServiceManager} from './ServiceManager';
-import {IDisposable} from '../utils';
-import {LoggerService} from './LoggerService';
 import {EXTENSION_ID} from '../constants';
+import {BaseService} from './BaseService';
 
 /**
  * @zh 书签颜色的一个管理服务类, 间接操作对应的store
  */
-export default class ColorsService implements IDisposable {
-  private _logger: LoggerService;
-  private _sm: ServiceManager;
+export default class ColorsService extends BaseService {
   constructor(sm: ServiceManager) {
-    this._sm = sm;
-    this._logger = new LoggerService(ColorsService.name);
+    super(ColorsService.name, sm);
+
     this._sm.configService.onDidChangeConfiguration(ev => {
       if (
         ev.affectsConfiguration(`${EXTENSION_ID}.defaultBookmarkIconColor`) ||

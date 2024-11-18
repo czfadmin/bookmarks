@@ -60,7 +60,7 @@ export async function addUniversalBookmark(ctx: UniversalContext) {
     label: input || '',
     type: selectedType.label as UniversalBookmarkType,
     color: sm.configService.colors['default'],
-  } as UniversalBookmarkMeta;
+  } as unknown as UniversalBookmarkMeta;
 
   newBookmark.icon = resolveIcon(newBookmark.type as string);
 
@@ -93,34 +93,34 @@ export function clearAllUniversalBookmarks(ctx: UniversalContext) {
   controller.clearAll();
 }
 
-export async function changeUniversalBookmarkColor(ctx: UniversalContext) {
-  const sm = resolveServiceManager();
-  const {meta} = ctx;
-  if (!meta) {
-    return;
-  }
-  const colors = sm.configService.colors;
-  const pickItems = Object.keys(colors).map(color => {
-    return {
-      label: color,
-      iconPath: sm.gutterService.getGutter(color).iconPath,
-    } as QuickPickItem;
-  });
-  const chosenColor = await window.showQuickPick(pickItems, {
-    title: l10n.t(
-      "Select bookmark color. Press 'Enter' to confirm, 'Escape' to cancel",
-    ),
-    placeHolder: l10n.t('Please select bookmark color'),
-    canPickMany: false,
-  });
-  if (!chosenColor) {
-    return;
-  }
-  const controller = resolveUniversalController();
-  controller.update(meta.id, {
-    color: chosenColor.label,
-  });
-}
+// export async function changeUniversalBookmarkColor(ctx: UniversalContext) {
+//   const sm = resolveServiceManager();
+//   const {meta} = ctx;
+//   if (!meta) {
+//     return;
+//   }
+//   const colors = sm.configService.colors;
+//   const pickItems = Object.keys(colors).map(color => {
+//     return {
+//       label: color,
+//       iconPath: sm.gutterService.getGutter(color).iconPath,
+//     } as QuickPickItem;
+//   });
+//   const chosenColor = await window.showQuickPick(pickItems, {
+//     title: l10n.t(
+//       "Select bookmark color. Press 'Enter' to confirm, 'Escape' to cancel",
+//     ),
+//     placeHolder: l10n.t('Please select bookmark color'),
+//     canPickMany: false,
+//   });
+//   if (!chosenColor) {
+//     return;
+//   }
+//   const controller = resolveUniversalController();
+//   controller.update(meta.id, {
+//     color: chosenColor.label,
+//   });
+// }
 
 export async function editUniversalBookmarkLabel(ctx: UniversalContext) {
   const {meta} = ctx;

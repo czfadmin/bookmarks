@@ -9,11 +9,12 @@ import {
   FileSystemWatcher,
 } from 'vscode';
 import {ServiceManager} from './ServiceManager';
+import {BaseService} from './BaseService';
 
 /**
  * Git 相关的服务类
  */
-export default class GitService implements Disposable {
+export default class GitService extends BaseService {
   repos: WorkspaceFolder[] = [];
   private _fsWatcher: FileSystemWatcher | undefined;
   private _onDidReposChangeEvent: EventEmitter<WorkspaceFolder[]> =
@@ -21,7 +22,8 @@ export default class GitService implements Disposable {
   onDidReposChangeEvent: Event<WorkspaceFolder[]> =
     this._onDidReposChangeEvent.event;
 
-  constructor(private _sm: ServiceManager) {
+  constructor(sm: ServiceManager) {
+    super(GitService.name, sm);
     this._init();
     workspace.onDidChangeWorkspaceFolders(ev => {
       const {added, removed} = ev;
@@ -29,7 +31,9 @@ export default class GitService implements Disposable {
       for (let wsFolder of added) {
         if (this._checkFolderIsRepo(wsFolder.uri.fsPath)) {
           this.repos.push(wsFolder);
-          if (!isChanged) {isChanged = true;}
+          if (!isChanged) {
+            isChanged = true;
+          }
         }
       }
       for (let wsFolder of removed) {
@@ -37,7 +41,9 @@ export default class GitService implements Disposable {
           this.repos = this.repos.filter(
             it => it.uri.fsPath === wsFolder.uri.fsPath,
           );
-          if (!isChanged) {isChanged = true;}
+          if (!isChanged) {
+            isChanged = true;
+          }
         }
       }
       if (isChanged) {
@@ -48,7 +54,9 @@ export default class GitService implements Disposable {
 
   private _init() {
     const workspaceFolders = workspace.workspaceFolders || [];
-    if (!workspaceFolders.length) {return;}
+    if (!workspaceFolders.length) {
+      return;
+    }
     for (let wsFolder of workspaceFolders) {
       const wsPath = wsFolder.uri.fsPath;
       if (

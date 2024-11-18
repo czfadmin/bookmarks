@@ -9,21 +9,16 @@ import {LoggerService} from './LoggerService';
 import path from 'node:path';
 import {IconifyIconsType} from '../types/icon';
 import {IDisposable} from '../utils';
+import {BaseService} from './BaseService';
 
 /**
  * @zh 装饰器和树上的图标服务类
  */
-export class IconsService implements IDisposable {
-  private readonly _sm: ServiceManager;
-
-  private readonly _logger: LoggerService;
-
+export class IconsService extends BaseService {
   constructor(sm: ServiceManager) {
-    this._sm = sm;
-    this._logger = new LoggerService(IconsService.name);
+    super(IconsService.name, sm);
+    this.initial();
   }
-
-  dispose(): void {}
 
   /**
    * @zh  下载iconfiy中的图标, 要求传递的格式是 {prefix}:{name}, vscode的装饰器图标的大小要求是16*16, 所以下载的大小默认是此尺寸
@@ -36,18 +31,15 @@ export class IconsService implements IDisposable {
       return;
     }
 
-    const file = path.join(
-      this._sm.fileService.homeDir,
-      `./icons/${prefix}.json`,
-    );
+    const file = path.join(this._sm.fileService.iconsDir, `./${prefix}.json`);
 
     if (!fs.existsSync(file)) {
       const response = await this.download(
         `${iconfiy_public_url}/${prefix}.json?icons=${name}`,
       );
       const svgBody = (response as IconifyIconsType).icons[name].body;
-      this._sm.store.addNewIcon(prefix, name, svgBody);
-      fs.writeFileSync(file, response);
+      this.store.addNewIcon(prefix, name, svgBody);
+      fs.writeFileSync(file, JSON.stringify(response));
     } else {
       const content = JSON.parse(
         fs.readFileSync(file).toString(),
@@ -60,12 +52,26 @@ export class IconsService implements IDisposable {
 
         content.icons[name] = (response as IconifyIconsType).icons[name];
         const svgBody = (response as IconifyIconsType).icons[name].body;
-        this._sm.store.addNewIcon(prefix, name, svgBody);
+        this.store.addNewIcon(prefix, name, svgBody);
         fs.writeFileSync(file, JSON.stringify(content));
       }
     }
   }
 
+  /**
+   * @zh 开始下载初始图标资源
+   */
+  async initial() {
+    const configure = this._sm.connfigure;
+    if (!configure) {
+      return;
+    }
+    const {defaultBookmarkIcon, defaultLabeledBookmarkIcon} =
+      configure.configure!;
+
+    await this.downloadIcon(defaultBookmarkIcon);
+    await this.downloadIcon(defaultLabeledBookmarkIcon);
+  }
   /**
    * 下载集合列表
    */
@@ -83,4 +89,6 @@ export class IconsService implements IDisposable {
       return error;
     }
   }
+
+  dispose(): void {}
 }

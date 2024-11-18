@@ -37,7 +37,7 @@ export class ServiceManager implements IServiceManager, IDisposable {
   readonly colorsService: ColorsService;
   private _statusbarService: StatusbarService | undefined;
 
-  public fileService: FileService;
+  public readonly fileService: FileService;
   public get statusbarService(): StatusbarService | undefined {
     return this._statusbarService;
   }
@@ -56,9 +56,14 @@ export class ServiceManager implements IServiceManager, IDisposable {
     return this._store;
   }
 
+  public get connfigure() {
+    return this._store.configure;
+  }
+
   constructor(context: ExtensionContext) {
     this._context = context;
     this._store = createGlobalStore();
+    this.fileService = new FileService(this);
     this.iconsService = new IconsService(this);
     this.configService = new ConfigService(this);
     this.colorsService = new ColorsService(this);
@@ -66,8 +71,6 @@ export class ServiceManager implements IServiceManager, IDisposable {
     this.decorationService = new DecorationService(this);
     this.workspaceService = new WorkspaceService(this);
     this.gitService = new GitService(this);
-    this.fileService = new FileService(this);
-
   }
 
   registerStatusbarService() {

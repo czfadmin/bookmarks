@@ -414,9 +414,10 @@ export async function chooseBookmarkColor() {
     return {
       label: color,
       description: colors[color] || color,
-      iconPath: (
-        gutterService.gutters.get(color) || gutterService.gutters.get('default')
-      )?.iconPath,
+      // TODO: 使用其他图标代替
+      // iconPath: (
+      //   gutterService.gutters.get(color) || gutterService.gutters.get('default')
+      // )?.iconPath,
     } as QuickPickItem;
   });
   const chosenColor = await window.showQuickPick(pickItems, {
@@ -958,12 +959,6 @@ export function getBookmarkColorFromCtx(
   return bookmark;
 }
 
-export function getBookmarkIcon(sm: ServiceManager, bookmark: IBookmark) {
-  return bookmark.label
-    ? sm.gutterService.getGutter(bookmark.color).iconPath
-    : sm.gutterService.getTagGutter(bookmark.color).iconPath;
-}
-
 export async function showBookmarksQuickPick(bookmarks?: IBookmark[]) {
   let _bookmarks = bookmarks;
   const sm = resolveServiceManager();
@@ -977,7 +972,7 @@ export async function showBookmarksQuickPick(bookmarks?: IBookmark[]) {
     description: getLineInfoStrFromBookmark(it),
     detail: it.fileId,
     meta: it,
-    iconPath: getBookmarkIcon(sm, it) as any,
+    iconPath: it.iconPath,
   }));
 
   // @ts-ignore

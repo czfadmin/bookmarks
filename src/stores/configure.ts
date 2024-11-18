@@ -13,42 +13,41 @@ export const BookmarkManagerConfigure = types
      */
     colors: types.map(types.string),
     /**
-     * 是否开启lineBlame 功能
+     * @zh 是否开启lineBlame 功能
      */
     lineBlame: types.optional(types.boolean, false),
     /**
-     * 是否在树视图中显示相对路径
+     * @zh 是否在树视图中显示相对路径
      */
     relativePath: types.optional(types.boolean, false),
     /**
-     * 允许单击书签跳转到书签所在位置
+     * @zh 允许单击书签跳转到书签所在位置
      */
     enableClick: types.optional(types.boolean, false),
     /**
-     * 设置默认书签颜色
+     * @zh 设置默认书签颜色
      */
     defaultBookmarkIconColor: types.optional(
       types.string,
       DEFAULT_BOOKMARK_COLOR,
     ),
     /**
-     * 是否在`.vscode`文件中创建`bookmark-manager.json`
-     * 建议将`bookmark-manager.json`添加到.gitignore,避免提交到代码仓库中,引起不必要的麻烦
+     * @zh 是否在`.vscode`文件中创建`bookmark-manager.json`,建议将`bookmark-manager.json`添加到.gitignore,避免提交到代码仓库中,引起不必要的麻烦
+     *
      */
     createJsonFile: types.optional(types.boolean, false),
     /**
-     * 使用内置的颜色列表来进行选择书签的颜色
+     * @zh 使用内置的颜色列表来进行选择书签的颜色
      */
     useBuiltInColors: types.optional(types.boolean, false),
     /**
-     * 是否将`bookmark-manager.json`文件追加到`.gitIgnore` 文件中
+     * @zh 是否将`bookmark-manager.json`文件追加到`.gitIgnore` 文件中
      */
     alwaysIgnore: types.optional(types.boolean, false),
     /**
-     * 自动将单行书签切换为多行书签
+     * @zh 自动将单行书签切换为多行书签
      */
     autoSwitchSingleToMultiWhenLineWrap: types.optional(types.boolean, false),
-
     /**
      * @zh 默认书签图标 (mdi:bookmark)
      */
@@ -57,7 +56,7 @@ export const BookmarkManagerConfigure = types
     /**
      * @zh 默认带有标签的书签图标 (mdi:tag)
      */
-    defaultLabeledBookmarkIcon: types.optional(types.string, "mdi:tag")
+    defaultLabeledBookmarkIcon: types.optional(types.string, 'mdi:tag'),
   })
   .views(self => {
     const configuration = workspace.getConfiguration(EXTENSION_ID);

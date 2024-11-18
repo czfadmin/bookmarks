@@ -1,10 +1,4 @@
-import {
-  Instance,
-  ISnapshotProcessor,
-  SnapshotIn,
-  SnapshotOut,
-  types,
-} from 'mobx-state-tree';
+import {Instance, types} from 'mobx-state-tree';
 import {l10n, Uri, window, workspace, WorkspaceFolder} from 'vscode';
 import {generateUUID, sortBookmarks} from '../utils';
 import {
@@ -41,7 +35,6 @@ const BookmarkGroupInfoModel = types.model('BookmarkGroupInfoModel', {
   ]),
   data: types.array(BookmarkGroupDataModel),
 });
-
 
 const logger = new LoggerService('BookmarkStore');
 
@@ -129,10 +122,10 @@ export const BookmarksStore = types
       get bookmarksGroupedByColor(): BookmarksGroupedByColorType[] {
         const grouped: BookmarksGroupedByColorType[] = [];
         self.bookmarks.forEach(it => {
-          const existed = grouped.find(item => item.color === it.color);
+          const existed = grouped.find(item => item.color === it.color.label);
           if (!existed) {
             grouped.push({
-              color: it.color,
+              color: it.color.label,
               bookmarks: [it],
             });
             return;
@@ -370,10 +363,10 @@ export const BookmarksStore = types
       // 表示当前颜色组信息中不存在, 或则颜色组信息不存在此颜色, 需要追加到颜色组信息
       if (
         !colorGroupInfo ||
-        !colorGroupInfo.data.find(it => it.id === _bookmark.color)
+        !colorGroupInfo.data.find(it => it.id === _bookmark.color?.label)
       ) {
         addColorsGroupInfo({
-          id: _bookmark.color,
+          id: _bookmark.color?.label,
           sortedIndex: colorGroupInfo ? colorGroupInfo.data.length : 0,
         });
       }
@@ -582,7 +575,7 @@ export const BookmarksStore = types
     }
 
     function clearBookmarksByColor(color: string) {
-      const bookmarks = self.bookmarks.filter(it => it.color === color);
+      const bookmarks = self.bookmarks.filter(it => it.color.label === color);
       for (let bookmark of bookmarks) {
         self.bookmarks.remove(bookmark);
       }

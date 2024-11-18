@@ -479,6 +479,16 @@
             "Error"
           ],
           "description": "%bookmark-manager.logLevel%"
+        },
+        "bookmark-manager.defaultBookmarkIcon": {
+          "type": "string",
+          "description": "%bookmark-manager.defaultBookmarkIcon.description%",
+          "default": "mdi:bookmark"
+        },
+        "bookmark-manager.defaultLabeledBookmarkIcon": {
+          "type": "string",
+          "description": "%bookmark-manager.defaultLabeledBookmarkIcon.description%",
+          "default": "mdi:tag"
         }
       }
     },

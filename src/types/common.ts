@@ -1,13 +1,13 @@
 import {Uri, workspace} from 'vscode';
 import BookmarkTreeItem from '../providers/BookmarksTreeItem';
+import {BookmarkColorType} from '../stores';
 
 export type StringIndexType<T> = {[key: string]: T};
-export type BookmarkColor = string | 'none';
 
 export interface BaseMeta {
   id: string;
   label?: string;
-  color: BookmarkColor;
+  color: BookmarkColorType;
   sortedIndex?: number;
 }
 

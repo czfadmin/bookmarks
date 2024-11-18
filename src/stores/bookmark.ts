@@ -1,34 +1,32 @@
 import {BookmarkGroup} from './bookmark-group';
-import {
-  getParent,
-  Instance,
-  ISnapshotProcessor,
-  SnapshotIn,
-  SnapshotOut,
-  types,
-} from 'mobx-state-tree';
+import {getParent, getRoot, Instance, SnapshotIn, types} from 'mobx-state-tree';
 import {DEFAULT_BOOKMARK_COLOR} from '../constants';
-import {Selection, Uri, WorkspaceFolder, workspace} from 'vscode';
+import {
+  DecorationRangeBehavior,
+  OverviewRulerLane,
+  Selection,
+  Uri,
+  WorkspaceFolder,
+  l10n,
+  window,
+  workspace,
+} from 'vscode';
 import {createHoverMessage} from '../utils';
+import {BookmarksGroupedByFileType, BookmarkTypeEnum} from '../types';
 import {
-  BookmarkColor,
-  BookmarksGroupedByFileType,
-  BookmarkTypeEnum,
-} from '../types';
-import {
-  MyColorType,
   MyUriType,
   MyWorkspaceFolderType,
   DecorationOptionsType,
   TagType,
-  IMyColorType,
   TSortedInfo,
 } from './custom';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
-import { Icon } from './icons';
+import {Icon} from './icons';
+import {BookmarkColor, BookmarkColorType} from './color';
+import {GlobalStoreType} from './global';
 
 export type BookmarksGroupedByColorType = {
-  color: BookmarkColor;
+  color: string;
   bookmarks: IBookmark[];
 };
 
@@ -73,7 +71,7 @@ export const Bookmark = types
     /**
      * @zh 书签颜色键名(key), 不是配置的具体的颜色值
      */
-    color: types.optional(types.string, DEFAULT_BOOKMARK_COLOR),
+    color: types.reference(BookmarkColor),
     /**
      * @zh 数千所在的文件URI
      */
@@ -146,8 +144,7 @@ export const Bookmark = types
     /**
      * @zh 书签的图标引用
      */
-    icon:types.maybeNull( types.reference(Icon)),
-    
+    icon: types.maybeNull(types.reference(Icon)),
   })
   .views(self => {
     return {
@@ -197,7 +194,84 @@ export const Bookmark = types
        *@zh 获取书签的装饰器图标
        */
       get iconPath() {
-        return '';
+        return self.icon?.uri;
+      },
+
+      /**
+       * @zh 书签的装饰器
+       */
+      get textDecoration() {
+        const root = getRoot<GlobalStoreType>(self);
+        let color =
+          self.color.value ||
+          root.colors.find(it => it.label === 'default')?.value ||
+          DEFAULT_BOOKMARK_COLOR;
+
+        const {
+          fontWeight,
+          showTextDecoration,
+          showGutterIcon,
+          showGutterInOverviewRuler,
+          alwaysUseDefaultColor,
+          wholeLine,
+          textDecorationLine,
+          textDecorationStyle,
+          textDecorationThickness,
+          highlightBackground,
+          showBorder,
+          border,
+          showOutline,
+          outline,
+        } = root.configure.decoration!;
+
+        let overviewRulerColor;
+        let overviewRulerLane: OverviewRulerLane | undefined = undefined;
+        if (showGutterInOverviewRuler) {
+          overviewRulerColor = self.color.value;
+          overviewRulerLane = OverviewRulerLane.Center;
+        } else {
+          overviewRulerColor = undefined;
+        }
+        let _showGutterIcon = showGutterIcon;
+
+        if (
+          !(showGutterIcon || showGutterInOverviewRuler || showTextDecoration)
+        ) {
+          window.showInformationMessage(
+            l10n.t(
+              `'showGutterIcon', 'showGutterInOverviewRuler', 'showTextDecoration' not available at the same time this is only 'false'`,
+            ),
+          );
+          _showGutterIcon = true;
+        }
+        if (alwaysUseDefaultColor) {
+          color =
+            root.colors.find(it => it.label === 'default')?.value ||
+            DEFAULT_BOOKMARK_COLOR;
+        }
+
+        let rangeBehavior = DecorationRangeBehavior.ClosedClosed;
+
+        const decoration = window.createTextEditorDecorationType({
+          isWholeLine: wholeLine,
+          borderRadius: '2px',
+          borderColor: color,
+          outlineColor: color,
+          fontWeight,
+          overviewRulerLane,
+          overviewRulerColor,
+          rangeBehavior,
+          gutterIconPath: self.icon?.uri,
+          gutterIconSize: 'auto',
+          border: showBorder ? border : '',
+          outline: showOutline ? outline : '',
+          backgroundColor: highlightBackground ? color : '',
+          textDecoration: showTextDecoration
+            ? `${textDecorationLine} ${textDecorationStyle} ${textDecorationThickness} ${color}`
+            : '',
+        });
+
+        return decoration;
       },
     };
   })
@@ -224,7 +298,9 @@ export const Bookmark = types
     }
 
     function updateColor(newColor: string) {
-      self.color = newColor;
+      self.color = getRoot<GlobalStoreType>(self).colors.find(
+        it => it.label === newColor,
+      )!;
     }
     function updateFileUri(uri: Uri) {
       self.fileUri = {
@@ -272,7 +348,6 @@ export const Bookmark = types
       }
     }
 
-
     function afterCreate() {}
 
     return {
@@ -288,25 +363,10 @@ export const Bookmark = types
       updateColorSortedIndex,
       updateWorkspaceSortedIndex,
       updateFileSortedIndex,
+      disposeTextDecoration() {
+        self.textDecoration.dispose();
+      },
     };
   });
-
-/**
- * 增加hooks, 将bookmark数据转换, PS: 暂时未使用到此hooks
- */
-// export const BookmarkProcessorModel: ISnapshotProcessor<
-//   typeof Bookmark,
-//   SnapshotIn<typeof Bookmark>,
-//   SnapshotOut<typeof Bookmark>
-// > = types.snapshotProcessor(Bookmark, {
-//   preProcessor(snapshot: SnapshotIn<IBookmark>): SnapshotOut<IBookmark> {
-//     return snapshot as SnapshotOut<IBookmark>;
-//   },
-//   postProcessor(snapshot: SnapshotOut<IBookmark>, node) {
-//     return snapshot;
-//   },
-// });
-
-// export type IBookmarkProcessorModel = Instance<typeof BookmarkProcessorModel>;
 
 export type IBookmark = Instance<typeof Bookmark>;

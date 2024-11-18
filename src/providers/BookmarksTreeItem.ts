@@ -80,21 +80,18 @@ export default class BookmarkTreeItem extends BaseTreeItem {
   }
 
   private _resolveIconPath() {
-    const tagGutters = this._sm.gutterService.tagGutters;
-    const gutters = this._sm.gutterService.gutters;
     if (this.contextValue === BookmarkTreeItemCtxValueEnum.FILE) {
       const meta = this.meta as BookmarksGroupedByFileType;
       this.iconPath = ThemeIcon.File;
       this.resourceUri = Uri.parse(meta.fileName);
     } else if (this.contextValue === BookmarkTreeItemCtxValueEnum.COLOR) {
       const _meta = this.meta as BookmarksGroupedByColorType;
-      this.iconPath = this._sm.gutterService.getTagGutter(_meta.color).iconPath;
+      // TODO: 使用默认的图标
+      this.iconPath = _meta.color;
     } else if (this.contextValue === BookmarkTreeItemCtxValueEnum.BOOKMARK) {
       const meta = this.meta as IBookmark;
       const color = meta.color;
-      this.iconPath = meta.label
-        ? this._sm.gutterService.getTagGutter(color).iconPath
-        : this._sm.gutterService.getGutter(color).iconPath;
+      this.iconPath = meta.iconPath;
     }
   }
 
