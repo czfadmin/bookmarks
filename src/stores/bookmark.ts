@@ -1,6 +1,10 @@
 import {BookmarkGroup} from './bookmark-group';
 import {getParent, getRoot, Instance, SnapshotIn, types} from 'mobx-state-tree';
-import {DEFAULT_BOOKMARK_COLOR} from '../constants';
+import {
+  default_bookmark_color,
+  DEFAULT_BOOKMARK_COLOR,
+  default_bookmark_icon,
+} from '../constants';
 import {
   DecorationRangeBehavior,
   OverviewRulerLane,
@@ -11,7 +15,7 @@ import {
   window,
   workspace,
 } from 'vscode';
-import {createHoverMessage} from '../utils';
+import {createHoverMessage, escapeColor} from '../utils';
 import {BookmarksGroupedByFileType, BookmarkTypeEnum} from '../types';
 import {
   MyUriType,
@@ -22,8 +26,7 @@ import {
 } from './custom';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
 import {Icon} from './icons';
-import {BookmarkColor, BookmarkColorType} from './color';
-import {GlobalStoreType} from './global';
+import {GlobalStore} from './global';
 
 export type BookmarksGroupedByColorType = {
   color: string;
@@ -71,7 +74,7 @@ export const Bookmark = types
     /**
      * @zh 书签颜色键名(key), 不是配置的具体的颜色值
      */
-    color: types.reference(BookmarkColor),
+    color: types.optional(types.string, default_bookmark_color),
     /**
      * @zh 数千所在的文件URI
      */
@@ -144,7 +147,7 @@ export const Bookmark = types
     /**
      * @zh 书签的图标引用
      */
-    icon: types.maybeNull(types.reference(Icon)),
+    icon: types.optional(types.string, default_bookmark_icon),
   })
   .views(self => {
     return {
@@ -190,21 +193,42 @@ export const Bookmark = types
         return rangesOrOptions;
       },
 
+      get escapedColor() {
+        const root = getRoot<Instance<typeof GlobalStore>>(self);
+        const color =
+          root.colors.find(it => it.label === self.color)?.value ||
+          root.configure.configure.defaultBookmarkIconColor;
+        return color.startsWith('#') ? escapeColor(color) : color;
+      },
+
       /**
        *@zh 获取书签的装饰器图标
        */
       get iconPath() {
-        return self.icon?.uri;
+        const root = getRoot<Instance<typeof GlobalStore>>(self);
+        const icon =
+          root.icons.find(it => it.id === self.icon)?.id ||
+          (self.selectionContent.length
+            ? root.configure.configure.defaultLabeledBookmarkIcon
+            : root.configure.configure.defaultBookmarkIcon);
+
+        const body = icon?.body.replace(
+          /fill=/gi,
+          `fill="${(self as Instance<typeof Bookmark>).escapedColor}"`,
+        );
+        return Uri.parse(
+          `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 24 24">${body}</svg>`,
+        );
       },
 
       /**
        * @zh 书签的装饰器
        */
       get textDecoration() {
-        const root = getRoot<GlobalStoreType>(self);
+        const root = getRoot<Instance<typeof GlobalStore>>(self);
+
         let color =
-          self.color.value ||
-          root.colors.find(it => it.label === 'default')?.value ||
+          (self as Instance<typeof Bookmark>).escapedColor ||
           DEFAULT_BOOKMARK_COLOR;
 
         const {
@@ -227,7 +251,7 @@ export const Bookmark = types
         let overviewRulerColor;
         let overviewRulerLane: OverviewRulerLane | undefined = undefined;
         if (showGutterInOverviewRuler) {
-          overviewRulerColor = self.color.value;
+          overviewRulerColor = self.color;
           overviewRulerLane = OverviewRulerLane.Center;
         } else {
           overviewRulerColor = undefined;
@@ -261,7 +285,7 @@ export const Bookmark = types
           overviewRulerLane,
           overviewRulerColor,
           rangeBehavior,
-          gutterIconPath: self.icon?.uri,
+          gutterIconPath: (self as Instance<typeof Bookmark>).iconPath,
           gutterIconSize: 'auto',
           border: showBorder ? border : '',
           outline: showOutline ? outline : '',
@@ -298,10 +322,11 @@ export const Bookmark = types
     }
 
     function updateColor(newColor: string) {
-      self.color = getRoot<GlobalStoreType>(self).colors.find(
-        it => it.label === newColor,
-      )!;
+      const root = getRoot<Instance<typeof GlobalStore>>(self);
+      self.color =
+        root.colors.find(it => it.label === newColor)?.label || 'default';
     }
+
     function updateFileUri(uri: Uri) {
       self.fileUri = {
         fsPath: uri.fsPath,

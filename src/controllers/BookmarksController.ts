@@ -41,7 +41,6 @@ import {
   IBookmarksStore,
 } from '../stores';
 
-import {IBookmarkManagerConfigure} from '../stores/configure';
 import {
   TreeViewStyleEnum,
   TreeViewSortedEnum,
@@ -64,7 +63,6 @@ export default class BookmarksController implements IController {
 
   private _watcher: FileSystemWatcher | undefined;
 
-  private _configuration: IBookmarkManagerConfigure;
   private _sm: ServiceManager;
 
   private _logger: LoggerService;
@@ -145,10 +143,14 @@ export default class BookmarksController implements IController {
   public get configService() {
     return this._sm.configService;
   }
+
+  public get configuration() {
+    return this._sm.configure.configure;
+  }
+
   constructor(context: ExtensionContext, serviceManager: ServiceManager) {
     this._context = context;
     this._sm = serviceManager;
-    this._configuration = this.configService.configuration;
     this._logger = new LoggerService(BookmarksController.name);
     this._initial();
   }
@@ -156,16 +158,16 @@ export default class BookmarksController implements IController {
   private async _initial() {
     this._needWarning = this.configService.getGlobalValue('_needWarning', true);
 
-    this.configService.onExtensionConfigChange(configuration => {
-      this._configuration = configuration;
-    });
+    // this.configService.onExtensionConfigChange(configuration => {
+    //   this._configuration = configuration;
+    // });
 
     this.configService.onDidChangeConfiguration(ev => {
       if (!ev.affectsConfiguration(`${EXTENSION_ID}.createJsonFile`)) {
         return;
       }
       this._initStore();
-      if (!this._configuration.createJsonFile) {
+      if (!this.configuration.createJsonFile) {
         this._watcher?.dispose();
       }
     });
@@ -188,7 +190,7 @@ export default class BookmarksController implements IController {
 
     this._resolveDataFromStoreFile();
     // 当从 `bookmark-manager.json`文件中读取, 直接刷新返回
-    if (!this._configuration.createJsonFile) {
+    if (!this.configuration.createJsonFile) {
       // 从state中读取数据
       try {
         store = this.workspaceState.get<any>(EXTENSION_ID);
@@ -314,7 +316,7 @@ export default class BookmarksController implements IController {
   }
 
   save() {
-    if (this._configuration.createJsonFile) {
+    if (this.configuration.createJsonFile) {
       this._saveToDisk();
     } else {
       this.workspaceState.update(EXTENSION_ID, this._store);
@@ -397,7 +399,7 @@ export default class BookmarksController implements IController {
 
       case TreeViewGroupEnum.COLOR:
         group = (this.groupedBookmarks as BookmarksGroupedByColorType[]).find(
-          it => it.color === bookmark.color.label,
+          it => it.color === bookmark.color,
         );
         break;
       case TreeViewGroupEnum.FILE:
@@ -532,7 +534,7 @@ export default class BookmarksController implements IController {
    */
   private _showCreateStoreWarning(ws: WorkspaceFolder) {
     const ignoreFilePath = path.resolve(ws.uri.fsPath, '.gitignore');
-    const {alwaysIgnore} = this._configuration;
+    const {alwaysIgnore} = this.configuration;
 
     if (!fs.existsSync(ignoreFilePath)) {
       return;
@@ -627,7 +629,7 @@ export default class BookmarksController implements IController {
       '**​/node_modules/**',
       10,
     );
-    if (existedStoreFile.length && this._configuration.createJsonFile) {
+    if (existedStoreFile.length && this.configuration.createJsonFile) {
       if (this._watcher) {
         this._watcher.dispose();
       }

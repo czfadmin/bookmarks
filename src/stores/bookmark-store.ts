@@ -1,4 +1,4 @@
-import {Instance, types} from 'mobx-state-tree';
+import {getRoot, Instance, types} from 'mobx-state-tree';
 import {l10n, Uri, window, workspace, WorkspaceFolder} from 'vscode';
 import {generateUUID, sortBookmarks} from '../utils';
 import {
@@ -19,6 +19,7 @@ import {BookmarkGroup, IBookmarkGroup} from './bookmark-group';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
 import {isProxy} from 'util/types';
 import {LoggerService} from '../services';
+import {GlobalStore} from './global';
 
 const BookmarkGroupDataModel = types.model('BookmarkGroupDataModel', {
   id: types.string,
@@ -122,10 +123,10 @@ export const BookmarksStore = types
       get bookmarksGroupedByColor(): BookmarksGroupedByColorType[] {
         const grouped: BookmarksGroupedByColorType[] = [];
         self.bookmarks.forEach(it => {
-          const existed = grouped.find(item => item.color === it.color.label);
+          const existed = grouped.find(item => item.color === it.color);
           if (!existed) {
             grouped.push({
-              color: it.color.label,
+              color: it.color,
               bookmarks: [it],
             });
             return;
@@ -328,6 +329,9 @@ export const BookmarksStore = types
 
       const groupId = bookmark.groupId || DEFAULT_BOOKMARK_GROUP_ID;
 
+      const root = getRoot<Instance<typeof GlobalStore>>(self);
+      const {defaultBookmarkIcon, defaultLabeledBookmarkIcon} =
+        root.configure.configure;
       _bookmark = Bookmark.create({
         id: id || generateUUID(),
         label,
@@ -354,6 +358,9 @@ export const BookmarksStore = types
           file: idxInFileGroup,
           workspace: idxInWorkspaceGroup,
         },
+        icon: selectionContent.length
+          ? defaultLabeledBookmarkIcon
+          : defaultBookmarkIcon,
       });
 
       const colorGroupInfo = self.groupInfo.find(
@@ -366,7 +373,7 @@ export const BookmarksStore = types
         !colorGroupInfo.data.find(it => it.id === _bookmark.color?.label)
       ) {
         addColorsGroupInfo({
-          id: _bookmark.color?.label,
+          id: _bookmark.color,
           sortedIndex: colorGroupInfo ? colorGroupInfo.data.length : 0,
         });
       }
@@ -575,7 +582,7 @@ export const BookmarksStore = types
     }
 
     function clearBookmarksByColor(color: string) {
-      const bookmarks = self.bookmarks.filter(it => it.color.label === color);
+      const bookmarks = self.bookmarks.filter(it => it.color === color);
       for (let bookmark of bookmarks) {
         self.bookmarks.remove(bookmark);
       }

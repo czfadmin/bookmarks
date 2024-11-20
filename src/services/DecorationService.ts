@@ -15,7 +15,7 @@ export default class DecorationService extends BaseService {
 
   setupAllDecorations() {
     this.restoreAllDecorations();
-    this._sm.configService.onDidChangeConfiguration(() => {
+    this.sm.configService.onDidChangeConfiguration(() => {
       this.restoreAllDecorations();
       this.updateActiveEditorAllDecorations();
     });

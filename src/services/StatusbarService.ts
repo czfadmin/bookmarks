@@ -18,7 +18,7 @@ export default class StatusbarService extends BaseService {
     super(StatusbarService.name, sm);
     this._controller = resolveBookmarkController();
     this.updateStatusBarItem();
-    this._sm.configService.onDidChangeConfiguration(() => {
+    this.sm.configService.onDidChangeConfiguration(() => {
       this.updateStatusBarItem();
     });
     this._controller.onDidChangeEvent(() => {
@@ -61,5 +61,6 @@ export default class StatusbarService extends BaseService {
 
     return tooltip;
   }
+  initial(): void {}
   dispose() {}
 }

@@ -1,23 +1,28 @@
-import {IDisposable} from '../utils';
+import {ILifecyle} from '../utils';
 import {LoggerService} from './LoggerService';
 import {ServiceManager} from './ServiceManager';
 
-export class BaseService implements IDisposable {
-  public readonly _sm: ServiceManager;
+export abstract class BaseService implements ILifecyle {
+  public readonly sm: ServiceManager;
   public readonly _logger: LoggerService;
 
   public get store() {
-    return this._sm.store;
+    return this.sm.store;
   }
 
   public get configure() {
-    return this._sm.connfigure;
+    return this.sm.configure;
   }
 
   constructor(name: string, sm: ServiceManager) {
-    this._sm = sm;
+    this.sm = sm;
     this._logger = new LoggerService(name);
   }
 
-  dispose(): void {}
+  initial() {}
+  abstract dispose(): void;
+
+  saveToDisk(p: string, data: any) {
+    this.sm.fileService.saveToDisk(p, data);
+  }
 }

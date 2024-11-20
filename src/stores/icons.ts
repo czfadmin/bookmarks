@@ -1,6 +1,4 @@
-import {types} from 'mobx-state-tree';
-import {Uri} from 'vscode';
-import {escapeColor} from '../utils';
+import {Instance, SnapshotOut, types} from 'mobx-state-tree';
 
 export const Icon = types
   .model('icon', {
@@ -16,51 +14,17 @@ export const Icon = types
     name: types.string,
 
     /**
-     * @zh 颜色值
-     */
-    color: types.string,
-
-    /**
      * @zh path body
      */
     body: types.string,
   })
   .views(self => {
-    return {
-      get uri() {
-        const body = self.body.replace(
-          /fill=/gi,
-          `fill="${self.color.startsWith('#') ? escapeColor(self.color) : self.color}"`,
-        );
-
-        return Uri.parse(
-          `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 24 24">${body}</svg>`,
-        );
-      },
-
-      get svg() {
-        const body = self.body.replace(
-          /fill=/gi,
-          `fill="${self.color.startsWith('#') ? escapeColor(self.color) : self.color}"`,
-        );
-
-        return `<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 24 24">${body}</svg>`;
-      },
-
-      get escapedColor() {
-        return self.color.startsWith('#')
-          ? escapeColor(self.color)
-          : self.color;
-      },
-    };
+    return {};
   })
   .actions(self => {
     return {
       changePrefix(prefix: string) {
         self.prefix = prefix;
-      },
-      changeColor(newColor: string) {
-        self.color = newColor;
       },
       changeName(newName: string) {
         self.name = newName;
@@ -71,3 +35,5 @@ export const Icon = types
     };
   });
 
+export type IconType = Instance<typeof Icon>;
+export type IconSnapshotOutType = SnapshotOut<Instance<typeof Icon>>;

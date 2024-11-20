@@ -23,10 +23,7 @@ import {
   TreeViewSortedEnum,
 } from '../types';
 import {resolveBookmarkController} from '../bootstrap';
-import resolveServiceManager, {
-  ServiceManager,
-} from '../services/ServiceManager';
-import {defaultColors} from '../constants/colors';
+import resolveServiceManager from '../services/ServiceManager';
 import {IBookmark} from '../stores/bookmark';
 import {IBookmarkGroup} from '../stores';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
@@ -50,8 +47,8 @@ export function checkIfBookmarkIsInGivenSelectionAndRemove(
   if (!bookmarks.length) {
     return;
   }
-  let item;
-  let matched = [];
+  let item: any;
+  let matched: any[] = [];
 
   for (item of bookmarks) {
     if (range.isEqual(item.selection)) {
@@ -407,7 +404,6 @@ export function getSelectionFromLine(
  */
 export async function chooseBookmarkColor() {
   const sm = resolveServiceManager();
-  const gutterService = sm.gutterService;
   const colors = {...sm.configService.colors};
 
   const pickItems = Object.keys(colors).map(color => {
@@ -578,14 +574,13 @@ export function updateBookmarksGroupByChangedLine(
   change: TextDocumentContentChangeEvent,
 ) {
   const {document} = event;
-  const serviceManager = resolveServiceManager();
-  const {configService} = serviceManager;
+  const sm = resolveServiceManager();
   const changeText = change.text;
   const isNewLine = REGEXP_NEWLINE.test(changeText);
   const isDeleteLine = change.range.end.line > change.range.start.line;
   const isLineStart = change.range.start.character === 0;
   const bookmarkInCurrentLine = getBookmarkFromLineNumber();
-  const {autoSwitchSingleToMultiWhenLineWrap} = configService.configuration;
+  const {autoSwitchSingleToMultiWhenLineWrap} = sm.configure.configure;
   const cursorLine = document.lineAt(change.range.start.line);
   const bookmarkInCursor = getBookmarkFromLineNumber(
     cursorLine.range.start.line,
@@ -771,7 +766,7 @@ export function updateBookmarksGroupByChangedLine(
 
   if (needUpdateDecorations) {
     // 这时候要刷新下打开的编辑器的装饰器样式, 要不然会被用户误认为还是将单行书签转换为多行书签显示
-    serviceManager.decorationService.updateActiveEditorAllDecorations();
+    sm.decorationService.updateActiveEditorAllDecorations();
   }
 }
 /**
@@ -966,7 +961,7 @@ export async function showBookmarksQuickPick(bookmarks?: IBookmark[]) {
     _bookmarks = resolveBookmarkController().store.bookmarks;
   }
 
-  const quickItems = _bookmarks.map(it => ({
+  const quickItems = _bookmarks?.map(it => ({
     label:
       it.label || it.description || it.selectionContent?.slice(0, 120) || '',
     description: getLineInfoStrFromBookmark(it),

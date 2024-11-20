@@ -56,8 +56,12 @@ export class ServiceManager implements IServiceManager, IDisposable {
     return this._store;
   }
 
-  public get connfigure() {
+  public get configure() {
     return this._store.configure;
+  }
+
+  public get colors() {
+    return this.configure.configure?.colors;
   }
 
   constructor(context: ExtensionContext) {

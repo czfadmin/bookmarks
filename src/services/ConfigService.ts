@@ -26,13 +26,6 @@ export default class ConfigService extends BaseService {
 
   private _onDidChangeConfigurationEvent: EventEmitter<ConfigurationChangeEvent> =
     new EventEmitter<ConfigurationChangeEvent>();
-  private _configuration: IBookmarkManagerConfigure | undefined;
-
-  private _decorationConfiguration: CreateDecorationOptionsType | undefined;
-
-  public get store() {
-    return this._sm.store.configure;
-  }
   onDidChangeConfiguration: Event<ConfigurationChangeEvent> =
     this._onDidChangeConfigurationEvent.event;
 
@@ -42,7 +35,7 @@ export default class ConfigService extends BaseService {
 
   get colors() {
     const _colors = {} as StringIndexType<string>;
-    this.store.configure!.colors.forEach((value, key) => {
+    this.configure.configure.colors.forEach((value, key) => {
       // @ts-ignore
       _colors[key as string] = value;
     });
@@ -50,21 +43,14 @@ export default class ConfigService extends BaseService {
   }
 
   get customColors() {
-    return this.store.configure!.customColors;
-  }
-
-  get configuration() {
-    if (!this._configuration) {
-      this._configuration = this._getExtensionConfiguration();
-    }
-    return this._configuration;
+    return this.configure!.configure?.customColors;
   }
 
   get decorationConfiguration() {
-    if (!this._decorationConfiguration) {
-      this._decorationConfiguration = this._getCreateDecorationOptions();
-    }
-    return this._decorationConfiguration;
+    return this.configure.decoration;
+  }
+  get configuration() {
+    return this.configure.configure;
   }
 
   constructor(sm: ServiceManager) {
@@ -75,7 +61,7 @@ export default class ConfigService extends BaseService {
         return;
       }
       // 需要手动刷新配置中的数据
-      this.store.refresh();
+      this.configure.refresh();
       this._init();
       this.fire(ev);
     });
@@ -84,7 +70,6 @@ export default class ConfigService extends BaseService {
   }
 
   private _init() {
-    this._configuration = this._getExtensionConfiguration();
     this._registerContextKey();
   }
 
@@ -97,29 +82,10 @@ export default class ConfigService extends BaseService {
   }
 
   /**
-   * 获取用户自定义的书签装饰器配置
-   * @returns 返回一个书签装饰的配置
-   */
-  private _getCreateDecorationOptions(): CreateDecorationOptionsType {
-    return this.store.decoration!;
-  }
-
-  /**
-   * 获取插件的所有配置
-   *  - 装饰器配置
-   *  - 额外配置
-   * @returns
-   */
-  private _getExtensionConfiguration(): IBookmarkManagerConfigure {
-    return this.store.configure!;
-  }
-
-  /**
    * 注册插件自定义上下文
    */
   private _registerExtensionCustomContext() {
-    const _configuration = this._getExtensionConfiguration();
-    Object.entries(_configuration).forEach(([key, value]) => {
+    Object.entries(this.configure.configure).forEach(([key, value]) => {
       if (typeof value !== 'boolean') {
         return;
       }
@@ -136,7 +102,7 @@ export default class ConfigService extends BaseService {
    */
   getGlobalValue<T>(key: string, defaultValue: T) {
     return (
-      this._sm.context.globalState.get<T>(
+      this.sm.context.globalState.get<T>(
         `bookmark-manager.global.configuration.${key}`,
       ) || defaultValue
     );
@@ -148,17 +114,15 @@ export default class ConfigService extends BaseService {
    * @param value
    */
   updateGlobalValue(key: string, value: any) {
-    this._sm.context.globalState.update(
+    this.sm.context.globalState.update(
       `bookmark-manager.global.configuration.${key}`,
       value,
     );
   }
 
   fire(ev: ConfigurationChangeEvent) {
-    this._configuration = this._getExtensionConfiguration();
-    this._decorationConfiguration = this._getCreateDecorationOptions();
-    this._onDecorationConfigChangeEvent.fire(this._decorationConfiguration);
-    this._onExtensionConfigChangeEvent.fire(this._configuration);
+    this._onDecorationConfigChangeEvent.fire(this.configure.decoration);
+    this._onExtensionConfigChangeEvent.fire(this.configure.configure);
     this._onDidChangeConfigurationEvent.fire(ev);
     this._registerContextKey();
   }

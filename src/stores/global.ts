@@ -4,11 +4,6 @@ import {BookmarkColor} from './color';
 import {Icon} from './icons';
 import {DEFAULT_BOOKMARK_COLOR} from '../constants';
 import {RootConfigure} from './configure';
-import {
-  TreeViewGroupEnum,
-  TreeViewSortedEnum,
-  TreeViewStyleEnum,
-} from '../types';
 
 export const GlobalStore = types
   .model('global-store', {
@@ -22,19 +17,20 @@ export const GlobalStore = types
       afterCreate() {
         // 填充颜色
         if (!self.colors.length) {
-          const defaultColor  = self.configure.configure?.defaultBookmarkIconColor || DEFAULT_BOOKMARK_COLOR
+          const defaultColor =
+            self.configure.configure?.defaultBookmarkIconColor ||
+            DEFAULT_BOOKMARK_COLOR;
           self.configure.configure?.colors.forEach(it => {
             self.colors.push(
               BookmarkColor.create({
                 label: it,
-                value:
-                  self.configure.configure?.colors.get(it) ||
-                  defaultColor,
+                value: self.configure.configure?.colors.get(it) || defaultColor,
               }),
             );
           });
         }
       },
+
       addNewIcon(
         prefix: string,
         name: string,
@@ -46,13 +42,31 @@ export const GlobalStore = types
             id: `${prefix}:${name}`,
             prefix,
             name,
-            color,
             body: body,
           }),
         );
       },
 
-      removeIcon(name: string) {},
+      removeIcon(id: string) {
+        const idx = self.icons.findIndex(it => it.id === id);
+        self.icons.splice(idx, 1);
+      },
+
+      removeIcons(items: string[]) {
+        for (let item of items) {
+          const idx = self.icons.findIndex(it => it.id === item);
+          self.icons.splice(idx, 1);
+        }
+      },
+
+      addNewColor(name: string, value: string) {
+        self.colors.push(
+          BookmarkColor.create({
+            label: name,
+            value,
+          }),
+        );
+      },
     };
   });
 
@@ -66,19 +80,17 @@ let globalStore: Instance<typeof GlobalStore>;
  */
 export function createGlobalStore() {
   globalStore = GlobalStore.create({
-    // @ts-ignore
-    bookmarksStore: BookmarksStore.create({
+    bookmarksStore: {
       bookmarks: [],
-      viewType: TreeViewStyleEnum.TREE,
-      groupView: TreeViewGroupEnum.DEFAULT,
-      sortedType: TreeViewSortedEnum.LINENUMBER,
-      groups: [],
-      groupInfo: [],
-    }),
+    },
     colors: [],
     icons: [],
-    // @ts-ignore
-    configure: RootConfigure.create(),
+    configure: {
+      decoration: {},
+      configure: {
+        colors: {},
+      },
+    },
   });
   return globalStore;
 }

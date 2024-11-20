@@ -127,7 +127,7 @@ export async function editLabel(context: LineBookmarkContext) {
  */
 export function gotoSourceLocation(args: any) {
   const sm = resolveServiceManager();
-  const {enableClick} = sm.configService.configuration;
+  const {enableClick} = sm.configure.configure;
 
   // 表示点击TreeView中的定位图标进入此方法, 反之为单击书签跳转到书签位置
   if (args.meta || (args && enableClick)) {
@@ -195,7 +195,7 @@ export async function changeBookmarkColorName(ctx: LineBookmarkContext) {
     title: l10n.t(
       'Bookmark Color Name (Press `Enter` to confirm or press `Escape` to cancel)',
     ),
-    value: bookmark.color.value,
+    value: bookmark.color,
   });
 
   if (!newColorName) {

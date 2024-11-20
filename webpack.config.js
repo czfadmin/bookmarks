@@ -37,7 +37,7 @@ const extensionConfig = {
         test: /\.m?ts$/,
         exclude: /(node_modules)/,
         use: {
-          loader: 'swc-loader',
+          loader: 'ts-loader',
         },
       },
     ],

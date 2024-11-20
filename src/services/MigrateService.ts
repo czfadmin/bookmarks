@@ -8,4 +8,6 @@ export class MigrateService extends BaseService {
   constructor(sm: ServiceManager) {
     super(MigrateService.name, sm);
   }
+  initial(): void {}
+  dispose(): void {}
 }

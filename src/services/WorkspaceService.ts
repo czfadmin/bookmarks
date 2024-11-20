@@ -24,7 +24,7 @@ export default class WorkspaceService extends BaseService {
     super(WorkspaceService.name, sm);
 
     this._restoreContextKey();
-    const {alwaysIgnore} = this._sm.configService.configuration;
+    const {alwaysIgnore} = this.sm.configure.configure;
     if (alwaysIgnore) {
       this._addToGitIgnore();
     }
@@ -33,7 +33,7 @@ export default class WorkspaceService extends BaseService {
     workspace.onDidChangeWorkspaceFolders(async ev => {
       this._restoreContextKey();
       if (ev.added) {
-        if (!this._sm.configService.configuration.alwaysIgnore) {
+        if (!alwaysIgnore) {
           return;
         }
         this._addToGitIgnore();
@@ -42,9 +42,9 @@ export default class WorkspaceService extends BaseService {
       this._onDidChangeWorkspaceFoldersEvent.fire(ev);
     });
 
-    this._sm.configService.onDidChangeConfiguration(ev => {
+    this.sm.configService.onDidChangeConfiguration(ev => {
       if (ev.affectsConfiguration(`${EXTENSION_NAME}.alwaysIgnore`)) {
-        const {alwaysIgnore} = this._sm.configService.configuration;
+        const {alwaysIgnore} = this.sm.configure.configure;
         if (alwaysIgnore) {
           this._addToGitIgnore();
         }
@@ -137,6 +137,8 @@ export default class WorkspaceService extends BaseService {
       workspace.workspaceFolders && workspace.workspaceFolders.length > 1,
     );
   }
+
+  initial(): void {}
 
   dispose() {
     this._onDidChangeWorkspaceFoldersEvent.dispose();

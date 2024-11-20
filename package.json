@@ -432,6 +432,14 @@
           },
           "default": {}
         },
+        "bookmark-manager.icons": {
+          "type": "object",
+          "description": "%bookmark-manager.icons.description%",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {}
+        },
         "bookmark-manager.defaultBookmarkIconColor": {
           "type": "string",
           "description": "%bookmark-manager.defaultBookmarkIconColor.description%",

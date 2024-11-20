@@ -70,9 +70,8 @@ export function updateCursorChangeListener() {
   decoration?.dispose();
   lastPositionLine = -1;
   const sm = resolveServiceManager();
-  const configService = sm.configService;
   const enableLineBlame =
-    (configService.configuration.lineBlame as boolean) || false;
+    (sm.configure.configure.lineBlame as boolean) || false;
   const activeEditor = window.activeTextEditor;
   if (activeEditor) {
     updateLineBlame(activeEditor, enableLineBlame);

@@ -11,6 +11,9 @@ export * from './gutter';
 export interface IDisposable {
   dispose(): void;
 }
+export interface ILifecyle extends IDisposable {
+  initial(): void;
+}
 
 export function generateUUID() {
   return uuid();

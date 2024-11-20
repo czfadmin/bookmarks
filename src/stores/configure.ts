@@ -1,17 +1,32 @@
-import {Instance, applySnapshot, cast, types} from 'mobx-state-tree';
+import {Instance, applySnapshot, cast, getRoot, types} from 'mobx-state-tree';
 import {WorkspaceConfiguration, workspace} from 'vscode';
-import {DEFAULT_BOOKMARK_COLOR, EXTENSION_ID} from '../constants';
+import {
+  DEFAULT_BOOKMARK_COLOR,
+  default_bookmark_icon,
+  default_bookmark_tag,
+  EXTENSION_ID,
+} from '../constants';
 import {defaultColors} from '../constants/colors';
 import {CreateDecorationOptions} from './decoration';
+import {GlobalStore} from './global';
 
 export type StringIndexType<T> = {[key: string]: T};
 
+/**
+ * @zh 插件在 vscode 的自定义配置
+ */
 export const BookmarkManagerConfigure = types
   .model('BookmarkManagerConfigure', {
     /**
-     * 配置书签的颜色
+     * @zh 配置书签的颜色
      */
     colors: types.map(types.string),
+
+    /**
+     * @zh 配置用户自定义的图标列表
+     */
+    icons: types.map(types.string),
+
     /**
      * @zh 是否开启lineBlame 功能
      */
@@ -24,6 +39,7 @@ export const BookmarkManagerConfigure = types
      * @zh 允许单击书签跳转到书签所在位置
      */
     enableClick: types.optional(types.boolean, false),
+
     /**
      * @zh 设置默认书签颜色
      */
@@ -31,32 +47,40 @@ export const BookmarkManagerConfigure = types
       types.string,
       DEFAULT_BOOKMARK_COLOR,
     ),
+
     /**
      * @zh 是否在`.vscode`文件中创建`bookmark-manager.json`,建议将`bookmark-manager.json`添加到.gitignore,避免提交到代码仓库中,引起不必要的麻烦
      *
      */
     createJsonFile: types.optional(types.boolean, false),
+
     /**
      * @zh 使用内置的颜色列表来进行选择书签的颜色
      */
     useBuiltInColors: types.optional(types.boolean, false),
+
     /**
      * @zh 是否将`bookmark-manager.json`文件追加到`.gitIgnore` 文件中
      */
     alwaysIgnore: types.optional(types.boolean, false),
+
     /**
      * @zh 自动将单行书签切换为多行书签
      */
     autoSwitchSingleToMultiWhenLineWrap: types.optional(types.boolean, false),
+
     /**
      * @zh 默认书签图标 (mdi:bookmark)
      */
-    defaultBookmarkIcon: types.optional(types.string, 'mdi:bookmark'),
+    defaultBookmarkIcon: types.optional(types.string, default_bookmark_icon),
 
     /**
      * @zh 默认带有标签的书签图标 (mdi:tag)
      */
-    defaultLabeledBookmarkIcon: types.optional(types.string, 'mdi:tag'),
+    defaultLabeledBookmarkIcon: types.optional(
+      types.string,
+      default_bookmark_tag,
+    ),
   })
   .views(self => {
     const configuration = workspace.getConfiguration(EXTENSION_ID);
@@ -75,7 +99,8 @@ export const BookmarkManagerConfigure = types
     };
   })
   .actions(self => {
-    function resolveColors(configuration: WorkspaceConfiguration) {
+    function refreshColors() {
+      const configuration = workspace.getConfiguration(EXTENSION_ID);
       const _colors = {} as any;
       Object.entries(configuration.get('colors') as object).forEach(
         ([key, value]) => {
@@ -98,6 +123,14 @@ export const BookmarkManagerConfigure = types
       if ((self as IBookmarkManagerConfigure).updateColors) {
         (self as IBookmarkManagerConfigure).updateColors(_colors);
       }
+
+      // 填充到根节点的colors节点上
+      Object.entries(_colors).forEach((v, i) => {
+        getRoot<Instance<typeof GlobalStore>>(self).addNewColor(
+          v[0],
+          v[1] as string,
+        );
+      });
     }
     function resolveConfiguration() {
       const configuration = workspace.getConfiguration(EXTENSION_ID);
@@ -116,7 +149,19 @@ export const BookmarkManagerConfigure = types
         }
       });
 
-      resolveColors(configuration);
+      refreshColors();
+    }
+
+    function refreshIcons() {
+      const configuration = workspace.getConfiguration(EXTENSION_ID);
+      self.icons.clear();
+      Object.entries(configuration.get('icons') as object).forEach(
+        ([key, value]) => {
+          if (typeof value === 'string') {
+            self.icons.set(key, value);
+          }
+        },
+      );
     }
     return {
       updateColors(colors: StringIndexType<string>) {
@@ -128,27 +173,29 @@ export const BookmarkManagerConfigure = types
       afterCreate() {
         resolveConfiguration();
       },
-      afterAttach() {},
       resolveConfiguration,
+      refreshColors() {},
+      refreshIcons,
     };
   });
 
 export const RootConfigure = types
   .model('RootConfigure', {
-    decoration: types.maybeNull(CreateDecorationOptions),
-    configure: types.maybeNull(BookmarkManagerConfigure),
+    decoration: CreateDecorationOptions,
+    configure: BookmarkManagerConfigure,
   })
   .actions(self => {
     return {
-      afterCreate() {
-        self.decoration = CreateDecorationOptions.create();
-        self.configure = BookmarkManagerConfigure.create({
-          colors: {},
-        });
-      },
+      afterCreate() {},
       refresh() {
         self.decoration?.resolveDecorationOptions();
         self.configure?.resolveConfiguration();
+      },
+      refreshIcons() {
+        self.configure.refreshIcons();
+      },
+      refreshColors() {
+        self.configure.refreshColors();
       },
     };
   });
