@@ -2,7 +2,10 @@ import {Instance, SnapshotOut, types} from 'mobx-state-tree';
 
 export const Icon = types
   .model('icon', {
-    id: types.identifier,
+    /**
+     * @zh 图标ID格式: prefix:name
+     */
+    id: types.string,
     /**
      * @zh iconfiy 中的所在集合的prefix
      */
@@ -23,6 +26,7 @@ export const Icon = types
   })
   .actions(self => {
     return {
+      afterCreate() {},
       changePrefix(prefix: string) {
         self.prefix = prefix;
       },

@@ -7,8 +7,9 @@ import {
 import {IconifyIconsType} from '../types/icon';
 import {BaseService} from './BaseService';
 import {applySnapshot, IDisposer, onSnapshot} from 'mobx-state-tree';
-import {Uri} from 'vscode';
+import {Uri, window, workspace} from 'vscode';
 import {escapeColor} from '../utils';
+import {EXTENSION_ID} from '../constants';
 
 /**
  * @zh 装饰器和树上的图标服务类
@@ -18,38 +19,79 @@ export class IconsService extends BaseService {
 
   private _snapshotDisposer2: IDisposer;
 
+  private _downloadingIcons: string[];
+
+  public get icons() {
+    return this.store.icons;
+  }
+
   constructor(sm: ServiceManager) {
     super(IconsService.name, sm);
-
+    this._downloadingIcons = [];
     this._snapshotDisposer = onSnapshot(this.sm.icons, snapshot => {
-      this.saveToDisk(this.sm.fileService.iconsPath, snapshot);
+      console.log(this.store.icons);
+      this.saveToDisk(this.sm.fileService.iconsPath, this.sm.icons);
     });
 
     // 监听插件的的`icons`的变化, 更新存储
     this._snapshotDisposer2 = onSnapshot(
       this.configure.configure.icons,
       snapshot => {
-        if (!this.configure.configure.icons.size) {
-          const {defaultBookmarkIcon, defaultLabeledBookmarkIcon} =
-            this.configure.configure;
+        // if (!this.configure.configure.icons.size) {
+        //   const {icons} = this.configure.configure;
+        //   const {defaultBookmarkIcon, defaultLabeledBookmarkIcon} =
+        //     this.configure.configure;
 
-          const tobeDeleted = this.store.icons.filter(
-            it =>
-              it.id != defaultBookmarkIcon &&
-              it.id != defaultLabeledBookmarkIcon,
-          );
+        //   const iconsValue: string[] = [];
+        //   for (let item of icons.values()) {
+        //     iconsValue.push(item);
+        //   }
 
-          this.store.removeIcons(tobeDeleted.map(it => it.id));
+        //   // 删除之前配置的且现在不在配置中多余的图标
+        //   const tobeDeleted = this.store.icons.filter(
+        //     it =>
+        //       it.id != defaultBookmarkIcon &&
+        //       it.id != defaultLabeledBookmarkIcon &&
+        //       !iconsValue.includes(it.id),
+        //   );
 
-          return;
-        }
+        //   this.store.removeIcons(tobeDeleted.map(it => it.id));
+        // }
+
         this.configure.configure.icons.forEach((value, key) => {
-          if (!this.store.icons.find(it => it.id !== value)) {
-            this.downloadIcon(value);
+          if (
+            !this.store.icons.find(it => it.id === value) &&
+            !this._downloadingIcons.find(it => it === value)
+          ) {
+            this._downloadingIcons.push(value);
+            this.downloadIcon(value).then(() => {
+              this._downloadingIcons = this._downloadingIcons.filter(
+                it => it !== value,
+              );
+            });
           }
         });
       },
     );
+    // 监听配置中的默认图标配置
+
+    workspace.onDidChangeConfiguration(ev => {
+      if (
+        ev.affectsConfiguration(`${EXTENSION_ID}.defaultBookmarkIcon`) ||
+        ev.affectsConfiguration(`${EXTENSION_ID}.defaultLabeledBookmarkIcon`)
+      ) {
+        const {defaultBookmarkIcon, defaultLabeledBookmarkIcon} =
+          this.configure.configure;
+        if (!this.store.icons.find(it => it.id === defaultBookmarkIcon)) {
+          this.downloadIcon(defaultBookmarkIcon);
+        }
+        if (
+          !this.store.icons.find(it => it.id === defaultLabeledBookmarkIcon)
+        ) {
+          this.downloadIcon(defaultLabeledBookmarkIcon);
+        }
+      }
+    });
 
     this.initial();
   }
@@ -65,13 +107,25 @@ export class IconsService extends BaseService {
       return;
     }
 
+    if (this._downloadingIcons.find(it => it === prefixWithName)) {
+      return;
+    }
+
+    this._downloadingIcons.push(prefixWithName);
+
     if (!this.store.icons.find(it => it.id === prefixWithName)) {
+      window.showInformationMessage('Downloading icon ....');
       const response = await this.download(
         `${iconfiy_public_url}/${prefix}.json?icons=${name}`,
       );
+      window.showInformationMessage('Icon downloaded successfully!');
 
       const svgBody = (response as IconifyIconsType).icons[name].body;
       this.store.addNewIcon(prefix, name, svgBody);
+
+      this._downloadingIcons = this._downloadingIcons.filter(
+        it => it !== prefixWithName,
+      );
     }
   }
 
