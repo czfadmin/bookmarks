@@ -79,15 +79,16 @@ export default class BookmarkTreeItem extends BaseTreeItem {
     this._resolveIconPath();
   }
 
-  private _resolveIconPath() {
+  private async _resolveIconPath() {
     if (this.contextValue === BookmarkTreeItemCtxValueEnum.FILE) {
       const meta = this.meta as BookmarksGroupedByFileType;
       this.iconPath = ThemeIcon.File;
       this.resourceUri = Uri.parse(meta.fileName);
     } else if (this.contextValue === BookmarkTreeItemCtxValueEnum.COLOR) {
       const _meta = this.meta as BookmarksGroupedByColorType;
+
       // TODO: 使用默认的图标
-      this.iconPath = _meta.color;
+      this.iconPath = await this._sm.iconsService.getDotIcon(_meta.color);
     } else if (this.contextValue === BookmarkTreeItemCtxValueEnum.BOOKMARK) {
       const meta = this.meta as IBookmark;
       const color = meta.color;

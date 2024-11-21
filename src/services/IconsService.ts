@@ -7,6 +7,8 @@ import {
 import {IconifyIconsType} from '../types/icon';
 import {BaseService} from './BaseService';
 import {applySnapshot, IDisposer, onSnapshot} from 'mobx-state-tree';
+import {Uri} from 'vscode';
+import {escapeColor} from '../utils';
 
 /**
  * @zh 装饰器和树上的图标服务类
@@ -63,9 +65,7 @@ export class IconsService extends BaseService {
       return;
     }
 
-    if (
-      !this.store.icons.find(it => it.prefix === prefix && it.name === name)
-    ) {
+    if (!this.store.icons.find(it => it.id === prefixWithName)) {
       const response = await this.download(
         `${iconfiy_public_url}/${prefix}.json?icons=${name}`,
       );
@@ -142,6 +142,34 @@ export class IconsService extends BaseService {
       this._logger.error(error);
       return error;
     }
+  }
+
+  async getIconUri(name: string, colorLabel: string = 'default') {
+    let icon = this.store.icons.find(it => it.id === name);
+
+    if (!icon) {
+      await this.downloadIcon(name);
+      icon = this.store.icons.find(it => it.id === name);
+    }
+
+    let color =
+      this.store.colors.find(it => it.label === colorLabel)?.value ||
+      this.configure.configure.defaultBookmarkIconColor;
+
+    color = color.startsWith('#') ? escapeColor(color) : color;
+
+    const body = icon?.body.replace(/fill="(\w.*?)"/gi, `fill="${color}"`);
+
+    return Uri.parse(
+      `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 24 24">${body}</svg>`,
+    );
+  }
+
+  async getDotIcon(colorLabel: string) {
+    return this.getIconUri(
+      this.configure.configure.defaultBookmarkIcon,
+      colorLabel,
+    );
   }
 
   dispose(): void {

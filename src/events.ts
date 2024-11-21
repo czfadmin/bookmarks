@@ -16,7 +16,7 @@ import {resolveBookmarkController} from './bootstrap';
 import resolveServiceManager from './services/ServiceManager';
 import {IBookmark} from './stores/bookmark';
 
-let onDidChangeActiveTextEditor: Disposable | undefined;
+// let onDidChangeActiveTextEditor: Disposable | undefined;
 let onDidChangeVisibleTextEditors: Disposable | undefined;
 let onDidSaveTextDocumentDisposable: Disposable | undefined;
 let onDidCursorChangeDisposable: Disposable | undefined;
@@ -27,20 +27,20 @@ let onDidDeleteFilesDisposable: Disposable | undefined;
 let onDidTextSelectionDisposable: Disposable | undefined;
 
 export function updateChangeActiveTextEditorListener() {
-  onDidChangeActiveTextEditor?.dispose();
+  // onDidChangeActiveTextEditor?.dispose();
   const sm = resolveServiceManager();
   // 当打开多个editor group时,更新每个editor的中的decorations
   let visibleTextEditors = window.visibleTextEditors;
   if (visibleTextEditors.length) {
     visibleTextEditors.forEach(editor => {
-      sm.decorationService.updateDecorationsByEditor(editor);
+      sm.decorationService.updateDecorationsByEditor(editor, true);
     });
   }
   // onDidChangeActiveTextEditor = window.onDidChangeActiveTextEditor(ev => {
   //   if (!ev) {
   //     return;
   //   }
-  //   sm.decorationService.updateDecorationsByEditor(ev);
+  //   sm.decorationService.updateDecorationsByEditor(ev, true);
   // });
 }
 
@@ -227,7 +227,7 @@ export function updateTextEditorSelectionListener() {
 }
 
 export function disableAllEvents() {
-  onDidChangeActiveTextEditor?.dispose();
+  // onDidChangeActiveTextEditor?.dispose();
   onDidChangeBreakpoints?.dispose();
   onDidCursorChangeDisposable?.dispose();
   onDidSaveTextDocumentDisposable?.dispose();

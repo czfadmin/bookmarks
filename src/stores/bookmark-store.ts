@@ -533,6 +533,7 @@ export const BookmarksStore = types
       }
 
       for (let bookmark of bookmarks) {
+        bookmark.removeTextDecoration();
         self.bookmarks.remove(bookmark);
       }
     }
@@ -542,6 +543,7 @@ export const BookmarksStore = types
       if (idx === -1) {
         return false;
       }
+      self.bookmarks[idx].removeTextDecoration();
       self.bookmarks.splice(idx, 1);
       return true;
     }
@@ -578,6 +580,7 @@ export const BookmarksStore = types
         it => it.fileId === fileUri.fsPath,
       );
       for (let item of deleteItems) {
+        item.removeTextDecoration();
         self.bookmarks.remove(item);
       }
     }
@@ -585,6 +588,7 @@ export const BookmarksStore = types
     function clearBookmarksByColor(color: string) {
       const bookmarks = self.bookmarks.filter(it => it.color === color);
       for (let bookmark of bookmarks) {
+        bookmark.removeTextDecoration();
         self.bookmarks.remove(bookmark);
       }
     }
@@ -599,6 +603,7 @@ export const BookmarksStore = types
         const delGroups = self.groups.filter(it => it.workspace === wsName);
 
         for (let bookmark of delBookmarks) {
+          bookmark.removeTextDecoration();
           self.bookmarks.remove(bookmark);
         }
 
@@ -606,6 +611,7 @@ export const BookmarksStore = types
           self.groups.remove(group);
         }
       } else {
+        self.bookmarks.forEach(it => it.removeTextDecoration());
         self.bookmarks.clear();
       }
       if (self.groups.find(it => it.id !== DEFAULT_BOOKMARK_GROUP_ID)) {

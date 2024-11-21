@@ -1,12 +1,4 @@
-import {BookmarkGroup} from './bookmark-group';
-import {
-  getEnv,
-  getParent,
-  getRoot,
-  Instance,
-  SnapshotIn,
-  types,
-} from 'mobx-state-tree';
+import {Instance, SnapshotIn, types} from 'mobx-state-tree';
 import {
   default_bookmark_color,
   DEFAULT_BOOKMARK_COLOR,
@@ -33,7 +25,6 @@ import {
 } from './custom';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
 import {ServiceManager} from '../services';
-import {BookmarksStore} from './bookmark-store';
 import {resolveBookmarkController} from '../bootstrap';
 
 export type BookmarksGroupedByColorType = {
@@ -215,7 +206,13 @@ export const Bookmark = types
             ? defaultLabeledBookmarkIcon
             : defaultBookmarkIcon;
 
-        const icon = icons.find(it => it.id === iconId);
+        let icon = icons.find(it => it.id === iconId);
+        if (!icon) {
+          icon =
+            self.label.length || self.description.length
+              ? icons.find(it => it.id === defaultLabeledBookmarkIcon)
+              : icons.find(it => it.id === defaultBookmarkIcon);
+        }
 
         const body = icon?.body.replace(
           /fill="currentColor"/gi,
@@ -230,84 +227,6 @@ export const Bookmark = types
         const controller = resolveBookmarkController();
         return controller.store.groups.find(it => it.id === self.groupId);
       },
-
-      /**
-       * @zh 书签的装饰器
-       */
-      get textDecoration() {
-        const {store, configure} = ServiceManager.instance;
-        let color =
-          (self as Instance<typeof Bookmark>).plainColor ||
-          DEFAULT_BOOKMARK_COLOR;
-
-        const {
-          fontWeight,
-          showTextDecoration,
-          showGutterIcon,
-          showGutterInOverviewRuler,
-          alwaysUseDefaultColor,
-          wholeLine,
-          textDecorationLine,
-          textDecorationStyle,
-          textDecorationThickness,
-          highlightBackground,
-          showBorder,
-          border,
-          showOutline,
-          outline,
-        } = configure.decoration!;
-
-        let overviewRulerColor;
-        let overviewRulerLane: OverviewRulerLane | undefined = undefined;
-        if (showGutterInOverviewRuler) {
-          overviewRulerColor = self.color;
-          overviewRulerLane = OverviewRulerLane.Center;
-        } else {
-          overviewRulerColor = undefined;
-        }
-
-        let _showGutterIcon = showGutterIcon;
-
-        if (
-          !(showGutterIcon || showGutterInOverviewRuler || showTextDecoration)
-        ) {
-          window.showInformationMessage(
-            l10n.t(
-              `'showGutterIcon', 'showGutterInOverviewRuler', 'showTextDecoration' not available at the same time this is only 'false'`,
-            ),
-          );
-          _showGutterIcon = true;
-        }
-
-        if (alwaysUseDefaultColor) {
-          color =
-            store.colors.find(it => it.label === 'default')?.value ||
-            DEFAULT_BOOKMARK_COLOR;
-        }
-
-        let rangeBehavior = DecorationRangeBehavior.ClosedClosed;
-
-        const decoration = window.createTextEditorDecorationType({
-          isWholeLine: wholeLine,
-          borderRadius: '2px',
-          borderColor: color,
-          outlineColor: color,
-          fontWeight,
-          overviewRulerLane,
-          overviewRulerColor,
-          rangeBehavior,
-          gutterIconPath: (self as Instance<typeof Bookmark>).iconPath,
-          gutterIconSize: 'auto',
-          border: showBorder ? border : '',
-          outline: showOutline ? outline : '',
-          backgroundColor: highlightBackground ? color : '',
-          textDecoration: showTextDecoration
-            ? `${textDecorationLine} ${textDecorationStyle} ${textDecorationThickness} ${color}`
-            : '',
-        });
-
-        return decoration;
-      },
     };
   })
   .actions(self => {
@@ -316,6 +235,12 @@ export const Bookmark = types
       V extends SnapshotIn<typeof self>[K],
     >(key: K, value: V) {
       self[key] = value;
+    }
+
+    function updateTextDecoration() {
+      ServiceManager.instance.decorationService.updateTextDecoration(
+        self as Instance<typeof Bookmark>,
+      );
     }
 
     function update(dto: Partial<Omit<IBookmark, 'id'>>) {
@@ -327,22 +252,26 @@ export const Bookmark = types
 
     function updateLabel(label: string) {
       self.label = label;
+      updateTextDecoration();
     }
 
     function updateDescription(desc: string) {
       self.description = desc;
+      updateTextDecoration();
     }
 
     function updateColor(newColor: string) {
       self.color =
         ServiceManager.instance.store.colors.find(it => it.label === newColor)
           ?.label || 'default';
+      updateTextDecoration();
     }
 
     function updateFileUri(uri: Uri) {
       self.fileUri = {
         fsPath: uri.fsPath,
       };
+      updateTextDecoration();
     }
 
     function changeGroupId(id: string) {
@@ -384,20 +313,7 @@ export const Bookmark = types
         self.sortedInfo.update(key, value);
       }
     }
-    function afterCreate() {
-      const editors = window.visibleTextEditors;
-      if (!editors.length) {
-        return;
-      }
-      for (const editor of editors) {
-        if (editor.document.uri.fsPath !== self.fileId) {
-          continue;
-        }
-        editor.setDecorations(self.textDecoration, [
-          self.prettierRangesOrOptions,
-        ]);
-      }
-    }
+    function afterCreate() {}
     /**
      * @zh 当书签创建时调用 渲染装饰器
      */
@@ -417,8 +333,11 @@ export const Bookmark = types
       updateColorSortedIndex,
       updateWorkspaceSortedIndex,
       updateFileSortedIndex,
-      disposeTextDecoration() {
-        self.textDecoration.dispose();
+      updateTextDecoration,
+      removeTextDecoration() {
+        ServiceManager.instance.decorationService.removeTextDecoration(
+          self as Instance<typeof Bookmark>,
+        );
       },
     };
   });
