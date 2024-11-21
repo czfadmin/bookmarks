@@ -206,14 +206,18 @@ export const Bookmark = types
        */
       get iconPath() {
         const root = getRoot<Instance<typeof GlobalStore>>(self);
-        const icon =
-          root.icons.find(it => it.id === self.icon)?.id ||
-          (self.selectionContent.length
-            ? root.configure.configure.defaultLabeledBookmarkIcon
-            : root.configure.configure.defaultBookmarkIcon);
+        const {defaultLabeledBookmarkIcon, defaultBookmarkIcon} =
+          root.configure.configure;
+        let iconId = self.icon
+          ? self.icon
+          : self.label.length || self.description.length
+            ? defaultLabeledBookmarkIcon
+            : defaultBookmarkIcon;
+
+        const icon = root.icons.find(it => it.id === iconId);
 
         const body = icon?.body.replace(
-          /fill=/gi,
+          /fill="currentColor"/gi,
           `fill="${(self as Instance<typeof Bookmark>).escapedColor}"`,
         );
         return Uri.parse(

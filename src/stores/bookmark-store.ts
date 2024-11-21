@@ -358,9 +358,10 @@ export const BookmarksStore = types
           file: idxInFileGroup,
           workspace: idxInWorkspaceGroup,
         },
-        icon: selectionContent.length
-          ? defaultLabeledBookmarkIcon
-          : defaultBookmarkIcon,
+        icon:
+          label.length || description.length
+            ? defaultLabeledBookmarkIcon
+            : defaultBookmarkIcon,
       });
 
       const colorGroupInfo = self.groupInfo.find(
