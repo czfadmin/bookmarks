@@ -327,12 +327,6 @@ export async function toggleBookmark(
     workspaceFolder: workspace.getWorkspaceFolder(editor.document.uri!)!,
   };
 
-  bookmark.rangesOrOptions.hoverMessage = createHoverMessage(
-    bookmark,
-    true,
-    true,
-  );
-
   controller.add(bookmark);
 }
 /**
@@ -517,7 +511,7 @@ function appendGroupInfo(
   bookmark: Omit<IBookmark, 'id'>,
   markdownString: MarkdownString,
 ) {
-  if (!bookmark.group) {
+  if (!bookmark.groupId) {
     return;
   }
 
@@ -534,7 +528,7 @@ function appendGroupInfo(
   markdownString.isTrusted = true;
 
   markdownString.appendMarkdown(
-    `[${bookmark.group.label}](command:bookmark-manager.revealInExplorer?${generateCMDArgs(customParams)}) | [${bookmark.color}](command:bookmark-manager.revealInExplorer?${generateCMDArgs(colorParams)}) | ${bookmark.createdAt.toLocaleString()}\n`,
+    `[${bookmark.group?.label}](command:bookmark-manager.revealInExplorer?${generateCMDArgs(customParams)}) | [${bookmark.color}](command:bookmark-manager.revealInExplorer?${generateCMDArgs(colorParams)}) | ${bookmark.createdAt.toLocaleString()}\n`,
   );
 }
 

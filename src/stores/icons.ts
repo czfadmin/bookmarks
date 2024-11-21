@@ -4,12 +4,12 @@ export const Icon = types
   .model('icon', {
     id: types.identifier,
     /**
-     * @zh iconfiy 中的prefix
+     * @zh iconfiy 中的所在集合的prefix
      */
     prefix: types.string,
 
     /**
-     * @zh gutter 名称
+     * @zh iconfiy的图标名称
      */
     name: types.string,
 

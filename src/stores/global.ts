@@ -7,29 +7,13 @@ import {RootConfigure} from './configure';
 
 export const GlobalStore = types
   .model('global-store', {
-    bookmarksStore: BookmarksStore,
     colors: types.array(BookmarkColor),
     icons: types.array(Icon),
     configure: RootConfigure,
   })
   .actions(self => {
     return {
-      afterCreate() {
-        // 填充颜色
-        if (!self.colors.length) {
-          const defaultColor =
-            self.configure.configure?.defaultBookmarkIconColor ||
-            DEFAULT_BOOKMARK_COLOR;
-          self.configure.configure?.colors.forEach(it => {
-            self.colors.push(
-              BookmarkColor.create({
-                label: it,
-                value: self.configure.configure?.colors.get(it) || defaultColor,
-              }),
-            );
-          });
-        }
-      },
+      afterCreate() {},
 
       addNewIcon(
         prefix: string,
@@ -69,28 +53,3 @@ export const GlobalStore = types
       },
     };
   });
-
-export type GlobalStoreType = Instance<typeof GlobalStore>;
-
-let globalStore: Instance<typeof GlobalStore>;
-
-/**
- * @zh 初始化一个全局的状态管理器
- * @returns
- */
-export function createGlobalStore() {
-  globalStore = GlobalStore.create({
-    bookmarksStore: {
-      bookmarks: [],
-    },
-    colors: [],
-    icons: [],
-    configure: {
-      decoration: {},
-      configure: {
-        colors: {},
-      },
-    },
-  });
-  return globalStore;
-}

@@ -36,6 +36,8 @@ import {ServiceManager} from '../services/ServiceManager';
 import {
   BookmarksGroupedByColorType,
   BookmarksGroupedByWorkspaceType,
+  BookmarksStore,
+  createBookmarkStore,
   IBookmark,
   IBookmarkGroup,
   IBookmarksStore,
@@ -179,8 +181,8 @@ export default class BookmarksController implements IController {
 
   private async _initStore() {
     let store;
-    this._store = this._sm.store.bookmarksStore;
 
+    this._store = createBookmarkStore();
     if (
       (!workspace.workspaceFolders || workspace.workspaceFolders!.length < 2) &&
       this.groupView === TreeViewGroupEnum.WORKSPACE
@@ -235,7 +237,7 @@ export default class BookmarksController implements IController {
       ...bookmark,
       groupId: activedGroup?.id,
     });
-    this._store.add(newBookmark);
+    return newBookmark;
   }
 
   remove(id: string) {
@@ -264,7 +266,7 @@ export default class BookmarksController implements IController {
     bookmarkDto: Partial<Omit<IBookmark, 'id'>>,
   ) {
     let sameColorBookmarks = this._store.bookmarks.filter(
-      it => it.color.label === colorName,
+      it => it.color === colorName,
     );
     const {rangesOrOptions, ...rest} = bookmarkDto;
     for (const bookmark of sameColorBookmarks) {

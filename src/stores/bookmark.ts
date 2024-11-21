@@ -1,5 +1,12 @@
 import {BookmarkGroup} from './bookmark-group';
-import {getParent, getRoot, Instance, SnapshotIn, types} from 'mobx-state-tree';
+import {
+  getEnv,
+  getParent,
+  getRoot,
+  Instance,
+  SnapshotIn,
+  types,
+} from 'mobx-state-tree';
 import {
   default_bookmark_color,
   DEFAULT_BOOKMARK_COLOR,
@@ -25,8 +32,9 @@ import {
   TSortedInfo,
 } from './custom';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
-import {Icon} from './icons';
-import {GlobalStore} from './global';
+import {ServiceManager} from '../services';
+import {BookmarksStore} from './bookmark-store';
+import {resolveBookmarkController} from '../bootstrap';
 
 export type BookmarksGroupedByColorType = {
   color: string;
@@ -129,21 +137,6 @@ export const Bookmark = types
       workspace: -1,
     }),
 
-    group: types.maybeNull(
-      types.reference(BookmarkGroup, {
-        get(identifier, parent: any) {
-          return (
-            (getParent(parent, 2) as any).groups.find(
-              (it: any) => it.id === identifier,
-            ) || null
-          );
-        },
-        set(value, parent) {
-          return value.id;
-        },
-      }),
-    ),
-
     /**
      * @zh 书签的图标引用
      */
@@ -193,11 +186,19 @@ export const Bookmark = types
         return rangesOrOptions;
       },
 
+      get plainColor() {
+        const {store, configure} = ServiceManager.instance;
+        return (
+          store.colors.find(it => it.label === self.color)?.value ||
+          configure.configure.defaultBookmarkIconColor
+        );
+      },
+
       get escapedColor() {
-        const root = getRoot<Instance<typeof GlobalStore>>(self);
+        const {store, configure} = ServiceManager.instance;
         const color =
-          root.colors.find(it => it.label === self.color)?.value ||
-          root.configure.configure.defaultBookmarkIconColor;
+          store.colors.find(it => it.label === self.color)?.value ||
+          configure.configure.defaultBookmarkIconColor;
         return color.startsWith('#') ? escapeColor(color) : color;
       },
 
@@ -205,16 +206,16 @@ export const Bookmark = types
        *@zh 获取书签的装饰器图标
        */
       get iconPath() {
-        const root = getRoot<Instance<typeof GlobalStore>>(self);
+        const {icons, configure} = ServiceManager.instance;
         const {defaultLabeledBookmarkIcon, defaultBookmarkIcon} =
-          root.configure.configure;
+          configure.configure;
         let iconId = self.icon
           ? self.icon
           : self.label.length || self.description.length
             ? defaultLabeledBookmarkIcon
             : defaultBookmarkIcon;
 
-        const icon = root.icons.find(it => it.id === iconId);
+        const icon = icons.find(it => it.id === iconId);
 
         const body = icon?.body.replace(
           /fill="currentColor"/gi,
@@ -225,14 +226,18 @@ export const Bookmark = types
         );
       },
 
+      get group() {
+        const controller = resolveBookmarkController();
+        return controller.store.groups.find(it => it.id === self.groupId);
+      },
+
       /**
        * @zh 书签的装饰器
        */
       get textDecoration() {
-        const root = getRoot<Instance<typeof GlobalStore>>(self);
-
+        const {store, configure} = ServiceManager.instance;
         let color =
-          (self as Instance<typeof Bookmark>).escapedColor ||
+          (self as Instance<typeof Bookmark>).plainColor ||
           DEFAULT_BOOKMARK_COLOR;
 
         const {
@@ -250,7 +255,7 @@ export const Bookmark = types
           border,
           showOutline,
           outline,
-        } = root.configure.decoration!;
+        } = configure.decoration!;
 
         let overviewRulerColor;
         let overviewRulerLane: OverviewRulerLane | undefined = undefined;
@@ -260,6 +265,7 @@ export const Bookmark = types
         } else {
           overviewRulerColor = undefined;
         }
+
         let _showGutterIcon = showGutterIcon;
 
         if (
@@ -272,9 +278,10 @@ export const Bookmark = types
           );
           _showGutterIcon = true;
         }
+
         if (alwaysUseDefaultColor) {
           color =
-            root.colors.find(it => it.label === 'default')?.value ||
+            store.colors.find(it => it.label === 'default')?.value ||
             DEFAULT_BOOKMARK_COLOR;
         }
 
@@ -321,14 +328,15 @@ export const Bookmark = types
     function updateLabel(label: string) {
       self.label = label;
     }
+
     function updateDescription(desc: string) {
       self.description = desc;
     }
 
     function updateColor(newColor: string) {
-      const root = getRoot<Instance<typeof GlobalStore>>(self);
       self.color =
-        root.colors.find(it => it.label === newColor)?.label || 'default';
+        ServiceManager.instance.store.colors.find(it => it.label === newColor)
+          ?.label || 'default';
     }
 
     function updateFileUri(uri: Uri) {
@@ -376,11 +384,28 @@ export const Bookmark = types
         self.sortedInfo.update(key, value);
       }
     }
-
-    function afterCreate() {}
+    function afterCreate() {
+      const editors = window.visibleTextEditors;
+      if (!editors.length) {
+        return;
+      }
+      for (const editor of editors) {
+        if (editor.document.uri.fsPath !== self.fileId) {
+          continue;
+        }
+        editor.setDecorations(self.textDecoration, [
+          self.prettierRangesOrOptions,
+        ]);
+      }
+    }
+    /**
+     * @zh 当书签创建时调用 渲染装饰器
+     */
+    function afterAttach() {}
 
     return {
       afterCreate,
+      afterAttach,
       setProp,
       update,
       updateLabel,

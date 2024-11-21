@@ -1,6 +1,6 @@
-import {getRoot, Instance, types} from 'mobx-state-tree';
+import {getEnv, getRoot, Instance, types} from 'mobx-state-tree';
 import {l10n, Uri, window, workspace, WorkspaceFolder} from 'vscode';
-import {generateUUID, sortBookmarks} from '../utils';
+import {createHoverMessage, generateUUID, sortBookmarks} from '../utils';
 import {
   BookmarksGroupedByCustomType,
   BookmarksGroupedByFileType,
@@ -18,8 +18,7 @@ import {
 import {BookmarkGroup, IBookmarkGroup} from './bookmark-group';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
 import {isProxy} from 'util/types';
-import {LoggerService} from '../services';
-import {GlobalStore} from './global';
+import {LoggerService, ServiceManager} from '../services';
 
 const BookmarkGroupDataModel = types.model('BookmarkGroupDataModel', {
   id: types.string,
@@ -83,7 +82,7 @@ export const BookmarksStore = types
     /**
      * 代表所有的group类型,暂时不考虑其他分组视图中再次以group分组的情况(后续可能会支持), 用户自定义的分组类型, 如果在工作区间
      */
-    groups: types.optional(types.array(BookmarkGroup), []),
+    groups: types.array(BookmarkGroup),
 
     groupInfo: types.array(BookmarkGroupInfoModel),
   })
@@ -282,7 +281,8 @@ export const BookmarksStore = types
     }
 
     function createBookmark(bookmark: any) {
-      let _bookmark;
+      const sm = ServiceManager.instance;
+      let _bookmark: Instance<typeof Bookmark>;
       const {
         id,
         label,
@@ -329,9 +329,8 @@ export const BookmarksStore = types
 
       const groupId = bookmark.groupId || DEFAULT_BOOKMARK_GROUP_ID;
 
-      const root = getRoot<Instance<typeof GlobalStore>>(self);
       const {defaultBookmarkIcon, defaultLabeledBookmarkIcon} =
-        root.configure.configure;
+        sm.store.configure.configure;
       _bookmark = Bookmark.create({
         id: id || generateUUID(),
         label,
@@ -350,7 +349,6 @@ export const BookmarksStore = types
         rangesOrOptions: rangesOrOptions,
         createdAt,
         groupId,
-        group: groupId,
         sortedInfo: {
           color: idxInColorGroup,
           custom: idxInCustomGroup,
@@ -371,7 +369,7 @@ export const BookmarksStore = types
       // 表示当前颜色组信息中不存在, 或则颜色组信息不存在此颜色, 需要追加到颜色组信息
       if (
         !colorGroupInfo ||
-        !colorGroupInfo.data.find(it => it.id === _bookmark.color?.label)
+        !colorGroupInfo.data.find(it => it.id === _bookmark.color)
       ) {
         addColorsGroupInfo({
           id: _bookmark.color,
@@ -405,6 +403,8 @@ export const BookmarksStore = types
       }
 
       logger.debug('add bookmark', _bookmark);
+
+      self.bookmarks.push(_bookmark);
       return _bookmark;
     }
 

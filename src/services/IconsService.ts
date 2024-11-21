@@ -19,7 +19,7 @@ export class IconsService extends BaseService {
   constructor(sm: ServiceManager) {
     super(IconsService.name, sm);
 
-    this._snapshotDisposer = onSnapshot(this.sm.store.icons, snapshot => {
+    this._snapshotDisposer = onSnapshot(this.sm.icons, snapshot => {
       this.saveToDisk(this.sm.fileService.iconsPath, snapshot);
     });
 
@@ -94,6 +94,8 @@ export class IconsService extends BaseService {
       if (!obj || !obj.length) {
         this.downloadDefaultIcons();
       } else {
+        applySnapshot(this.sm.store.icons, obj);
+
         const {defaultBookmarkIcon, defaultLabeledBookmarkIcon} =
           this.configure.configure;
 
@@ -104,6 +106,7 @@ export class IconsService extends BaseService {
         if (!obj.find(it => it.id === defaultLabeledBookmarkIcon)) {
           await this.downloadIcon(defaultLabeledBookmarkIcon);
         }
+        return;
       }
       applySnapshot(this.sm.store.icons, obj);
       return;

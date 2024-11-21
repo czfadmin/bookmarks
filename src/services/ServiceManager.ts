@@ -7,9 +7,10 @@ import GutterService from './GutterService';
 import WorkspaceService from './WorkspaceService';
 import GitService from './GitService';
 import {FileService} from './FileService';
-import {createGlobalStore, GlobalStoreType} from '../stores';
+import {createGlobalStore, GlobalStore} from '../stores';
 import {IconsService} from './IconsService';
 import ColorsService from './ColorsService';
+import {Instance} from 'mobx-state-tree';
 
 export interface IServiceManager {
   readonly configService: ConfigService;
@@ -22,8 +23,6 @@ export interface IServiceManager {
   readonly colorsService: ColorsService;
   readonly fileService: FileService;
 }
-
-let _serviceManager: ServiceManager;
 
 export class ServiceManager implements IServiceManager, IDisposable {
   readonly configService: ConfigService;
@@ -38,6 +37,13 @@ export class ServiceManager implements IServiceManager, IDisposable {
   private _statusbarService: StatusbarService | undefined;
 
   public readonly fileService: FileService;
+
+  private static _instance: ServiceManager;
+
+  public static get instance() {
+    return this._instance;
+  }
+
   public get statusbarService(): StatusbarService | undefined {
     return this._statusbarService;
   }
@@ -47,7 +53,7 @@ export class ServiceManager implements IServiceManager, IDisposable {
     return this._context;
   }
 
-  private _store: GlobalStoreType;
+  private _store: Instance<typeof GlobalStore>;
 
   public get store() {
     if (!this._store) {
@@ -62,6 +68,10 @@ export class ServiceManager implements IServiceManager, IDisposable {
 
   public get colors() {
     return this.configure.configure?.colors;
+  }
+
+  public get icons() {
+    return this.store.icons;
   }
 
   constructor(context: ExtensionContext) {
@@ -90,6 +100,10 @@ export class ServiceManager implements IServiceManager, IDisposable {
     this.iconsService.dispose();
     this.colorsService.dispose();
   }
+
+  static initial(context) {
+    this._instance = new ServiceManager(context);
+  }
 }
 
 export function initServiceManager(
@@ -98,11 +112,11 @@ export function initServiceManager(
 ): Promise<ServiceManager> {
   return new Promise((resolve, reject) => {
     try {
-      _serviceManager = new ServiceManager(context);
-      _serviceManager.configService.onDecorationConfigChange(() => {
+      ServiceManager.initial(context);
+      ServiceManager.instance.configService.onDecorationConfigChange(() => {
         udpateCb();
       });
-      resolve(_serviceManager);
+      resolve(ServiceManager.instance);
     } catch (error) {
       reject(error);
     }
@@ -110,15 +124,10 @@ export function initServiceManager(
 }
 
 export function postInitController() {
-  _serviceManager.decorationService.setupAllDecorations();
-  _serviceManager.registerStatusbarService();
+  // _serviceManager.decorationService.setupAllDecorations();
+  ServiceManager.instance.registerStatusbarService();
 }
 
-const resolveServiceManager = () => _serviceManager;
-export const resolveGutterService = () => _serviceManager.gutterService;
-export const resolveConfigurationService = () => _serviceManager.configService;
-export const resolveDecorationService = () => _serviceManager.decorationService;
-export const resolveWorkspaceService = () => _serviceManager.workspaceService;
-export const resolveGitService = () => _serviceManager.gitService;
+const resolveServiceManager = () => ServiceManager.instance;
 
 export default resolveServiceManager;

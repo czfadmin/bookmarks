@@ -14,10 +14,10 @@ export default class DecorationService extends BaseService {
   }
 
   setupAllDecorations() {
-    this.restoreAllDecorations();
+    // this.restoreAllDecorations();
     this.sm.configService.onDidChangeConfiguration(() => {
-      this.restoreAllDecorations();
-      this.updateActiveEditorAllDecorations();
+      // this.restoreAllDecorations();
+      // this.updateActiveEditorAllDecorations();
     });
   }
 
@@ -46,8 +46,9 @@ export default class DecorationService extends BaseService {
     },
   ) {
     try {
+      const {bookmarks} = options;
       options.bookmarks.forEach(it => {
-        editor?.setDecorations(it.textDecoration, [it.prettierRangesOrOptions]);
+        editor.setDecorations(it.textDecoration, [it.prettierRangesOrOptions]);
       });
     } catch (error) {
       this._logger.error(error);

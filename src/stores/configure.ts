@@ -23,7 +23,7 @@ export const BookmarkManagerConfigure = types
     colors: types.map(types.string),
 
     /**
-     * @zh 配置用户自定义的图标列表
+     * @zh 配置用户自定义的图标列表 如: 名称-iconfiy资源名称
      */
     icons: types.map(types.string),
 

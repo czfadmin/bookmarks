@@ -7,7 +7,7 @@ export type StringIndexType<T> = {[key: string]: T};
 export interface BaseMeta {
   id: string;
   label?: string;
-  color: BookmarkColorType;
+  color: string;
   sortedIndex?: number;
 }
 
