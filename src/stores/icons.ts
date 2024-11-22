@@ -31,12 +31,13 @@ export const Icon = types
   })
   .views(self => {
     return {
-      get iconPath() {
-        const {configure} = getRoot<any>(self);
+      iconPath(colorLabel?: string) {
+        const {configure, colors} = getRoot<any>(self);
         let color =
+          colors.find(it => it.label === colorLabel)?.value ||
           configure.configure.defaultBookmarkIconColor ||
           DEFAULT_BOOKMARK_COLOR;
-        color = color.startsWith('#') ? escapeColor(color) : configure.color;
+        color = color.startsWith('#') ? escapeColor(color) : color;
         let body = self.body;
         if (!self.body.includes('stroke')) {
           body = self.body.replace(/fill\s*=\s*"(.*?)"/gi, `fill="${color}"`);

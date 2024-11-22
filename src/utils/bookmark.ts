@@ -23,7 +23,9 @@ import {
   TreeViewSortedEnum,
 } from '../types';
 import {resolveBookmarkController} from '../bootstrap';
-import resolveServiceManager from '../services/ServiceManager';
+import resolveServiceManager, {
+  ServiceManager,
+} from '../services/ServiceManager';
 import {IBookmark} from '../stores/bookmark';
 import {IBookmarkGroup} from '../stores';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
@@ -404,10 +406,9 @@ export async function chooseBookmarkColor() {
     return {
       label: color,
       description: colors[color] || color,
-      // TODO: 使用其他图标代替
-      // iconPath: (
-      //   gutterService.gutters.get(color) || gutterService.gutters.get('default')
-      // )?.iconPath,
+      iconPath: ServiceManager.instance.icons
+        .find(it => it.id === sm.configure.configure.defaultBookmarkIcon)
+        ?.iconPath(color),
     } as QuickPickItem;
   });
   const chosenColor = await window.showQuickPick(pickItems, {

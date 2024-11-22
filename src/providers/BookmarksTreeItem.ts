@@ -94,9 +94,9 @@ export default class BookmarkTreeItem extends BaseTreeItem {
       const meta = this.meta as IBookmark;
       this.iconPath = meta.iconPath;
     } else if (this.contextValue === BookmarkTreeItemCtxValueEnum.ICON) {
-      this.iconPath = ServiceManager.instance.icons.find(
-        it => it.id === (this.meta as BookmarksGroupedByIconType).icon,
-      )?.iconPath;
+      this.iconPath = ServiceManager.instance.icons
+        .find(it => it.id === (this.meta as BookmarksGroupedByIconType).icon)
+        ?.iconPath();
     }
   }
 
