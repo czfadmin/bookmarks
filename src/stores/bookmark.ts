@@ -10,7 +10,10 @@ import {
   TagType,
   TSortedInfo,
 } from './custom';
-import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
+import {
+  DEFAULT_BOOKMARK_GROUP_ID,
+  default_bookmark_svg_icon,
+} from '../constants/bookmark';
 import {ServiceManager} from '../services';
 import {resolveBookmarkController} from '../bootstrap';
 
@@ -26,6 +29,7 @@ export type BookmarksGroupedByWorkspaceType = {
 
 export type BookmarksGroupedByIconType = {
   icon: string;
+  label: string;
   bookmarks: IBookmark[];
 };
 export const SortedInfoType = types
@@ -207,7 +211,19 @@ export const Bookmark = types
               : icons.find(it => it.id === defaultBookmarkIcon);
         }
 
-        const body = icon?.body.replace(
+        const color = (self as any).escapedColor;
+
+        if (icon) {
+          return Uri.parse(
+            `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 24 24">${
+              icon.body.includes('stroke')
+                ? icon.body.replace(/stroke="(\w.*?)"/gi, `stroke="${color}"`)
+                : icon.body.replace(/fill="(\w.*?)"/gi, `fill="${color}"`)
+            }</svg>`,
+          );
+        }
+        // 这样写只是为了消除ts报警错误,误删
+        const body = default_bookmark_svg_icon.replace(
           /fill="currentColor"/gi,
           `fill="${(self as Instance<typeof Bookmark>).escapedColor}"`,
         );

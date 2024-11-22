@@ -9,15 +9,6 @@ import {BaseService} from './BaseService';
 export default class GutterService extends BaseService {
   constructor(sm: ServiceManager) {
     super(GutterService.name, sm);
-    // this._sm.configService.onDidChangeConfiguration(ev => {
-    //   if (
-    //     ev.affectsConfiguration(`${EXTENSION_ID}.defaultBookmarkIconColor`) ||
-    //     ev.affectsConfiguration(`${EXTENSION_ID}.colors`) ||
-    //     ev.affectsConfiguration(`${EXTENSION_ID}.useBuiltInColors`)
-    //   ) {
-    //     // this._initial();
-    //   }
-    // });
   }
 
   initial(): void {}

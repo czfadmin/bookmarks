@@ -1,5 +1,5 @@
-import {Instance, applySnapshot, cast, getRoot, types} from 'mobx-state-tree';
-import {WorkspaceConfiguration, workspace} from 'vscode';
+import {Instance, getRoot, types} from 'mobx-state-tree';
+import {workspace} from 'vscode';
 import {
   DEFAULT_BOOKMARK_COLOR,
   default_bookmark_icon,

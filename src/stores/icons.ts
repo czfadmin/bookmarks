@@ -1,5 +1,4 @@
 import {getRoot, Instance, SnapshotOut, types} from 'mobx-state-tree';
-import {GlobalStore} from './global';
 import {escapeColor} from '../utils';
 import {Uri} from 'vscode';
 import {DEFAULT_BOOKMARK_COLOR} from '../constants';
@@ -38,9 +37,12 @@ export const Icon = types
           configure.configure.defaultBookmarkIconColor ||
           DEFAULT_BOOKMARK_COLOR;
         color = color.startsWith('#') ? escapeColor(color) : configure.color;
-
-        const body = self.body.replace(/fill="(\w.*?)"/gi, `fill="${color}"`);
-
+        let body = self.body;
+        if (!self.body.includes('stroke')) {
+          body = self.body.replace(/fill="(\w.*?)"/gi, `fill="${color}"`);
+        } else {
+          body = self.body.replace(/stroke="(\w.*?)"/gi, `stroke="${color}"`);
+        }
         return Uri.parse(
           `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 24 24">${body}</svg>`,
         );

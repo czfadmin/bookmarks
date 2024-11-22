@@ -37,11 +37,10 @@ import {
   BookmarksGroupedByIconType,
   BookmarksGroupedByColorType,
   BookmarksGroupedByWorkspaceType,
-  BookmarksStore,
   createBookmarkStore,
   IBookmark,
   IBookmarkGroup,
-  IBookmarksStore,
+  BookmarksStoreType,
 } from '../stores';
 
 import {
@@ -61,7 +60,7 @@ export default class BookmarksController implements IController {
 
   private _onDidChangeEvent = new EventEmitter<void>();
 
-  private _store!: IBookmarksStore;
+  private _store!: BookmarksStoreType;
   private _disposables: IDisposable[] = [];
 
   private _watcher: FileSystemWatcher | undefined;
@@ -83,7 +82,7 @@ export default class BookmarksController implements IController {
     return this._context.workspaceState;
   }
 
-  public get store(): IBookmarksStore {
+  public get store(): BookmarksStoreType {
     return this._store!;
   }
 

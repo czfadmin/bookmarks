@@ -253,9 +253,13 @@ export const BookmarksStore = types
         const grouped: BookmarksGroupedByIconType[] = [];
         self.bookmarks.forEach(it => {
           const existed = grouped.find(item => item.icon === it.icon);
+          const iconInfo = ServiceManager.instance.icons.find(
+            ic => ic.id === it.icon,
+          );
           if (!existed) {
             grouped.push({
               icon: it.icon,
+              label: iconInfo?.customName || it.icon,
               bookmarks: [it],
             });
             return;
@@ -754,4 +758,4 @@ export const BookmarksStore = types
     };
   });
 
-export type IBookmarksStore = Instance<typeof BookmarksStore>;
+export type BookmarksStoreType = Instance<typeof BookmarksStore>;

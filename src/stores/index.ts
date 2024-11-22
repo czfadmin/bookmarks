@@ -1,4 +1,3 @@
-import {Instance} from 'mobx-state-tree';
 import {GlobalStore} from './global';
 import {BookmarksStore} from './bookmark-store';
 

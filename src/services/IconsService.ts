@@ -7,15 +7,22 @@ import {
 import {IconifyIconsType} from '../types/icon';
 import {BaseService} from './BaseService';
 import {applySnapshot, IDisposer, onSnapshot} from 'mobx-state-tree';
-import {Uri, window, workspace} from 'vscode';
+import {EventEmitter, Uri, window, workspace} from 'vscode';
 import {escapeColor} from '../utils';
 import {EXTENSION_ID} from '../constants';
+import {IconType} from '../stores';
 
 /**
  * @zh 装饰器和树上的图标服务类
  */
 export class IconsService extends BaseService {
   private _downloadingIcons: string[];
+
+  private _onIconsDidChangeEvent: EventEmitter<IconType[]> = new EventEmitter<
+    IconType[]
+  >();
+
+  public onIconsDidChange = this._onIconsDidChangeEvent.event;
 
   public get icons() {
     return this.store.icons;
@@ -26,13 +33,16 @@ export class IconsService extends BaseService {
     this._downloadingIcons = [];
     this._disposers.push(
       onSnapshot(this.sm.icons, snapshot => {
-        this.saveToDisk(this.sm.fileService.iconsPath, this.sm.icons);
+        this.fire();
+        this.saveToDisk(this.sm.fileService.iconsPath, snapshot);
       }),
     );
 
     // 监听插件的的`icons`的变化, 更新存储
     this._disposers.push(
       onSnapshot(this.configure.configure.icons, snapshot => {
+        const {defaultBookmarkIcon, defaultLabeledBookmarkIcon} =
+          this.configure.configure;
         Object.entries(snapshot).forEach(([key, value], index) => {
           if (!this.store.icons.find(it => it.id === value)) {
             this.downloadIcon(value, key);
@@ -41,7 +51,12 @@ export class IconsService extends BaseService {
 
         const iconValues = Object.values(snapshot);
         this.store.icons
-          .filter(it => !iconValues.includes(it.id))
+          .filter(
+            it =>
+              !iconValues.includes(it.id) &&
+              it.id !== defaultBookmarkIcon &&
+              it.id !== defaultLabeledBookmarkIcon,
+          )
           .forEach(it => {
             this.store.removeIcon(it.id);
           });
@@ -123,55 +138,67 @@ export class IconsService extends BaseService {
       }[];
 
       if (!obj || !obj.length) {
-        this.downloadDefaultIcons();
+        await this.downloadDefaultIcons();
       } else {
         applySnapshot(this.sm.store.icons, obj);
-
-        const {
-          defaultBookmarkIcon,
-          defaultLabeledBookmarkIcon,
-          icons: iconsInConfigure,
-        } = this.configure.configure;
-
-        if (!obj.find(it => it.id === defaultBookmarkIcon)) {
-          await this.downloadIcon(defaultBookmarkIcon);
-        }
-
-        if (!obj.find(it => it.id === defaultLabeledBookmarkIcon)) {
-          await this.downloadIcon(defaultLabeledBookmarkIcon);
-        }
-
-        const iconsValues: [string, string][] = [];
-
-        for (let [key, value] of iconsInConfigure.entries()) {
-          iconsValues.push([key, value]);
-        }
-
-        const toDownloadIcons: any[] = [];
-        for (let [key, value] of iconsValues) {
-          // 下载配置需要存在但不存在本地的图标数据
-          if (!this.sm.store.icons.find(it => it.id === value)) {
-            toDownloadIcons.push({key, value});
-          }
-        }
-
-        // 删除配置不存在但是本地缓存中存在的图标缓存数据
-        this.store.icons
-          .filter(it => !iconsValues.find(km => km[1] === it.id))
-          .forEach(it => this.store.removeIcon(it.id));
-        if (!toDownloadIcons.length) {
-          return;
-        }
-
-        toDownloadIcons.forEach(async it => {
-          await this.downloadIcon(it.value, it.key);
-        });
       }
-      applySnapshot(this.sm.store.icons, obj);
+    }
+
+    const {
+      defaultBookmarkIcon,
+      defaultLabeledBookmarkIcon,
+      icons: iconsInConfigure,
+    } = this.configure.configure;
+
+    const iconsValues: [string, string][] = [];
+
+    for (let [key, value] of iconsInConfigure.entries()) {
+      iconsValues.push([key, value]);
+    }
+
+    if (!this.store.icons.find(it => it.id === defaultBookmarkIcon)) {
+      const defaultIcon = iconsValues.find(iv => iv[1] === defaultBookmarkIcon);
+      await this.downloadIcon(
+        defaultBookmarkIcon,
+        defaultIcon ? defaultIcon[0] : 'default:bookmark',
+      );
+    }
+
+    if (!this.store.icons.find(it => it.id === defaultLabeledBookmarkIcon)) {
+      const defaultIcon = iconsValues.find(iv => iv[1] === defaultBookmarkIcon);
+      await this.downloadIcon(
+        defaultLabeledBookmarkIcon,
+        defaultIcon ? defaultIcon[0] : 'default:bookmark:tag',
+      );
+    }
+
+    const toDownloadIcons: any[] = [];
+    for (let [key, value] of iconsValues) {
+      // 下载配置需要存在但不存在本地的图标数据
+      if (!this.sm.store.icons.find(it => it.id === value)) {
+        toDownloadIcons.push({key, value});
+      }
+    }
+
+    // 删除配置不存在但是本地缓存中存在的图标缓存数据
+    this.store.icons
+      .filter(
+        it =>
+          !iconsValues.find(km => km[1] === it.id) &&
+          it.id !== defaultBookmarkIcon &&
+          it.id !== defaultLabeledBookmarkIcon,
+      )
+      .forEach(it => this.store.removeIcon(it.id));
+
+    if (!toDownloadIcons.length) {
       return;
     }
 
-    await this.downloadDefaultIcons();
+    Promise.all(
+      toDownloadIcons.map(it => {
+        return this.downloadIcon(it.value, it.key);
+      }),
+    );
   }
 
   async downloadDefaultIcons() {
@@ -182,8 +209,8 @@ export class IconsService extends BaseService {
     const {defaultBookmarkIcon, defaultLabeledBookmarkIcon} =
       configure.configure;
 
-    await this.downloadIcon(defaultBookmarkIcon);
-    await this.downloadIcon(defaultLabeledBookmarkIcon);
+    await this.downloadIcon(defaultBookmarkIcon, 'default:bookmark');
+    await this.downloadIcon(defaultLabeledBookmarkIcon, 'default:bookmark:tag');
   }
   /**
    * 下载集合列表
@@ -229,5 +256,14 @@ export class IconsService extends BaseService {
       this.configure.configure.defaultBookmarkIcon,
       colorLabel,
     );
+  }
+
+  fire() {
+    this._onIconsDidChangeEvent.fire(this.sm.icons);
+  }
+
+  dispose(): void {
+    this._onIconsDidChangeEvent.dispose();
+    super.dispose();
   }
 }

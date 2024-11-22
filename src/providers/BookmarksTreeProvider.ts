@@ -248,7 +248,7 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
         .groupedBookmarks as BookmarksGroupedByIconType[];
       const children = store.map(it => {
         return new BookmarkTreeItem(
-          it.icon,
+          it.label,
           TreeItemCollapsibleState.Collapsed,
           BookmarkTreeItemCtxValueEnum.ICON,
           it,
