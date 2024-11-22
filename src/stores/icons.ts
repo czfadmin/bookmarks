@@ -39,9 +39,12 @@ export const Icon = types
         color = color.startsWith('#') ? escapeColor(color) : configure.color;
         let body = self.body;
         if (!self.body.includes('stroke')) {
-          body = self.body.replace(/fill="(\w.*?)"/gi, `fill="${color}"`);
+          body = self.body.replace(/fill\s*=\s*"(.*?)"/gi, `fill="${color}"`);
         } else {
-          body = self.body.replace(/stroke="(\w.*?)"/gi, `stroke="${color}"`);
+          body = self.body.replace(
+            /stroke\s*=\s*"(.*?)"/gi,
+            `stroke="${color}"`,
+          );
         }
         return Uri.parse(
           `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 24 24">${body}</svg>`,

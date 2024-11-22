@@ -217,8 +217,11 @@ export const Bookmark = types
           return Uri.parse(
             `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 24 24">${
               icon.body.includes('stroke')
-                ? icon.body.replace(/stroke="(\w.*?)"/gi, `stroke="${color}"`)
-                : icon.body.replace(/fill="(\w.*?)"/gi, `fill="${color}"`)
+                ? icon.body.replace(
+                    /stroke\s*=\s*"(.*?)"/gi,
+                    `stroke="${color}"`,
+                  )
+                : icon.body.replace(/fill\s*=\s*"(.*?)"/gi, `fill="${color}"`)
             }</svg>`,
           );
         }
