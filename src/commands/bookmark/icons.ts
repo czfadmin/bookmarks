@@ -25,7 +25,7 @@ export async function changeBookmarkIcon(context: BookmarkActionContext) {
       description: it.id,
       iconPath: it.iconPath(),
       meta: {
-        it,
+        ...it,
       },
     } as QuickPickItem;
   });
