@@ -142,6 +142,17 @@ export const Bookmark = types
 
         return Uri.joinPath(ws.uri, self.fileUri.fsPath).fsPath;
       },
+
+      get fileUri2() {
+        const ws = workspace.workspaceFolders?.find(
+          it => it.name === self.workspaceFolder.name,
+        );
+        if (!ws) {
+          return self.fileUri;
+        }
+        return Uri.joinPath(ws.uri, self.fileUri.fsPath);
+      },
+
       get fileName() {
         const arr = self.fileUri.fsPath.split('/');
         return arr[arr.length - 1];
@@ -152,6 +163,7 @@ export const Bookmark = types
           it => it.name === self.workspaceFolder.name,
         );
       },
+
       get selection() {
         const {start, end} = self.rangesOrOptions.range;
         return new Selection(

@@ -7,6 +7,7 @@ import {
   Uri,
   TextEditorRevealType,
   commands,
+  Position,
 } from 'vscode';
 import {resolveBookmarkController} from '../../bootstrap';
 import resolveServiceManager from '../../services/ServiceManager';
@@ -32,7 +33,10 @@ import {
   getBookmarkFromCtx,
   getBookmarkColorFromCtx,
   toggleBookmarksWithSelections,
+  highlightSelection,
+  openDocumentAndGotoLocation,
 } from '../../utils';
+import {range} from 'lodash';
 
 /**
  * 开启行书签, 使用默认颜色且无标签等相关信息
@@ -300,7 +304,7 @@ export async function listBookmarksInCurrentFile(ctx: BookmarkActionContext) {
       detail: it.fileUri.fsPath,
       iconPath: it.iconPath,
       meta: {
-        ...it,
+        value: it,
         selection: new Selection(it.selection.anchor, it.selection.active),
       },
     };
@@ -311,24 +315,33 @@ export async function listBookmarksInCurrentFile(ctx: BookmarkActionContext) {
     placeHolder: l10n.t('Please select the bookmark you want to open'),
     canPickMany: false,
     ignoreFocusOut: false,
-    async onDidSelectItem(item: QuickPickItem & {meta: IBookmark}) {
+    async onDidSelectItem(
+      item: QuickPickItem & {meta: {value: IBookmark; selection: Selection}},
+    ) {
       // @ts-ignore
       let bookmark = typeof item === 'object' ? item.meta : undefined;
       if (bookmark) {
-        const doc = await workspace.openTextDocument(
-          Uri.parse(bookmark.fileName),
-        );
+        const {value: _bookmark, selection} = item.meta;
+
+        const openedUri = Uri.from({
+          scheme: 'file',
+          path: _bookmark.fileId,
+        });
+
+        const doc = await workspace.openTextDocument(openedUri);
+
         const editor = await window.showTextDocument(doc, {
           preview: true,
           preserveFocus: true,
         });
-        editor.selection = new Selection(
-          bookmark.selection.start,
-          bookmark.selection.end,
-        );
-        editor.revealRange(
-          bookmark.selection,
-          TextEditorRevealType.InCenterIfOutsideViewport,
+
+        const range = selection || _bookmark.rangesOrOptions?.range;
+        const {start, end} = range;
+        highlightSelection(
+          editor,
+          range,
+          new Position(start.line, start.character),
+          new Position(end.line, end.character),
         );
       }
     },

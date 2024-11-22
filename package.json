@@ -774,6 +774,10 @@
           "when": "false"
         },
         {
+          "command": "bookmark-manager.gotoSourceLocation",
+          "when": "false"
+        },
+        {
           "command": "bookmark-manager.editUniversalBookmarkLabel",
           "when": "false"
         },
