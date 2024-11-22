@@ -24,6 +24,10 @@ export type BookmarksGroupedByWorkspaceType = {
   files: BookmarksGroupedByFileType[];
 };
 
+export type BookmarksGroupedByIconType = {
+  icon: string;
+  bookmarks: IBookmark[];
+};
 export const SortedInfoType = types
   .model('SortedInfoType', {
     color: types.number,
@@ -31,6 +35,7 @@ export const SortedInfoType = types
     default: types.number,
     file: types.number,
     workspace: types.number,
+    icon: types.number,
   })
   .actions(self => {
     function setProp<
@@ -113,6 +118,7 @@ export const Bookmark = types
       default: -1,
       file: -1,
       workspace: -1,
+      icon: -1,
     }),
 
     /**

@@ -202,6 +202,11 @@
         "category": "Bookmark Manager (BM)"
       },
       {
+        "command": "bookmark-manager.groupedByIcon",
+        "title": "%bookmark-manager.groupedByIcon%",
+        "category": "Bookmark Manager (BM)"
+      },
+      {
         "command": "bookmark-manager.groupedByCustom",
         "title": "%bookmark-manager.groupedByCustom%",
         "category": "Bookmark Manager (BM)"
@@ -239,6 +244,12 @@
       {
         "command": "bookmark-manager.clearAllBookmarksInColor",
         "title": "%bookmark-manager.clearAllBookmarksInColor%",
+        "icon": "$(clear-all)",
+        "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.clearAllBookmarksInIconGroup",
+        "title": "%bookmark-manager.clearAllBookmarksInIconGroup%",
         "icon": "$(clear-all)",
         "category": "Bookmark Manager (BM)"
       },
@@ -591,9 +602,13 @@
           "group": "group@3"
         },
         {
+          "command": "bookmark-manager.groupedByIcon",
+          "group": "group@4"
+        },
+        {
           "command": "bookmark-manager.groupedByWorkspace",
           "when": "view == bookmark-manager && bookmark-manager.multiRootWorkspaces",
-          "group": "group@4"
+          "group": "group@5"
         }
       ],
       "view/title": [
@@ -696,6 +711,11 @@
         {
           "command": "bookmark-manager.clearAllBookmarksInColor",
           "when": "view==bookmark-manager && viewItem === color",
+          "group": "inline@1"
+        },
+        {
+          "command": "bookmark-manager.clearAllBookmarksInIconGroup",
+          "when": "view==bookmark-manager && viewItem === icon",
           "group": "inline@1"
         },
         {

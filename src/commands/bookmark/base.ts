@@ -10,7 +10,11 @@ import {
 } from 'vscode';
 import {resolveBookmarkController} from '../../bootstrap';
 import resolveServiceManager from '../../services/ServiceManager';
-import {BookmarksGroupedByColorType, IBookmark} from '../../stores';
+import {
+  BookmarksGroupedByColorType,
+  BookmarksGroupedByIconType,
+  IBookmark,
+} from '../../stores';
 import {
   BookmarksGroupedByFileType,
   BookmarkTypeEnum,
@@ -354,6 +358,19 @@ export function clearAllBookmarksInColor(args: any) {
 
   const meta = args.meta as BookmarksGroupedByColorType;
   controller.clearAllBookmarksInColor(meta.color);
+}
+
+export function clearAllBookmarksInIconGroup(args: any) {
+  if (!args || !args.meta) {
+    return;
+  }
+  const controller = resolveBookmarkController();
+  if (!controller) {
+    return;
+  }
+
+  const meta = args.meta as BookmarksGroupedByIconType;
+  controller.clearAllBookmarksInIconGroup(meta.icon);
 }
 
 /**

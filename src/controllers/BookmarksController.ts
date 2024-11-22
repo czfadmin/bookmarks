@@ -34,6 +34,7 @@ import {
 
 import {ServiceManager} from '../services/ServiceManager';
 import {
+  BookmarksGroupedByIconType,
   BookmarksGroupedByColorType,
   BookmarksGroupedByWorkspaceType,
   BookmarksStore,
@@ -115,7 +116,7 @@ export default class BookmarksController implements IController {
   }
 
   public get groupView(): TreeViewGroupEnum {
-    return this._store.groupView as TreeViewGroupEnum;
+    return this._store.groupView;
   }
 
   public get sortedType(): TreeViewSortedEnum {
@@ -126,7 +127,8 @@ export default class BookmarksController implements IController {
     | BookmarksGroupedByFileType[]
     | BookmarksGroupedByCustomType[]
     | BookmarksGroupedByColorType[]
-    | BookmarksGroupedByWorkspaceType[] {
+    | BookmarksGroupedByWorkspaceType[]
+    | BookmarksGroupedByIconType[] {
     switch (this._store.groupView) {
       case TreeViewGroupEnum.FILE:
       case TreeViewGroupEnum.DEFAULT:
@@ -137,6 +139,8 @@ export default class BookmarksController implements IController {
         return this._store.bookmarksGroupedByWorkspace;
       case TreeViewGroupEnum.CUSTOM:
         return this._store.bookmarksGroupedByCustom;
+      case TreeViewGroupEnum.ICON:
+        return this._store.bookmarksGroupedByIcon;
       default:
         return [];
     }
@@ -317,6 +321,10 @@ export default class BookmarksController implements IController {
     this._store.clearBookmarksByColor(color);
   }
 
+  clearAllBookmarksInIconGroup(icon: string) {
+    this._store.clearBookmarksByIcon(icon);
+  }
+
   save() {
     if (this.configuration.createJsonFile) {
       this._saveToDisk();
@@ -427,7 +435,8 @@ export default class BookmarksController implements IController {
       !group ||
       this.groupView === TreeViewGroupEnum.FILE ||
       this.groupView === TreeViewGroupEnum.DEFAULT ||
-      this.groupView === TreeViewGroupEnum.WORKSPACE
+      this.groupView === TreeViewGroupEnum.WORKSPACE ||
+      this.groupView === TreeViewGroupEnum.ICON
     ) {
       return;
     }

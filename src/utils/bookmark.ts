@@ -837,6 +837,10 @@ export function sortBookmarks(
         if (groupViewType === TreeViewGroupEnum.WORKSPACE) {
           return a.sortedInfo.workspace - b.sortedInfo.workspace;
         }
+
+        if (groupViewType === TreeViewGroupEnum.ICON) {
+          return a.sortedInfo.icon - b.sortedInfo.icon;
+        }
         return a.selection.start.line - b.selection.start.line;
       });
 

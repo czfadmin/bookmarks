@@ -165,6 +165,14 @@ export const BookmarkGroupCommands: IBookmarkCommand[] = [
       controller.changeGroupView(TreeViewGroupEnum.CUSTOM);
     },
   },
+  {
+    name: 'groupedByIcon',
+    docs: '按照图标分组',
+    callback: async (ctx: IBookmarkCommandContext, args: any) => {
+      const controller = resolveBookmarkController();
+      controller.changeGroupView(TreeViewGroupEnum.ICON);
+    },
+  },
 ];
 
 /**

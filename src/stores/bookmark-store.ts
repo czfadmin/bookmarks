@@ -1,6 +1,6 @@
-import {getEnv, getRoot, Instance, types} from 'mobx-state-tree';
+import {Instance, types} from 'mobx-state-tree';
 import {l10n, Uri, window, workspace, WorkspaceFolder} from 'vscode';
-import {createHoverMessage, generateUUID, sortBookmarks} from '../utils';
+import {generateUUID, sortBookmarks} from '../utils';
 import {
   BookmarksGroupedByCustomType,
   BookmarksGroupedByFileType,
@@ -14,36 +14,34 @@ import {
   BookmarksGroupedByWorkspaceType,
   IBookmark,
   Bookmark,
+  BookmarksGroupedByIconType,
 } from './bookmark';
 import {BookmarkGroup, IBookmarkGroup} from './bookmark-group';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
 import {isProxy} from 'util/types';
 import {LoggerService, ServiceManager} from '../services';
 
-const BookmarkGroupDataModel = types.model('BookmarkGroupDataModel', {
+const BookmarkGroupData = types.model('BookmarkGroupData', {
   id: types.string,
   sortedIndex: types.optional(types.number, -1),
 });
 
-const BookmarkGroupInfoModel = types.model('BookmarkGroupInfoModel', {
+const BookmarkGroupInfo = types.model('BookmarkGroupInfo', {
   name: types.enumeration([
     TreeViewGroupEnum.FILE,
     TreeViewGroupEnum.DEFAULT,
     TreeViewGroupEnum.COLOR,
     TreeViewGroupEnum.WORKSPACE,
     TreeViewGroupEnum.FILE,
+    TreeViewGroupEnum.ICON,
   ]),
-  data: types.array(BookmarkGroupDataModel),
+  data: types.array(BookmarkGroupData),
 });
 
 const logger = new LoggerService('BookmarkStore');
 
-export type BookmarkGroupDataModelType = Instance<
-  typeof BookmarkGroupDataModel
->;
-export type BookmarkGroupInfoModelType = Instance<
-  typeof BookmarkGroupInfoModel
->;
+export type BookmarkGroupDataType = Instance<typeof BookmarkGroupData>;
+export type BookmarkGroupInfoType = Instance<typeof BookmarkGroupInfo>;
 
 export const BookmarksStore = types
   .model('BookmarksStore', {
@@ -59,6 +57,7 @@ export const BookmarksStore = types
      * - default: 按照文件分组
      * - workspace: 按照工作区间分组
      * - custom: 按照自定义的分组方式, 参考 @field group.
+     * - icon: 按照图标进行分组
      */
     groupView: types.optional(
       types.enumeration([
@@ -67,6 +66,7 @@ export const BookmarksStore = types
         TreeViewGroupEnum.DEFAULT,
         TreeViewGroupEnum.WORKSPACE,
         TreeViewGroupEnum.CUSTOM,
+        TreeViewGroupEnum.ICON,
       ]),
       TreeViewGroupEnum.FILE,
     ),
@@ -84,7 +84,7 @@ export const BookmarksStore = types
      */
     groups: types.array(BookmarkGroup),
 
-    groupInfo: types.array(BookmarkGroupInfoModel),
+    groupInfo: types.array(BookmarkGroupInfo),
   })
   .views(self => {
     return {
@@ -245,6 +245,32 @@ export const BookmarksStore = types
           (a, b) => a.group.sortedIndex - b.group.sortedIndex,
         );
       },
+
+      /**
+       * @zh 获取按照图标颜色分组的书签数据
+       */
+      get bookmarksGroupedByIcon(): BookmarksGroupedByIconType[] {
+        const grouped: BookmarksGroupedByIconType[] = [];
+        self.bookmarks.forEach(it => {
+          const existed = grouped.find(item => item.icon === it.icon);
+          if (!existed) {
+            grouped.push({
+              icon: it.icon,
+              bookmarks: [it],
+            });
+            return;
+          }
+          existed.bookmarks.push(it);
+        });
+        return grouped.map(it => ({
+          ...it,
+          bookmarks: sortBookmarks(
+            it.bookmarks,
+            self.sortedType,
+            self.groupView,
+          ),
+        }));
+      },
       get totalCount() {
         return self.bookmarks.length;
       },
@@ -265,7 +291,7 @@ export const BookmarksStore = types
   .actions(self => {
     function addGroupInfoHelper(
       groupType: TreeViewGroupEnum,
-      item: BookmarkGroupDataModelType,
+      item: BookmarkGroupDataType,
     ) {
       const existed = self.groupInfo.find(it => it.name === groupType);
 
@@ -315,6 +341,10 @@ export const BookmarksStore = types
         self.bookmarksGroupedByCustom.find(it => it.id === bookmark.groupId)
           ?.bookmarks.length || 0;
 
+      const idxInIconGroup =
+        self.bookmarksGroupedByIcon.find(it => it.icon === bookmark.icon)
+          ?.bookmarks.length || 0;
+
       let idxInWorkspaceGroup = 0;
       const workspaceGroup = self.bookmarksGroupedByWorkspace.find(it =>
         it.files.find(f => f.fileUri.fsPath === fsPath),
@@ -355,6 +385,7 @@ export const BookmarksStore = types
           default: idxInFileGroup,
           file: idxInFileGroup,
           workspace: idxInWorkspaceGroup,
+          icon: idxInIconGroup,
         },
         icon:
           label.length || description.length
@@ -593,6 +624,14 @@ export const BookmarksStore = types
       }
     }
 
+    function clearBookmarksByIcon(iconId: string) {
+      const bookmarks = self.bookmarks.filter(it => it.icon === iconId);
+      for (let bookmark of bookmarks) {
+        bookmark.removeTextDecoration();
+        self.bookmarks.remove(bookmark);
+      }
+    }
+
     function clearAll(wsFolder?: WorkspaceFolder) {
       if (wsFolder) {
         const wsName = wsFolder.name;
@@ -661,7 +700,7 @@ export const BookmarksStore = types
 
     function addGroupInfo(
       groupType: TreeViewGroupEnum,
-      data: BookmarkGroupDataModelType[],
+      data: BookmarkGroupDataType[],
     ) {
       self.groupInfo.push({
         name: groupType,
@@ -669,22 +708,22 @@ export const BookmarksStore = types
       });
     }
 
-    function addColorsGroupInfo(info: BookmarkGroupDataModelType) {
+    function addColorsGroupInfo(info: BookmarkGroupDataType) {
       addGroupInfoHelper(TreeViewGroupEnum.COLOR, info);
     }
 
-    function addWorkspaceGroupInfo(info: BookmarkGroupDataModelType) {
+    function addWorkspaceGroupInfo(info: BookmarkGroupDataType) {
       addGroupInfoHelper(TreeViewGroupEnum.WORKSPACE, info);
     }
 
-    function addFileGroupInfo(info: BookmarkGroupDataModelType) {
+    function addFileGroupInfo(info: BookmarkGroupDataType) {
       addGroupInfoHelper(TreeViewGroupEnum.FILE, info);
     }
 
     /**
      * 已经通过之前groups字段实现
      */
-    function addCustomroupInfo(info: BookmarkGroupDataModelType) {}
+    function addCustomroupInfo(info: BookmarkGroupDataType) {}
 
     function afterCreate() {}
 
@@ -703,6 +742,7 @@ export const BookmarksStore = types
       updateSortedType,
       clearBookmarksByFile,
       clearBookmarksByColor,
+      clearBookmarksByIcon,
       clearAll,
       initStore,
       updateGroupSortedIndex,

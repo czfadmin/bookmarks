@@ -50,4 +50,5 @@ export enum TreeViewGroupEnum {
   DEFAULT = 'default',
   WORKSPACE = 'workspace',
   CUSTOM = 'custom',
+  ICON = 'icon',
 }

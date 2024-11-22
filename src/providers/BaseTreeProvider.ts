@@ -69,7 +69,6 @@ export default class BaseTreeProvider<
       if (!this.controller.store) {
         return;
       }
-      const needClear = this.controller.store.bookmarks.length === 0;
       this._serviceManager.decorationService.updateActiveEditorAllDecorations(
         true,
       );

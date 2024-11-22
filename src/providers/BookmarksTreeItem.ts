@@ -17,6 +17,7 @@ import {getLineInfoStrFromBookmark} from '../utils';
 import {ServiceManager} from '../services/ServiceManager';
 import {
   BookmarksGroupedByColorType,
+  BookmarksGroupedByIconType,
   BookmarksGroupedByWorkspaceType,
   IBookmark,
 } from '../stores';
@@ -27,7 +28,8 @@ export default class BookmarkTreeItem extends BaseTreeItem {
     | BookmarksGroupedByFileType
     | BookmarksGroupedByColorType
     | BookmarksGroupedByWorkspaceType
-    | BookmarksGroupedByCustomType;
+    | BookmarksGroupedByCustomType
+    | BookmarksGroupedByIconType;
 
   private _sm: ServiceManager;
 
@@ -40,7 +42,8 @@ export default class BookmarkTreeItem extends BaseTreeItem {
       | BookmarksGroupedByFileType
       | BookmarksGroupedByColorType
       | BookmarksGroupedByWorkspaceType
-      | BookmarksGroupedByCustomType,
+      | BookmarksGroupedByCustomType
+      | BookmarksGroupedByIconType,
     sm: ServiceManager,
   ) {
     super(label, collapsibleState, contextValue);
@@ -68,7 +71,7 @@ export default class BookmarkTreeItem extends BaseTreeItem {
       if (meta && meta.group.activeStatus) {
         this.iconPath = new ThemeIcon('folder-active');
       }
-    } else {
+    } else if (this.contextValue === BookmarkTreeItemCtxValueEnum.BOOKMARK) {
       this.command = {
         title: l10n.t('Jump to bookmark position'),
         command: `bookmark-manager.gotoSourceLocation`,
@@ -86,13 +89,14 @@ export default class BookmarkTreeItem extends BaseTreeItem {
       this.resourceUri = Uri.parse(meta.fileName);
     } else if (this.contextValue === BookmarkTreeItemCtxValueEnum.COLOR) {
       const _meta = this.meta as BookmarksGroupedByColorType;
-
-      // TODO: 使用默认的图标
       this.iconPath = await this._sm.iconsService.getDotIcon(_meta.color);
     } else if (this.contextValue === BookmarkTreeItemCtxValueEnum.BOOKMARK) {
       const meta = this.meta as IBookmark;
-      const color = meta.color;
       this.iconPath = meta.iconPath;
+    } else if (this.contextValue === BookmarkTreeItemCtxValueEnum.ICON) {
+      this.iconPath = ServiceManager.instance.icons.find(
+        it => it.id === (this.meta as BookmarksGroupedByIconType).icon,
+      )?.iconPath;
     }
   }
 
