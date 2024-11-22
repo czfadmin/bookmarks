@@ -72,5 +72,8 @@
   "bookmark-manager.sortMenu": "排序方式",
   "bookmark-manager.sortedByCustom": "自定义排序",
   "bookmark-manager.sortedByLineNumber": "行号",
-  "bookmark-manager.sortedByCreateTime": "创建时间"
+  "bookmark-manager.sortedByCreateTime": "创建时间",
+  "bookmark-manager.defaultLabeledBookmarkIcon.description": "打上标签的书签的默认图标",
+  "bookmark-manager.defaultBookmarkIcon.description": "书签的默认图标",
+  "bookmark-manager.icons.description": "自定义图标列表，`key`为自定义图标名称，`value`格式为`prefix:name`，即`iconify`网站图标名称格式.例如: 'mdi:bookmark'"
 }
