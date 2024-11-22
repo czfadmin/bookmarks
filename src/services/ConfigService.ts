@@ -67,6 +67,10 @@ export default class ConfigService extends BaseService {
     });
 
     this._init();
+
+    this._disposers.push(this._onDecorationConfigChangeEvent);
+    this._disposers.push(this._onDidChangeConfigurationEvent);
+    this._disposers.push(this._onExtensionConfigChangeEvent);
   }
 
   private _init() {
@@ -125,11 +129,5 @@ export default class ConfigService extends BaseService {
     this._onExtensionConfigChangeEvent.fire(this.configure.configure);
     this._onDidChangeConfigurationEvent.fire(ev);
     this._registerContextKey();
-  }
-
-  dispose() {
-    this._onDidChangeConfigurationEvent.dispose();
-    this._onDecorationConfigChangeEvent.dispose();
-    this._onExtensionConfigChangeEvent.dispose();
   }
 }

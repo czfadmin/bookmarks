@@ -71,7 +71,7 @@ export default class BaseTreeProvider<
       }
       const needClear = this.controller.store.bookmarks.length === 0;
       this._serviceManager.decorationService.updateActiveEditorAllDecorations(
-        needClear,
+        true,
       );
     });
   }

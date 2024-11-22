@@ -15,10 +15,6 @@ import {EXTENSION_ID} from '../constants';
  * @zh 装饰器和树上的图标服务类
  */
 export class IconsService extends BaseService {
-  private _snapshotDisposer: IDisposer;
-
-  private _snapshotDisposer2: IDisposer;
-
   private _downloadingIcons: string[];
 
   public get icons() {
@@ -28,70 +24,53 @@ export class IconsService extends BaseService {
   constructor(sm: ServiceManager) {
     super(IconsService.name, sm);
     this._downloadingIcons = [];
-    this._snapshotDisposer = onSnapshot(this.sm.icons, snapshot => {
-      console.log(this.store.icons);
-      this.saveToDisk(this.sm.fileService.iconsPath, this.sm.icons);
-    });
+    this._disposers.push(
+      onSnapshot(this.sm.icons, snapshot => {
+        this.saveToDisk(this.sm.fileService.iconsPath, this.sm.icons);
+      }),
+    );
 
     // 监听插件的的`icons`的变化, 更新存储
-    this._snapshotDisposer2 = onSnapshot(
-      this.configure.configure.icons,
-      snapshot => {
-        // if (!this.configure.configure.icons.size) {
-        //   const {icons} = this.configure.configure;
-        //   const {defaultBookmarkIcon, defaultLabeledBookmarkIcon} =
-        //     this.configure.configure;
-
-        //   const iconsValue: string[] = [];
-        //   for (let item of icons.values()) {
-        //     iconsValue.push(item);
-        //   }
-
-        //   // 删除之前配置的且现在不在配置中多余的图标
-        //   const tobeDeleted = this.store.icons.filter(
-        //     it =>
-        //       it.id != defaultBookmarkIcon &&
-        //       it.id != defaultLabeledBookmarkIcon &&
-        //       !iconsValue.includes(it.id),
-        //   );
-
-        //   this.store.removeIcons(tobeDeleted.map(it => it.id));
-        // }
-
-        this.configure.configure.icons.forEach((value, key) => {
-          if (
-            !this.store.icons.find(it => it.id === value) &&
-            !this._downloadingIcons.find(it => it === value)
-          ) {
-            this._downloadingIcons.push(value);
-            this.downloadIcon(value).then(() => {
-              this._downloadingIcons = this._downloadingIcons.filter(
-                it => it !== value,
-              );
-            });
+    this._disposers.push(
+      onSnapshot(this.configure.configure.icons, snapshot => {
+        Object.entries(snapshot).forEach(([key, value], index) => {
+          if (!this.store.icons.find(it => it.id === value)) {
+            this.downloadIcon(value, key);
           }
         });
-      },
-    );
-    // 监听配置中的默认图标配置
 
-    workspace.onDidChangeConfiguration(ev => {
-      if (
-        ev.affectsConfiguration(`${EXTENSION_ID}.defaultBookmarkIcon`) ||
-        ev.affectsConfiguration(`${EXTENSION_ID}.defaultLabeledBookmarkIcon`)
-      ) {
-        const {defaultBookmarkIcon, defaultLabeledBookmarkIcon} =
-          this.configure.configure;
-        if (!this.store.icons.find(it => it.id === defaultBookmarkIcon)) {
-          this.downloadIcon(defaultBookmarkIcon);
-        }
+        const iconValues = Object.values(snapshot);
+        this.store.icons
+          .filter(it => !iconValues.includes(it.id))
+          .forEach(it => {
+            this.store.removeIcon(it.id);
+          });
+      }),
+    );
+
+    // 监听配置中的默认图标配置
+    this._disposers.push(
+      workspace.onDidChangeConfiguration(ev => {
         if (
-          !this.store.icons.find(it => it.id === defaultLabeledBookmarkIcon)
+          ev.affectsConfiguration(`${EXTENSION_ID}.defaultBookmarkIcon`) ||
+          ev.affectsConfiguration(`${EXTENSION_ID}.defaultLabeledBookmarkIcon`)
         ) {
-          this.downloadIcon(defaultLabeledBookmarkIcon);
+          const {defaultBookmarkIcon, defaultLabeledBookmarkIcon} =
+            this.configure.configure;
+          if (!this.store.icons.find(it => it.id === defaultBookmarkIcon)) {
+            this.downloadIcon(defaultBookmarkIcon, 'default:bookmark');
+          }
+          if (
+            !this.store.icons.find(it => it.id === defaultLabeledBookmarkIcon)
+          ) {
+            this.downloadIcon(
+              defaultLabeledBookmarkIcon,
+              'default:bookmark:tag',
+            );
+          }
         }
-      }
-    });
+      }),
+    );
 
     this.initial();
   }
@@ -100,7 +79,7 @@ export class IconsService extends BaseService {
    * @zh  下载iconfiy中的图标, 要求传递的格式是 {prefix}:{name}, vscode的装饰器图标的大小要求是16*16, 所以下载的大小默认是此尺寸
    * @param prefixWithName
    */
-  async downloadIcon(prefixWithName: string) {
+  async downloadIcon(prefixWithName: string, customName: string = '') {
     const [prefix, name] = prefixWithName.split(':');
 
     if (!prefix || !name) {
@@ -119,10 +98,8 @@ export class IconsService extends BaseService {
         `${iconfiy_public_url}/${prefix}.json?icons=${name}`,
       );
       window.showInformationMessage('Icon downloaded successfully!');
-
       const svgBody = (response as IconifyIconsType).icons[name].body;
-      this.store.addNewIcon(prefix, name, svgBody);
-
+      this.store.addNewIcon(prefix, name, svgBody, customName);
       this._downloadingIcons = this._downloadingIcons.filter(
         it => it !== prefixWithName,
       );
@@ -138,7 +115,7 @@ export class IconsService extends BaseService {
         this.sm.fileService.iconsPath,
       );
 
-      const obj = JSON.parse(content) as {
+      const obj = JSON.parse(content || '[]') as {
         id: string;
         prefix: string;
         name: string;
@@ -150,8 +127,11 @@ export class IconsService extends BaseService {
       } else {
         applySnapshot(this.sm.store.icons, obj);
 
-        const {defaultBookmarkIcon, defaultLabeledBookmarkIcon} =
-          this.configure.configure;
+        const {
+          defaultBookmarkIcon,
+          defaultLabeledBookmarkIcon,
+          icons: iconsInConfigure,
+        } = this.configure.configure;
 
         if (!obj.find(it => it.id === defaultBookmarkIcon)) {
           await this.downloadIcon(defaultBookmarkIcon);
@@ -160,7 +140,32 @@ export class IconsService extends BaseService {
         if (!obj.find(it => it.id === defaultLabeledBookmarkIcon)) {
           await this.downloadIcon(defaultLabeledBookmarkIcon);
         }
-        return;
+
+        const iconsValues: [string, string][] = [];
+
+        for (let [key, value] of iconsInConfigure.entries()) {
+          iconsValues.push([key, value]);
+        }
+
+        const toDownloadIcons: any[] = [];
+        for (let [key, value] of iconsValues) {
+          // 下载配置需要存在但不存在本地的图标数据
+          if (!this.sm.store.icons.find(it => it.id === value)) {
+            toDownloadIcons.push({key, value});
+          }
+        }
+
+        // 删除配置不存在但是本地缓存中存在的图标缓存数据
+        this.store.icons
+          .filter(it => !iconsValues.find(km => km[1] === it.id))
+          .forEach(it => this.store.removeIcon(it.id));
+        if (!toDownloadIcons.length) {
+          return;
+        }
+
+        toDownloadIcons.forEach(async it => {
+          await this.downloadIcon(it.value, it.key);
+        });
       }
       applySnapshot(this.sm.store.icons, obj);
       return;
@@ -198,7 +203,7 @@ export class IconsService extends BaseService {
     }
   }
 
-  async getIconUri(name: string, colorLabel: string = 'default') {
+  async getIconPath(name: string, colorLabel: string = 'default') {
     let icon = this.store.icons.find(it => it.id === name);
 
     if (!icon) {
@@ -220,14 +225,9 @@ export class IconsService extends BaseService {
   }
 
   async getDotIcon(colorLabel: string) {
-    return this.getIconUri(
+    return this.getIconPath(
       this.configure.configure.defaultBookmarkIcon,
       colorLabel,
     );
-  }
-
-  dispose(): void {
-    this._snapshotDisposer();
-    this._snapshotDisposer2();
   }
 }

@@ -1,5 +1,4 @@
-import {Instance, types} from 'mobx-state-tree';
-import {BookmarksStore} from './bookmark-store';
+import {types} from 'mobx-state-tree';
 import {BookmarkColor} from './color';
 import {Icon} from './icons';
 import {DEFAULT_BOOKMARK_COLOR} from '../constants';
@@ -19,7 +18,7 @@ export const GlobalStore = types
         prefix: string,
         name: string,
         body: string,
-        color: string = DEFAULT_BOOKMARK_COLOR,
+        customName: string = '',
       ) {
         self.icons.push(
           Icon.create({
@@ -27,6 +26,7 @@ export const GlobalStore = types
             prefix,
             name,
             body: body,
+            customName,
           }),
         );
       },

@@ -7,6 +7,7 @@
   "bookmark-manager.editDescription": "Edit description",
   "bookmark-manager.clearAllBookmarksInCurrentFile": "Clear all bookmarks in current file",
   "bookmark-manager.changeBookmarkColor": "Change color",
+  "bookmark-manager.changeBookmarkIcon": "Change icon",
   "bookmark-manager.changeBookmarkColorName": "Change color name",
   "bookmark-manager.clearAllBookmarks": "Clear All bookmarks",
   "bookmark-manager.deleteBookmark": "Delete",

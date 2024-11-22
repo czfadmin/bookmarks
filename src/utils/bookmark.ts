@@ -18,7 +18,7 @@ import {
 import {
   BookmarkTreeItemCtxValueEnum,
   BookmarkTypeEnum,
-  LineBookmarkContext,
+  BookmarkActionContext,
   TreeViewGroupEnum,
   TreeViewSortedEnum,
 } from '../types';
@@ -239,7 +239,7 @@ export async function toggleBookmarksWithSelections(label: string) {
  * @returns
  */
 export async function toggleBookmark(
-  context: LineBookmarkContext,
+  context: BookmarkActionContext,
   extra: {
     type: BookmarkTypeEnum;
     label?: string;
@@ -334,7 +334,7 @@ export async function toggleBookmark(
  * @param context
  * @returns
  */
-export function deleteBookmark(context?: LineBookmarkContext) {
+export function deleteBookmark(context?: BookmarkActionContext) {
   const editor = window.activeTextEditor;
   const controller = resolveBookmarkController();
   let _lineNumber = -1,
@@ -902,7 +902,7 @@ export async function showGroupQuickPick(
  * @returns
  */
 export function getBookmarkFromCtx(
-  context: LineBookmarkContext,
+  context: BookmarkActionContext,
   cb?: () => void,
 ) {
   let bookmark: IBookmark | undefined;
@@ -929,7 +929,7 @@ export function getBookmarkFromCtx(
  * @returns
  */
 export function getBookmarkColorFromCtx(
-  context: LineBookmarkContext | BookmarkTreeItem | undefined,
+  context: BookmarkActionContext | BookmarkTreeItem | undefined,
   cb?: () => void,
 ) {
   let bookmark: IBookmark | undefined;

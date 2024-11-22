@@ -1,19 +1,6 @@
 import {Instance, SnapshotIn, types} from 'mobx-state-tree';
-import {
-  default_bookmark_color,
-  DEFAULT_BOOKMARK_COLOR,
-  default_bookmark_icon,
-} from '../constants';
-import {
-  DecorationRangeBehavior,
-  OverviewRulerLane,
-  Selection,
-  Uri,
-  WorkspaceFolder,
-  l10n,
-  window,
-  workspace,
-} from 'vscode';
+import {default_bookmark_color, default_bookmark_icon} from '../constants';
+import {Selection, Uri, WorkspaceFolder, workspace} from 'vscode';
 import {createHoverMessage, escapeColor} from '../utils';
 import {BookmarksGroupedByFileType, BookmarkTypeEnum} from '../types';
 import {
@@ -313,6 +300,11 @@ export const Bookmark = types
         self.sortedInfo.update(key, value);
       }
     }
+
+    function updateIcon(label: string) {
+      self.icon = label;
+    }
+
     function afterCreate() {}
     /**
      * @zh 当书签创建时调用 渲染装饰器
@@ -322,13 +314,13 @@ export const Bookmark = types
     return {
       afterCreate,
       afterAttach,
-      setProp,
+      changeGroupId,
       update,
       updateLabel,
       updateDescription,
       updateFileUri,
       updateColor,
-      changeGroupId,
+      updateIcon,
       updateSortedInfo,
       updateColorSortedIndex,
       updateWorkspaceSortedIndex,
@@ -339,6 +331,7 @@ export const Bookmark = types
           self as Instance<typeof Bookmark>,
         );
       },
+      setProp,
     };
   });
 

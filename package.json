@@ -295,6 +295,12 @@
         "title": "%bookmark-manager.sortedByCreateTime%",
         "icon": "$(bookmark)",
         "category": "Bookmark Manager (BM)"
+      },
+      {
+        "command": "bookmark-manager.changeBookmarkIcon",
+        "title": "%bookmark-manager.changeBookmarkIcon%",
+        "icon": "$(bookmark)",
+        "category": "Bookmark Manager (BM)"
       }
     ],
     "views": {
@@ -516,35 +522,39 @@
       "bookmark-manager": [
         {
           "command": "bookmark-manager.toggleLineBookmark",
-          "group": "bookmarksActionsGroup@1"
+          "group": "bookmarksAToggleActionsGroup@1"
         },
         {
           "command": "bookmark-manager.toggleLineBookmarkWithLabel",
-          "group": "bookmarksActionsGroup@2"
+          "group": "bookmarksAToggleActionsGroup@2"
         },
         {
           "command": "bookmark-manager.toggleBookmarkWithSelection",
-          "group": "bookmarksActionsGroup@3"
+          "group": "bookmarksAToggleActionsGroup@3"
         },
         {
           "command": "bookmark-manager.changeBookmarkGroup",
-          "group": "bookmarksAGroupActionGroup@1"
+          "group": "bookmarksChangeActionGroup@1"
         },
         {
-          "command": "bookmark-manager.editLabel",
-          "group": "bookmarksEditActionGroup@1"
+          "command": "bookmark-manager.changeBookmarkIcon",
+          "group": "bookmarksChangeActionGroup@2"
         },
         {
           "command": "bookmark-manager.changeBookmarkColor",
-          "group": "bookmarksEditActionGroup@2"
+          "group": "bookmarksChangeActionGroup@3"
+        },
+        {
+          "command": "bookmark-manager.editLabel",
+          "group": "bookmarksBEditActionGroup@1"
         },
         {
           "command": "bookmark-manager.editDescription",
-          "group": "bookmarksEditActionGroup@3"
+          "group": "bookmarksBEditActionGroup@2"
         },
         {
           "command": "bookmark-manager.deleteBookmark",
-          "group": "bookmarksEditActionGroup@4"
+          "group": "bookmarksDeleteActionGroup@1"
         }
       ],
       "bookmark-manager.universal": [
@@ -651,7 +661,17 @@
         {
           "command": "bookmark-manager.changeBookmarkGroup",
           "when": "view==bookmark-manager && viewItem === bookmark",
-          "group": "bookmarksGroupActionGroup@1"
+          "group": "bookmarksChangeActionGroup@1"
+        },
+        {
+          "command": "bookmark-manager.changeBookmarkColor",
+          "when": "view==bookmark-manager && viewItem === bookmark",
+          "group": "bookmarksChangeActionGroup@3"
+        },
+        {
+          "command": "bookmark-manager.changeBookmarkIcon",
+          "when": "view==bookmark-manager && viewItem === bookmark",
+          "group": "bookmarksChangeActionGroup@1"
         },
         {
           "command": "bookmark-manager.clearAllBookmarksInCurrentFile",
@@ -661,17 +681,12 @@
         {
           "command": "bookmark-manager.editLabel",
           "when": "view==bookmark-manager && viewItem === bookmark",
-          "group": "itemContextGroup@1"
+          "group": "bookmarksAEditActionGroup@1"
         },
         {
           "command": "bookmark-manager.editDescription",
           "when": "view==bookmark-manager && viewItem === bookmark",
-          "group": "itemContextGroup@2"
-        },
-        {
-          "command": "bookmark-manager.changeBookmarkColor",
-          "when": "view==bookmark-manager && viewItem === bookmark",
-          "group": "itemContextGroup@3"
+          "group": "bookmarksAEditActionGroup@2"
         },
         {
           "command": "bookmark-manager.changeBookmarkColorName",

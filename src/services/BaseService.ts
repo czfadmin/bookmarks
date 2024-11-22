@@ -1,10 +1,13 @@
-import {ILifecyle} from '../utils';
+import {IDisposer} from 'mobx-state-tree';
+import {IDisposable, ILifecyle} from '../utils';
 import {LoggerService} from './LoggerService';
 import {ServiceManager} from './ServiceManager';
 
 export abstract class BaseService implements ILifecyle {
   public readonly sm: ServiceManager;
   public readonly _logger: LoggerService;
+
+  public readonly _disposers: (IDisposable | IDisposer)[] = [];
 
   public get store() {
     return this.sm.store;
@@ -20,7 +23,20 @@ export abstract class BaseService implements ILifecyle {
   }
 
   initial() {}
-  abstract dispose(): void;
+
+  dispose() {
+    this._disposers.forEach(it => {
+      if (typeof it === 'function') {
+        it();
+        return;
+      }
+      it.dispose();
+    });
+  }
+
+  addToDisposers(disposable: IDisposable | IDisposer) {
+    this._disposers.push(disposable);
+  }
 
   saveToDisk(p: string, data: any) {
     this.sm.fileService.saveToDisk(p, data);

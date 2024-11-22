@@ -1,4 +1,8 @@
-import {Instance, SnapshotOut, types} from 'mobx-state-tree';
+import {getRoot, Instance, SnapshotOut, types} from 'mobx-state-tree';
+import {GlobalStore} from './global';
+import {escapeColor} from '../utils';
+import {Uri} from 'vscode';
+import {DEFAULT_BOOKMARK_COLOR} from '../constants';
 
 export const Icon = types
   .model('icon', {
@@ -20,9 +24,28 @@ export const Icon = types
      * @zh path body
      */
     body: types.string,
+
+    /**
+     * @zh 用户配置在设置中的自定义图标名称
+     */
+    customName: types.optional(types.string, ''),
   })
   .views(self => {
-    return {};
+    return {
+      get iconPath() {
+        const {configure} = getRoot<any>(self);
+        let color =
+          configure.configure.defaultBookmarkIconColor ||
+          DEFAULT_BOOKMARK_COLOR;
+        color = color.startsWith('#') ? escapeColor(color) : configure.color;
+
+        const body = self.body.replace(/fill="(\w.*?)"/gi, `fill="${color}"`);
+
+        return Uri.parse(
+          `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 24 24">${body}</svg>`,
+        );
+      },
+    };
   })
   .actions(self => {
     return {
