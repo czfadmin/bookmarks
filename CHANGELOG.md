@@ -1,5 +1,14 @@
 # Change Log
 
+## 0.0.37
+
+### Patch Changes
+
+- feat(icons): 新增支持自定义使用`iconify`图标功能以及图标分组功能
+- fix(universal): 修复通用书签按钮无法删除问题
+- fix(/): 修复开关使用内置颜色设置时无法切换书签装饰器样式问题
+- chore(/): 调整渲染图标内容更新时机
+
 ## 0.0.36
 
 ### Patch Changes
