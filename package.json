@@ -818,15 +818,6 @@
       "key": "ctrl+m ctrl+b",
       "mac": "cmd+m cmd+b"
     },
-    "icons": {
-      "bm-bookmark": {
-        "description": "Use bootstrap icons",
-        "default": {
-          "fontPath": "./resources/bootstrap-icons.woff",
-          "fontCharacter": "\\f101"
-        }
-      }
-    },
     "walkthroughs": [
       {
         "id": "bookmark-manager-walkthroughs",

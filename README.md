@@ -15,6 +15,7 @@
 - Quickly jump to preview bookmarks
 - Customized bookmark notes
 - Group customization
+- Customize icons using [iconify](https://iconify.design/)  🎉
 
 ### Preview
 
@@ -24,15 +25,17 @@
 
 - Sidebar bookmark management
 
-![tree-view](images/tree-view.png)
+![tree-view](images/badge.png)
 
 - Various colors available
 
-![various-colors](resources/various-colors.png)
+![various-colors](images/colors.png)
+
+![choose color](images/choose-color.png)
 
 - The floating prompt displays bookmark information
 
-![float-prompt](images/float-prompt.png)
+![float-prompt](images/prompt.png)
 
 - Display an overview list of bookmarks
 
@@ -40,7 +43,15 @@
 
 - Group customization
 
-![Group customization](resources/group-customization.png)
+![Group customization](images/group.png)
+
+- Menus
+
+![menu](images/menus.png)
+
+- Customize icons using [iconify](https://iconify.design/)  🎉
+
+![icons](images/icons.png)
 
 ## Configuration
 

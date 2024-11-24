@@ -1,86 +1,111 @@
 # Bookmark Manager
 
-- [英文](./README.md)
+![GitHub Release Date](https://img.shields.io/github/release-date/czfadmin/bookmarks?logo=github)
+![GitHub last commit](https://img.shields.io/github/last-commit/czfadmin/bookmarks?logo=github)
+![Visual Studio Marketplace Last Updated](https://img.shields.io/visual-studio-marketplace/last-updated/czfadmin.bookmark-manager?logo=visualstudiocode&logoColor=blue)
 
-## 功能
+- [中文](./README-ZN.md)
 
-- 单行书签切换
-- 选中内容设置标签
-- 自定义书签样式以及文本装饰器颜色
-- 书签管理视图
-- 快速跳转预览书签
-- 自定义书签备注
-- 分组自定义
+## Features
 
-### 预览
+- Toggle line bookmark
+- Toggle bookmark with selection
+- Customize bookmark style and text decorator color
+- Bookmark management view
+- Quickly jump to preview bookmarks
+- Customized bookmark notes
+- Group customization
+- Customize icons using [iconify](https://iconify.design/)  🎉
 
-- 总览
+### Preview
+
+- Overview
 
 ![overview](resources/overview.gif)
 
-- 管理视图
+- Sidebar bookmark management
 
-![tree-view](images/tree-view.png)
+![tree-view](images/badge.png)
 
-- 可选多种颜色
+- Various colors available
 
-![various-colors](resources/various-colors.png)
+![various-colors](images/colors.png)
 
-- 悬浮时显示书签详情
+![choose color](images/choose-color.png)
 
-![float-prompt](images/float-prompt.png)
+- The floating prompt displays bookmark information
 
-- 文件预览
+![float-prompt](images/prompt.png)
+
+- Display an overview list of bookmarks
 
 ![file-overview](images/file-overview.png)
 
-- 分组自定义
+- Group customization
 
-![Group customization](resources/group-customization.png)
+![Group customization](images/group.png)
 
-## 插件配置
+- Menus
 
-- `bookmark-manager.alwaysUseDefaultColor`：始终使用默认颜色来装饰书签图标。
-- `bookmark-manager.showGutterInOverviewRuler`: 是否在概览标尺上显示 `Gutter` 图标。
-- `bookmark-manager.showTextDecoration`: 设置是否显示书签的文本装饰器。
-- `bookmark-manager.showGutterIcon`: 是否显示`gutter`图标。
-- `bookmark-manager.fontWeight`：书签字体样式。
-- `bookmark-manager.colors`：内置颜色和用户定义的书签颜色。
-- `bookmark-manager.defaultBookmarkIconColor`：设置默认书签颜色。
-- `bookmark-manager.showBorder`: 是否显示边框。
-- `bookmark-manager.border`：书签边框样式。
-- `bookmark-manager.showOutline`: 是否显示书签的轮廓。
-- `bookmark-manager.outline`：书签大纲样式。
-- `bookmark-manager.wholeLine`: 是否选择整行，默认选择有内容的区域。
-- `bookmark-manager.textDecorationLine`：自定义书签的装饰器风格。
-- `bookmark-manager.textDecorationStyle`：自定义书签的装饰器风格。
-- `bookmark-manager.outlitextDecorationThicknessne`：自定义装饰的厚度。
-- `bookmark-manager.lineBlame`：为书签启用 `lineBlame`。
-- `bookmark-manager.enableClick`：启用点击跳转到书签位置。
+![menu](images/menus.png)
+
+- Customize icons using [iconify](https://iconify.design/)  🎉
+
+![icons](images/icons.png)
+
+## Configuration
+
+- `bookmark-manager.alwaysUseDefaultColor`: Always use the default color to decorate the bookmark icon.
+- `bookmark-manager.showGutterInOverviewRuler`: Whether to display the `Gutter` icon on the overview ruler.
+- `bookmark-manager.showTextDecoration`: Set whether to display the bookmark's text decorator.
+- `bookmark-manager.showGutterIcon`: Whether to display the `gutter` icon.
+- `bookmark-manager.fontWeight`: Bookmark font style.
+- `bookmark-manager.colors`: built-in colors and user-defined bookmark colors.
+- `bookmark-manager.defaultBookmarkIconColor`: Set the default bookmark color.
+- `bookmark-manager.showBorder`: whether to display the border.
+- `bookmark-manager.border`: Bookmark border style.
+- `bookmark-manager.showOutline`: whether to display the outline of the bookmark.
+- `bookmark-manager.outline`: bookmark outline style.
+- `bookmark-manager.wholeLine`: Whether to select the entire line, by default the area with content is selected.
+- `bookmark-manager.textDecorationLine`: Customize the decorator style of bookmarks.
+- `bookmark-manager.textDecorationStyle`: Customize the decorator style of bookmarks.
+- `bookmark-manager.outlitextDecorationThicknessne`: Customize the thickness of the decoration.
+- `bookmark-manager.lineBlame`: Enable `lineBlame` for bookmarks.
+- `bookmark-manager.enableClick`: Enable click to jump to bookmark location.
+- ......
+
+### Commands
+
+- `bookmark-manager.toggleLineBookmark`: Toggle line bookmark.
+- `bookmark-manager.toggleLineBookmarkWithLabel`: Toggle line bookmark with label.
+- `bookmark-manager.toggleLineBookmarkWithColor`: Toggle line bookmark with color.
+- `bookmark-manager.toggleBookmarkWithSelection`: Toggle Bookmark with selection.
+- `bookmark-manager.editDescription`: Editing the description of a bookmark.
+- `bookmark-manager.clearAllBookmarksInCurrentFile`: Clear all bookmark in opened file.
+- `bookmark-manager.changeBookmarkColor`: Change the color of the selected bookmark.
+- `bookmark-manager.clearAllBookmarks`: Clear all bookmarks.
+- `bookmark-manager.deleteBookmark`: Delete selected bookmark.
+- `bookmark-manager.editLabel`: Edit the label of the selected bookmark.
+- `bookmark-manager.gotoSourceLocation`: Jump to the location of the bookmark.
+- `bookmark-manager.quickJumpTo`: Quick jump.
+- `bookmark-manager.openInEditor`: Open in editor. **WIP**
+- `bookmark-manager.listBookmarksInCurrentFile`: List bookmarks in current file.
 - ....
 
-## 命令
+## Attention
 
-- `bookmark-manager.toggleLineBookmark`：切换行书签。
-- `bookmark-manager.toggleLineBookmarkWithLabel`：使用标签切换行书签。
-- `bookmark-manager.toggleLineBookmarkWithColor`：用颜色切换行书签。
-- `bookmark-manager.toggleBookmarkWithSelection`：切换书签与选择。
-- `bookmark-manager.editDescription`：编辑书签的描述。
-- `bookmark-manager.clearAllBookmarksInCurrentFile`：清除打开文件中的所有书签。
-- `bookmark-manager.changeBookmarkColor`：更改所选书签的颜色。
-- `bookmark-manager.clearAllBookmarks`：清除所有书签。
-- `bookmark-manager.deleteBookmark`：删除选定的书签。
-- `bookmark-manager.editLabel`：编辑所选书签的标签。
-- `bookmark-manager.gotoSourceLocation`：跳转到书签的位置。
-- `bookmark-manager.quickJumpTo`：快速跳转。
-- `bookmark-manager.openInEditor`：在编辑器中打开。 **WIP**
-- `bookmark-manager.listBookmarksInCurrentFile`：列出当前文件中的书签。
-- ...
+- After adding a bookmark to a line or selected area, if `bookmark-manager.showGutterIcon` is turned on, you will not be able to set a breakpoint directly. However, you can create one by right-clicking on the line number. For more details [VSCode issus# 5923](https://github.com/Microsoft/vscode/issues/5923)
+- ⚒️ Note that there is currently a problem of abnormal bookmark information when the code is refactored.
 
-## 注意
+  **Enjoy!**
 
-- 当在对行或者选择的区域添加书签后,如果开启了 `bookmark-manager.showGutterIcon`, 会出现无法直接设置断点的情况, 不过可以通过使用右键行号进行创建, 更多详情[VSCode issus#5923](https://github.com/Microsoft/vscode/issues/5923)
+## Contributors
 
-- ⚒️注意，目前代码重构时存在书签信息异常的问题。
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+[![All Contributors](https://img.shields.io/github/all-contributors/czfadmin/bookmarks?color=ee8449&style=flat-square)](#contributors)
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
 
-**Enjoy!**
+<!-- ALL-CONTRIBUTORS-LIST:END -->
