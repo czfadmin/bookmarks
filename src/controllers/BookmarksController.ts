@@ -163,10 +163,6 @@ export default class BookmarksController implements IController {
   private async _initial() {
     this._needWarning = this.configService.getGlobalValue('_needWarning', true);
 
-    // this.configService.onExtensionConfigChange(configuration => {
-    //   this._configuration = configuration;
-    // });
-
     this.configService.onDidChangeConfiguration(ev => {
       if (!ev.affectsConfiguration(`${EXTENSION_ID}.createJsonFile`)) {
         return;
@@ -203,7 +199,7 @@ export default class BookmarksController implements IController {
           store = this._store;
         }
 
-        applySnapshot(this._store, isProxy(store) ? getSnapshot(store) : store);
+        applySnapshot(this._store, isProxy(store) ? getSnapshot(store) : this._sm.migrateService.migrate(store));
 
         if (!this._store.groups.length) {
           this._store.addGroups([]);
@@ -611,7 +607,9 @@ export default class BookmarksController implements IController {
           });
         }
 
-        const storeContent = JSON.parse(content) as IBookmarkStoreInfo;
+        let storeContent = JSON.parse(content) as IBookmarkStoreInfo;
+
+        storeContent = this._sm.migrateService.migrate(storeContent);
 
         applySnapshot(this._store, {
           ...storeContent,

@@ -85,6 +85,7 @@ export const BookmarksStore = types
     groups: types.array(BookmarkGroup),
 
     groupInfo: types.array(BookmarkGroupInfo),
+    version: types.optional(types.string, process.env.version || ""),
   })
   .views(self => {
     return {

@@ -5,7 +5,6 @@ import {
   QuickPickItem,
   workspace,
   Uri,
-  TextEditorRevealType,
   commands,
   Position,
 } from 'vscode';
@@ -34,7 +33,6 @@ import {
   getBookmarkColorFromCtx,
   toggleBookmarksWithSelections,
   highlightSelection,
-  openDocumentAndGotoLocation,
 } from '../../utils';
 import {range} from 'lodash';
 
