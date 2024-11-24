@@ -12,6 +12,7 @@ import {
 import {resolveBookmarkController} from '../bootstrap';
 import BookmarksController from '../controllers/BookmarksController';
 import {
+  BookmarksGroupedByIconType,
   BookmarksGroupedByColorType,
   BookmarksGroupedByWorkspaceType,
   IBookmark,
@@ -58,6 +59,10 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
 
       if (groupView === TreeViewGroupEnum.CUSTOM) {
         return this.getChildrenByCustomGroup(element);
+      }
+
+      if (groupView === TreeViewGroupEnum.ICON) {
+        return this.getChildrenByIcon(element);
       }
     }
   }
@@ -221,6 +226,41 @@ export class BookmarksTreeProvider extends BaseTreeProvider<
     let children: BookmarkTreeItem[] = [];
     try {
       children = (element.meta as BookmarksGroupedByCustomType).bookmarks.map(
+        it => {
+          return new BookmarkTreeItem(
+            it.label || it.selectionContent || it.id,
+            TreeItemCollapsibleState.None,
+            BookmarkTreeItemCtxValueEnum.BOOKMARK,
+            it,
+            this.serviceManager,
+          );
+        },
+      );
+      return Promise.resolve(children);
+    } catch (error) {
+      return Promise.resolve([]);
+    }
+  }
+
+  getChildrenByIcon(element?: BookmarkTreeItem | undefined) {
+    if (!element) {
+      const store = this.controller
+        .groupedBookmarks as BookmarksGroupedByIconType[];
+      const children = store.map(it => {
+        return new BookmarkTreeItem(
+          it.label,
+          TreeItemCollapsibleState.Collapsed,
+          BookmarkTreeItemCtxValueEnum.ICON,
+          it,
+          this.serviceManager,
+        );
+      });
+
+      return Promise.resolve(children);
+    }
+    let children: BookmarkTreeItem[] = [];
+    try {
+      children = (element.meta as BookmarksGroupedByFileType).bookmarks.map(
         it => {
           return new BookmarkTreeItem(
             it.label || it.selectionContent || it.id,

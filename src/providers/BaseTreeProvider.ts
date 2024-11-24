@@ -24,7 +24,7 @@ export default class BaseTreeProvider<
 
   private _controller: C;
 
-  private _serviceManager: ServiceManager;
+  private _sm: ServiceManager;
 
   get datastore() {
     return this._controller.store;
@@ -47,12 +47,16 @@ export default class BaseTreeProvider<
   }
 
   get serviceManager() {
-    return this._serviceManager;
+    return this._sm;
+  }
+
+  get iconsService() {
+    return this._sm.iconsService;
   }
 
   constructor(controller: C) {
     this._controller = controller;
-    this._serviceManager = resolveServiceManager();
+    this._sm = resolveServiceManager();
     this._extensionConfiguration = this.configService.configuration;
 
     // 监听插件的配置变化, 同时刷新TreeView
@@ -69,10 +73,11 @@ export default class BaseTreeProvider<
       if (!this.controller.store) {
         return;
       }
-      const needClear = this.controller.store.bookmarks.length === 0;
-      this._serviceManager.decorationService.updateActiveEditorAllDecorations(
-        needClear,
-      );
+      this._sm.decorationService.updateActiveEditorAllDecorations(true);
+    });
+
+    this.iconsService.onIconsDidChange(icons => {
+      this.refresh();
     });
   }
 

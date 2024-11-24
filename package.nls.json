@@ -7,6 +7,7 @@
   "bookmark-manager.editDescription": "Edit description",
   "bookmark-manager.clearAllBookmarksInCurrentFile": "Clear all bookmarks in current file",
   "bookmark-manager.changeBookmarkColor": "Change color",
+  "bookmark-manager.changeBookmarkIcon": "Change icon",
   "bookmark-manager.changeBookmarkColorName": "Change color name",
   "bookmark-manager.clearAllBookmarks": "Clear All bookmarks",
   "bookmark-manager.deleteBookmark": "Delete",
@@ -48,6 +49,7 @@
   "bookmark-manager.groupedByColor": "Grouped by color",
   "bookmark-manager.groupedByDefault": "Grouped by default",
   "bookmark-manager.groupedByWorkspace": "Grouped by workspace",
+  "bookmark-manager.groupedByIcon": "Grouped by icon",
   "bookmark-manager.group": "Group",
   "bookmark-manager.useBuiltInColors": "When this configuration is turned on, the built-in color set will be added to the defined color (label) set; at the same time, when the user does not customize the color, the built-in color set will be used by default, otherwise the user-defined color set will be used.",
   "bookmark-manager.alwaysIgnore": "Always add 'bookmark-manager.json' to the '.gitignore 'file",
@@ -59,7 +61,8 @@
   "bookmark-manager.deleteBookmarkGroup": "Delete group",
   "bookmark-manager.addBookmarkGroup": "Add a bookmark group",
   "bookmark-manager.groupedByCustom": "Grouped by custom",
-  "bookmark-manager.clearAllBookmarksInColor": "Clear bookmarks in this color",
+  "bookmark-manager.clearAllBookmarksInColor": "Clear bookmarks in this color group",
+  "bookmark-manager.clearAllBookmarksInIconGroup": "Clear bookmarks in this icon group",
   "bookmark-manager.setAsDefaultActivedGroup": "Set as default activation group",
   "bookmark-manager.changeBookmarkGroup": "Change group",
   "bookmark-manager.listBookmarksInSelectedGroup": "List the bookmarks in the selected group",
@@ -71,5 +74,8 @@
   "bookmark-manager.sortMenu": "Sort",
   "bookmark-manager.sortedByCustom": "Sorted by custom",
   "bookmark-manager.sortedByLineNumber": "Sorted by line number",
-  "bookmark-manager.sortedByCreateTime": "Sorted by create time"
+  "bookmark-manager.sortedByCreateTime": "Sorted by create time",
+  "bookmark-manager.defaultLabeledBookmarkIcon.description": "Default labeled bookmark icon",
+  "bookmark-manager.defaultBookmarkIcon.description": "Default bookmark icon",
+  "bookmark-manager.icons.description": "Custom icon list, `key` is the custom icon name, `value` format is `prefix:name`, which is the `iconify` website icon name format. for example: 'mdi:bookmark'"
 }

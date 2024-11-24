@@ -1,33 +1,24 @@
-import {BookmarkGroup} from './bookmark-group';
-import {
-  getParent,
-  Instance,
-  ISnapshotProcessor,
-  SnapshotIn,
-  SnapshotOut,
-  types,
-} from 'mobx-state-tree';
-import {DEFAULT_BOOKMARK_COLOR} from '../constants';
+import {Instance, SnapshotIn, types} from 'mobx-state-tree';
+import {default_bookmark_color, default_bookmark_icon} from '../constants';
 import {Selection, Uri, WorkspaceFolder, workspace} from 'vscode';
-import {createHoverMessage} from '../utils';
+import {createHoverMessage, escapeColor} from '../utils';
+import {BookmarksGroupedByFileType, BookmarkTypeEnum} from '../types';
 import {
-  BookmarkColor,
-  BookmarksGroupedByFileType,
-  BookmarkTypeEnum,
-} from '../types';
-import {
-  MyColorType,
   MyUriType,
   MyWorkspaceFolderType,
   DecorationOptionsType,
   TagType,
-  IMyColorType,
   TSortedInfo,
 } from './custom';
-import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
+import {
+  DEFAULT_BOOKMARK_GROUP_ID,
+  default_bookmark_svg_icon,
+} from '../constants/bookmark';
+import {ServiceManager} from '../services';
+import {resolveBookmarkController} from '../bootstrap';
 
 export type BookmarksGroupedByColorType = {
-  color: BookmarkColor;
+  color: string;
   bookmarks: IBookmark[];
 };
 
@@ -36,6 +27,11 @@ export type BookmarksGroupedByWorkspaceType = {
   files: BookmarksGroupedByFileType[];
 };
 
+export type BookmarksGroupedByIconType = {
+  icon: string;
+  label: string;
+  bookmarks: IBookmark[];
+};
 export const SortedInfoType = types
   .model('SortedInfoType', {
     color: types.number,
@@ -43,6 +39,7 @@ export const SortedInfoType = types
     default: types.number,
     file: types.number,
     workspace: types.number,
+    icon: types.number,
   })
   .actions(self => {
     function setProp<
@@ -61,26 +58,63 @@ export type ISortedInfoType = Instance<typeof SortedInfoType>;
 export const Bookmark = types
   .model('Boomkmark', {
     id: types.string,
+    /**
+     * @zh 书签的自定义标签
+     */
     label: types.optional(types.string, ''),
+    /**
+     * @zh 书签的自定义描述
+     */
     description: types.optional(types.string, ''),
-    color: types.optional(types.string, DEFAULT_BOOKMARK_COLOR),
+    /**
+     * @zh 书签颜色键名(key), 不是配置的具体的颜色值
+     */
+    color: types.optional(types.string, default_bookmark_color),
+    /**
+     * @zh 数千所在的文件URI
+     */
     fileUri: MyUriType,
+    /**
+     * @zh 书签的类型
+     */
     type: types.optional(
       types.enumeration([BookmarkTypeEnum.LINE, BookmarkTypeEnum.SELECTION]),
       BookmarkTypeEnum.LINE,
     ),
+    /**
+     * @zh 选择的内容数据
+     */
     selectionContent: types.optional(types.string, ''),
+    /**
+     * @zh 书签所在的文件的语言ID
+     */
     languageId: types.optional(types.string, 'javascript'),
+    /**
+     * @zh 书签的工作区间
+     */
     workspaceFolder: MyWorkspaceFolderType,
+    /**
+     * @zh 记录书签的选择区域信息
+     */
     rangesOrOptions: DecorationOptionsType,
+    /**
+     * @zh 代表书签的创建日期
+     */
     createdAt: types.optional(types.Date, () => new Date()),
+
+    /**
+     * @zh 代表书签Tag 信息, 暂时未用到
+     */
     tag: types.optional(TagType, {
       name: 'default',
       sortedIndex: -1,
     }),
+    /**
+     * @zh 代表书签的分组ID
+     */
     groupId: types.optional(types.string, DEFAULT_BOOKMARK_GROUP_ID),
     /**
-     * 用于存储在各个分组情况下的分组中的排序索引
+     * @zh 用于存储在各个分组情况下的分组中的排序索引
      */
     sortedInfo: types.optional(SortedInfoType, {
       color: -1,
@@ -88,22 +122,13 @@ export const Bookmark = types
       default: -1,
       file: -1,
       workspace: -1,
+      icon: -1,
     }),
 
-    group: types.maybeNull(
-      types.reference(BookmarkGroup, {
-        get(identifier, parent: any) {
-          return (
-            (getParent(parent, 2) as any).groups.find(
-              (it: any) => it.id === identifier,
-            ) || null
-          );
-        },
-        set(value, parent) {
-          return value.id;
-        },
-      }),
-    ),
+    /**
+     * @zh 书签的图标引用
+     */
+    icon: types.optional(types.string, default_bookmark_icon),
   })
   .views(self => {
     return {
@@ -117,6 +142,17 @@ export const Bookmark = types
 
         return Uri.joinPath(ws.uri, self.fileUri.fsPath).fsPath;
       },
+
+      get fileUri2() {
+        const ws = workspace.workspaceFolders?.find(
+          it => it.name === self.workspaceFolder.name,
+        );
+        if (!ws) {
+          return self.fileUri;
+        }
+        return Uri.joinPath(ws.uri, self.fileUri.fsPath);
+      },
+
       get fileName() {
         const arr = self.fileUri.fsPath.split('/');
         return arr[arr.length - 1];
@@ -127,6 +163,7 @@ export const Bookmark = types
           it => it.name === self.workspaceFolder.name,
         );
       },
+
       get selection() {
         const {start, end} = self.rangesOrOptions.range;
         return new Selection(
@@ -137,7 +174,7 @@ export const Bookmark = types
         );
       },
       /**
-       * 当label, range 以及description发生改变时, 调用此计算属性, 获取最新的hoverMessage
+       *@zh 当label, range 以及description发生改变时, 调用此计算属性, 获取最新的hoverMessage
        */
       get prettierRangesOrOptions() {
         const rangesOrOptions = {...self.rangesOrOptions};
@@ -147,6 +184,72 @@ export const Bookmark = types
           true,
         );
         return rangesOrOptions;
+      },
+
+      get plainColor() {
+        const {store, configure} = ServiceManager.instance;
+        return (
+          store.colors.find(it => it.label === self.color)?.value ||
+          configure.configure.defaultBookmarkIconColor
+        );
+      },
+
+      get escapedColor() {
+        const {store, configure} = ServiceManager.instance;
+        const color =
+          store.colors.find(it => it.label === self.color)?.value ||
+          configure.configure.defaultBookmarkIconColor;
+        return color.startsWith('#') ? escapeColor(color) : color;
+      },
+
+      /**
+       *@zh 获取书签的装饰器图标
+       */
+      get iconPath() {
+        const {icons, configure} = ServiceManager.instance;
+        const {defaultLabeledBookmarkIcon, defaultBookmarkIcon} =
+          configure.configure;
+        let iconId = self.icon
+          ? self.icon
+          : self.label.length || self.description.length
+            ? defaultLabeledBookmarkIcon
+            : defaultBookmarkIcon;
+
+        let icon = icons.find(it => it.id === iconId);
+        if (!icon) {
+          icon =
+            self.label.length || self.description.length
+              ? icons.find(it => it.id === defaultLabeledBookmarkIcon)
+              : icons.find(it => it.id === defaultBookmarkIcon);
+        }
+
+        const color = (self as any).escapedColor;
+
+        if (icon) {
+          return Uri.parse(
+            `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 24 24">${
+              icon.body.includes('stroke')
+                ? icon.body.replace(
+                    /stroke\s*=\s*"(.*?)"/gi,
+                    `stroke="${color}"`,
+                  )
+                : icon.body.replace(/fill\s*=\s*"(.*?)"/gi, `fill="${color}"`)
+            }</svg>`,
+          );
+        }
+        // 这样写只是为了消除ts报警错误,误删
+        const body = default_bookmark_svg_icon.replace(
+          /fill="currentColor"/gi,
+          `fill="${(self as Instance<typeof Bookmark>).escapedColor}"`,
+        );
+        return Uri.parse(
+          `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 24 24">${body}</svg>`,
+        );
+      },
+
+      get group() {
+        const controller = resolveBookmarkController();
+        return controller.store.groups.find(it => it.id === self.groupId);
       },
     };
   })
@@ -158,6 +261,12 @@ export const Bookmark = types
       self[key] = value;
     }
 
+    function updateTextDecoration() {
+      ServiceManager.instance.decorationService.updateTextDecoration(
+        self as Instance<typeof Bookmark>,
+      );
+    }
+
     function update(dto: Partial<Omit<IBookmark, 'id'>>) {
       Object.keys(dto).forEach(key => {
         // @ts-ignore
@@ -167,18 +276,26 @@ export const Bookmark = types
 
     function updateLabel(label: string) {
       self.label = label;
+      updateTextDecoration();
     }
+
     function updateDescription(desc: string) {
       self.description = desc;
+      updateTextDecoration();
     }
 
     function updateColor(newColor: string) {
-      self.color = newColor;
+      self.color =
+        ServiceManager.instance.store.colors.find(it => it.label === newColor)
+          ?.label || 'default';
+      updateTextDecoration();
     }
+
     function updateFileUri(uri: Uri) {
       self.fileUri = {
         fsPath: uri.fsPath,
       };
+      updateTextDecoration();
     }
 
     function changeGroupId(id: string) {
@@ -221,40 +338,38 @@ export const Bookmark = types
       }
     }
 
+    function updateIcon(label: string) {
+      self.icon = label;
+    }
+
     function afterCreate() {}
+    /**
+     * @zh 当书签创建时调用 渲染装饰器
+     */
+    function afterAttach() {}
 
     return {
       afterCreate,
-      setProp,
+      afterAttach,
+      changeGroupId,
       update,
       updateLabel,
       updateDescription,
       updateFileUri,
       updateColor,
-      changeGroupId,
+      updateIcon,
       updateSortedInfo,
       updateColorSortedIndex,
       updateWorkspaceSortedIndex,
       updateFileSortedIndex,
+      updateTextDecoration,
+      removeTextDecoration() {
+        ServiceManager.instance.decorationService.removeTextDecoration(
+          self as Instance<typeof Bookmark>,
+        );
+      },
+      setProp,
     };
   });
-
-/**
- * 增加hooks, 将bookmark数据转换, PS: 暂时未使用到此hooks
- */
-export const BookmarkProcessorModel: ISnapshotProcessor<
-  typeof Bookmark,
-  SnapshotIn<typeof Bookmark>,
-  SnapshotOut<typeof Bookmark>
-> = types.snapshotProcessor(Bookmark, {
-  preProcessor(snapshot: SnapshotIn<IBookmark>): SnapshotOut<IBookmark> {
-    return snapshot as SnapshotOut<IBookmark>;
-  },
-  postProcessor(snapshot: SnapshotOut<IBookmark>, node) {
-    return snapshot;
-  },
-});
-
-export type IBookmarkProcessorModel = Instance<typeof BookmarkProcessorModel>;
 
 export type IBookmark = Instance<typeof Bookmark>;

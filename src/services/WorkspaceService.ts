@@ -1,5 +1,4 @@
 import {
-  Disposable,
   EventEmitter,
   Uri,
   WorkspaceFoldersChangeEvent,
@@ -13,20 +12,19 @@ import {
   EXTENSION_STORE_FILE_NAME,
   EXTENSION_STORE_PATH,
 } from '../constants';
+import {BaseService} from './BaseService';
 
-export default class WorkspaceService implements Disposable {
-  private _sm: ServiceManager;
-
+export default class WorkspaceService extends BaseService {
   private _onDidChangeWorkspaceFoldersEvent =
     new EventEmitter<WorkspaceFoldersChangeEvent>();
 
   onDidChangeWorkspaceFolders = this._onDidChangeWorkspaceFoldersEvent.event;
 
   constructor(sm: ServiceManager) {
-    this._sm = sm;
+    super(WorkspaceService.name, sm);
 
     this._restoreContextKey();
-    const {alwaysIgnore} = this._sm.configService.configuration;
+    const {alwaysIgnore} = this.sm.configure.configure;
     if (alwaysIgnore) {
       this._addToGitIgnore();
     }
@@ -35,16 +33,18 @@ export default class WorkspaceService implements Disposable {
     workspace.onDidChangeWorkspaceFolders(async ev => {
       this._restoreContextKey();
       if (ev.added) {
-        if (!this._sm.configService.configuration.alwaysIgnore) {return;}
+        if (!alwaysIgnore) {
+          return;
+        }
         this._addToGitIgnore();
       }
 
       this._onDidChangeWorkspaceFoldersEvent.fire(ev);
     });
 
-    this._sm.configService.onDidChangeConfiguration(ev => {
+    this.sm.configService.onDidChangeConfiguration(ev => {
       if (ev.affectsConfiguration(`${EXTENSION_NAME}.alwaysIgnore`)) {
-        const {alwaysIgnore} = this._sm.configService.configuration;
+        const {alwaysIgnore} = this.sm.configure.configure;
         if (alwaysIgnore) {
           this._addToGitIgnore();
         }
@@ -58,7 +58,9 @@ export default class WorkspaceService implements Disposable {
    */
   private _addToGitIgnore() {
     const folders = workspace.workspaceFolders || [];
-    if (!folders.length) {return;}
+    if (!folders.length) {
+      return;
+    }
     for (let ws of folders) {
       try {
         let existed = fs.existsSync(Uri.joinPath(ws.uri, '.git').fsPath);
@@ -67,14 +69,18 @@ export default class WorkspaceService implements Disposable {
 
         existed = fs.existsSync(ignoreFilePath);
 
-        if (!existed) {continue;}
+        if (!existed) {
+          continue;
+        }
 
         // 当`bookmark-manger.json`文件存在的时候进行后续步骤,避免多余无意义追加到`.gitignore`过程
         existed = fs.existsSync(
           Uri.joinPath(ws.uri, EXTENSION_STORE_PATH).fsPath,
         );
 
-        if (!existed) {continue;}
+        if (!existed) {
+          continue;
+        }
 
         const content = fs.readFileSync(ignoreFilePath, 'utf-8');
         if (content && !content.includes(EXTENSION_STORE_FILE_NAME)) {
@@ -93,18 +99,24 @@ export default class WorkspaceService implements Disposable {
    */
   private _removeFromGitIgnore() {
     const folders = workspace.workspaceFolders || [];
-    if (!folders.length) {return;}
+    if (!folders.length) {
+      return;
+    }
     for (let ws of folders) {
       try {
         let existed = fs.existsSync(Uri.joinPath(ws.uri, '.git').fsPath);
 
         const ignoreFilePath = Uri.joinPath(ws.uri, '.gitignore');
 
-        if (!existed) {continue;}
+        if (!existed) {
+          continue;
+        }
 
         existed = fs.existsSync(ignoreFilePath.fsPath);
 
-        if (!existed) {continue;}
+        if (!existed) {
+          continue;
+        }
 
         let content = fs.readFileSync(ignoreFilePath.fsPath, 'utf-8');
         if (content && content.includes(EXTENSION_STORE_FILE_NAME)) {
@@ -125,6 +137,8 @@ export default class WorkspaceService implements Disposable {
       workspace.workspaceFolders && workspace.workspaceFolders.length > 1,
     );
   }
+
+  initial(): void {}
 
   dispose() {
     this._onDidChangeWorkspaceFoldersEvent.dispose();

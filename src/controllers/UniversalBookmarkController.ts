@@ -1,7 +1,6 @@
 import {Event, EventEmitter, ExtensionContext, Uri} from 'vscode';
 import {
   BaseMeta,
-  BookmarkColor,
   TreeViewGroupEnum,
   TreeViewSortedEnum,
   TreeViewStyleEnum,
@@ -10,11 +9,12 @@ import {generateUUID} from '../utils';
 import IController from './IController';
 import {ServiceManager} from '../services/ServiceManager';
 import {_NotCustomized} from 'mobx-state-tree';
+import {BookmarkColorType} from '../stores';
 export const UNIVERSAL_STORE_KEY = 'bookmark-manager.universal';
 export type UniversalBookmarkType = 'file' | 'link' | 'command' | 'code';
 
 export type UniversalBase = BaseMeta & {
-  color?: BookmarkColor;
+  color?: BookmarkColorType;
   icon?: string;
   [index: string]: any;
 };

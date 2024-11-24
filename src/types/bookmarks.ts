@@ -1,4 +1,4 @@
-import {BookmarkGroupInfoModelType, IBookmark, IBookmarkGroup} from '../stores';
+import {BookmarkGroupInfoType, IBookmark, IBookmarkGroup} from '../stores';
 import {TreeViewGroupEnum} from './common';
 
 /**
@@ -51,7 +51,7 @@ export interface IBookmarkStoreInfo {
     'id' | 'label' | 'sortedIndex' | 'activeStatus' | 'workspace'
   >[];
 
-  groupInfo?: BookmarkGroupInfoModelType[];
+  groupInfo?: BookmarkGroupInfoType[];
 }
 
 /**
@@ -82,6 +82,8 @@ export enum BookmarkTreeItemCtxValueEnum {
   FILE = 'file',
   WORKSPACE = 'workspace',
   COLOR = 'color',
+
+  ICON = 'icon',
 }
 
 export enum BookmarkTypeEnum {

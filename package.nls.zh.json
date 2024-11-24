@@ -7,6 +7,7 @@
   "bookmark-manager.editDescription": "编辑备注",
   "bookmark-manager.clearAllBookmarksInCurrentFile": "清除当前文件中的所有书签",
   "bookmark-manager.changeBookmarkColor": "更换书签颜色",
+  "bookmark-manager.changeBookmarkIcon": "改变图标",
   "bookmark-manager.changeBookmarkColorName": "更换书签颜色名称",
   "bookmark-manager.clearAllBookmarks": "清除所有书签",
   "bookmark-manager.deleteBookmark": "删除书签",
@@ -48,6 +49,7 @@
   "bookmark-manager.groupedByColor": "按颜色分组",
   "bookmark-manager.groupedByDefault": "默认分组",
   "bookmark-manager.groupedByWorkspace": "按工作区间分组",
+  "bookmark-manager.groupedByIcon": "按图标分组",
   "bookmark-manager.group": "分组",
   "bookmark-manager.useBuiltInColors": "开启此配置,将会在已定义的颜色(标签)集合中追加内置的颜色集合; 同时当用户未自定义颜色的时候, 默认也使用内置的颜色集合, 反之使用用户自定义颜色集合.",
   "bookmark-manager.alwaysIgnore": "将`bookmark-manager.json`总是添加到`.gitignore` 文件中",
@@ -60,6 +62,7 @@
   "bookmark-manager.addBookmarkGroup": "新增书签分组",
   "bookmark-manager.groupedByCustom": "自定义分组",
   "bookmark-manager.clearAllBookmarksInColor": "清除此颜色下的所有书签",
+  "bookmark-manager.clearAllBookmarksInIconGroup": "清除此图标组下的所有书签",
   "bookmark-manager.setAsDefaultActivedGroup": "设置为默认激活组",
   "bookmark-manager.changeBookmarkGroup": "改变书签分组",
   "bookmark-manager.listBookmarksInSelectedGroup": "列出已选择分组中的书签列表",
@@ -71,5 +74,8 @@
   "bookmark-manager.sortMenu": "排序方式",
   "bookmark-manager.sortedByCustom": "自定义排序",
   "bookmark-manager.sortedByLineNumber": "行号",
-  "bookmark-manager.sortedByCreateTime": "创建时间"
+  "bookmark-manager.sortedByCreateTime": "创建时间",
+  "bookmark-manager.defaultLabeledBookmarkIcon.description": "打上标签的书签的默认图标",
+  "bookmark-manager.defaultBookmarkIcon.description": "书签的默认图标",
+  "bookmark-manager.icons.description": "自定义图标列表，`key`为自定义图标名称，`value`格式为`prefix:name`，即`iconify`网站图标名称格式.例如: 'mdi:bookmark'"
 }

@@ -32,18 +32,17 @@ import {
   EXTENSION_STORE_PATH,
 } from '../constants';
 
-import ConfigService from '../services/ConfigService';
 import {ServiceManager} from '../services/ServiceManager';
 import {
+  BookmarksGroupedByIconType,
   BookmarksGroupedByColorType,
   BookmarksGroupedByWorkspaceType,
+  createBookmarkStore,
   IBookmark,
   IBookmarkGroup,
-  IBookmarksStore,
+  BookmarksStoreType,
 } from '../stores';
-import {BookmarksStoreProcessorModel} from '../stores/bookmark-store';
 
-import {IBookmarkManagerConfigure} from '../stores/configure';
 import {
   TreeViewStyleEnum,
   TreeViewSortedEnum,
@@ -61,16 +60,12 @@ export default class BookmarksController implements IController {
 
   private _onDidChangeEvent = new EventEmitter<void>();
 
-  private _store!: IBookmarksStore;
+  private _store!: BookmarksStoreType;
   private _disposables: IDisposable[] = [];
 
   private _watcher: FileSystemWatcher | undefined;
 
-  private _configuration: IBookmarkManagerConfigure;
-
-  private _configService: ConfigService;
-
-  private _serviceManager: ServiceManager;
+  private _sm: ServiceManager;
 
   private _logger: LoggerService;
 
@@ -87,7 +82,7 @@ export default class BookmarksController implements IController {
     return this._context.workspaceState;
   }
 
-  public get store(): IBookmarksStore {
+  public get store(): BookmarksStoreType {
     return this._store!;
   }
 
@@ -120,7 +115,7 @@ export default class BookmarksController implements IController {
   }
 
   public get groupView(): TreeViewGroupEnum {
-    return this._store.groupView as TreeViewGroupEnum;
+    return this._store.groupView;
   }
 
   public get sortedType(): TreeViewSortedEnum {
@@ -131,7 +126,8 @@ export default class BookmarksController implements IController {
     | BookmarksGroupedByFileType[]
     | BookmarksGroupedByCustomType[]
     | BookmarksGroupedByColorType[]
-    | BookmarksGroupedByWorkspaceType[] {
+    | BookmarksGroupedByWorkspaceType[]
+    | BookmarksGroupedByIconType[] {
     switch (this._store.groupView) {
       case TreeViewGroupEnum.FILE:
       case TreeViewGroupEnum.DEFAULT:
@@ -142,36 +138,37 @@ export default class BookmarksController implements IController {
         return this._store.bookmarksGroupedByWorkspace;
       case TreeViewGroupEnum.CUSTOM:
         return this._store.bookmarksGroupedByCustom;
+      case TreeViewGroupEnum.ICON:
+        return this._store.bookmarksGroupedByIcon;
       default:
         return [];
     }
   }
 
+  public get configService() {
+    return this._sm.configService;
+  }
+
+  public get configuration() {
+    return this._sm.configure.configure;
+  }
+
   constructor(context: ExtensionContext, serviceManager: ServiceManager) {
     this._context = context;
-    this._serviceManager = serviceManager;
-    this._configService = this._serviceManager.configService;
-    this._configuration = this._configService.configuration;
+    this._sm = serviceManager;
     this._logger = new LoggerService(BookmarksController.name);
     this._initial();
   }
 
   private async _initial() {
-    this._needWarning = this._configService.getGlobalValue(
-      '_needWarning',
-      true,
-    );
+    this._needWarning = this.configService.getGlobalValue('_needWarning', true);
 
-    this._configService.onExtensionConfigChange(configuration => {
-      this._configuration = configuration;
-    });
-
-    this._configService.onDidChangeConfiguration(ev => {
+    this.configService.onDidChangeConfiguration(ev => {
       if (!ev.affectsConfiguration(`${EXTENSION_ID}.createJsonFile`)) {
         return;
       }
       this._initStore();
-      if (!this._configuration.createJsonFile) {
+      if (!this.configuration.createJsonFile) {
         this._watcher?.dispose();
       }
     });
@@ -183,8 +180,8 @@ export default class BookmarksController implements IController {
 
   private async _initStore() {
     let store;
-    this._store = BookmarksStoreProcessorModel.create();
 
+    this._store = createBookmarkStore();
     if (
       (!workspace.workspaceFolders || workspace.workspaceFolders!.length < 2) &&
       this.groupView === TreeViewGroupEnum.WORKSPACE
@@ -194,7 +191,7 @@ export default class BookmarksController implements IController {
 
     this._resolveDataFromStoreFile();
     // 当从 `bookmark-manager.json`文件中读取, 直接刷新返回
-    if (!this._configuration.createJsonFile) {
+    if (!this.configuration.createJsonFile) {
       // 从state中读取数据
       try {
         store = this.workspaceState.get<any>(EXTENSION_ID);
@@ -202,13 +199,13 @@ export default class BookmarksController implements IController {
           store = this._store;
         }
 
-        applySnapshot(this._store, isProxy(store) ? getSnapshot(store) : store);
+        applySnapshot(this._store, isProxy(store) ? getSnapshot(store) : this._sm.migrateService.migrate(store));
 
         if (!this._store.groups.length) {
           this._store.addGroups([]);
         }
 
-        this._logger.log(getSnapshot(this._store));
+        this._logger.debug(getSnapshot(this._store));
       } catch (error) {
         this._logger.error(error);
       }
@@ -239,7 +236,7 @@ export default class BookmarksController implements IController {
       ...bookmark,
       groupId: activedGroup?.id,
     });
-    this._store.add(newBookmark);
+    return newBookmark;
   }
 
   remove(id: string) {
@@ -319,8 +316,12 @@ export default class BookmarksController implements IController {
     this._store.clearBookmarksByColor(color);
   }
 
+  clearAllBookmarksInIconGroup(icon: string) {
+    this._store.clearBookmarksByIcon(icon);
+  }
+
   save() {
-    if (this._configuration.createJsonFile) {
+    if (this.configuration.createJsonFile) {
       this._saveToDisk();
     } else {
       this.workspaceState.update(EXTENSION_ID, this._store);
@@ -429,7 +430,8 @@ export default class BookmarksController implements IController {
       !group ||
       this.groupView === TreeViewGroupEnum.FILE ||
       this.groupView === TreeViewGroupEnum.DEFAULT ||
-      this.groupView === TreeViewGroupEnum.WORKSPACE
+      this.groupView === TreeViewGroupEnum.WORKSPACE ||
+      this.groupView === TreeViewGroupEnum.ICON
     ) {
       return;
     }
@@ -538,7 +540,7 @@ export default class BookmarksController implements IController {
    */
   private _showCreateStoreWarning(ws: WorkspaceFolder) {
     const ignoreFilePath = path.resolve(ws.uri.fsPath, '.gitignore');
-    const {alwaysIgnore} = this._configuration;
+    const {alwaysIgnore} = this.configuration;
 
     if (!fs.existsSync(ignoreFilePath)) {
       return;
@@ -558,14 +560,14 @@ export default class BookmarksController implements IController {
         ),
       );
 
-      this._configService.updateGlobalValue('needWarning', false);
+      this.configService.updateGlobalValue('needWarning', false);
       this._needWarning = false;
 
       return;
     }
 
     if (!this._needWarning && this.store?.bookmarks.length) {
-      this._configService.updateGlobalValue('needWarning', true);
+      this.configService.updateGlobalValue('needWarning', true);
       this._needWarning = true;
     }
 
@@ -605,9 +607,9 @@ export default class BookmarksController implements IController {
           });
         }
 
-        const storeContent = JSON.parse(content) as IBookmarkStoreInfo;
-        // const {version, updatedDate, updatedDateTimespan, ...rest} =
-        //   storeContent;
+        let storeContent = JSON.parse(content) as IBookmarkStoreInfo;
+
+        storeContent = this._sm.migrateService.migrate(storeContent);
 
         applySnapshot(this._store, {
           ...storeContent,
@@ -635,7 +637,7 @@ export default class BookmarksController implements IController {
       '**​/node_modules/**',
       10,
     );
-    if (existedStoreFile.length && this._configuration.createJsonFile) {
+    if (existedStoreFile.length && this.configuration.createJsonFile) {
       if (this._watcher) {
         this._watcher.dispose();
       }
@@ -665,9 +667,18 @@ export default class BookmarksController implements IController {
       }
     }
   }
+
+  /**
+   * @zh 清理所有书签装饰器
+   */
+  disposeAllBookmarkTextDecorations() {
+    this._store.bookmarks.forEach(it => it.disposeTextDecoration());
+  }
+
   dispose(): void {
     this._disposables.filter(it => it).forEach(it => it.dispose());
     this._storeDisposer?.();
+    this.disposeAllBookmarkTextDecorations();
     destroy(this._store);
   }
 

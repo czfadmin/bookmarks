@@ -6,6 +6,12 @@ import StatusbarService from './StatusbarService';
 import GutterService from './GutterService';
 import WorkspaceService from './WorkspaceService';
 import GitService from './GitService';
+import {FileService} from './FileService';
+import {createGlobalStore, GlobalStore} from '../stores';
+import {IconsService} from './IconsService';
+import ColorsService from './ColorsService';
+import {Instance} from 'mobx-state-tree';
+import { MigrateService } from './MigrateService';
 
 export interface IServiceManager {
   readonly configService: ConfigService;
@@ -14,9 +20,12 @@ export interface IServiceManager {
   readonly workspaceService: WorkspaceService;
   readonly gitService: GitService;
   readonly statusbarService: StatusbarService | undefined;
-}
+  readonly iconsService: IconsService;
+  readonly colorsService: ColorsService;
+  readonly fileService: FileService;
 
-let _serviceManager: ServiceManager;
+  readonly migrateService: MigrateService
+}
 
 export class ServiceManager implements IServiceManager, IDisposable {
   readonly configService: ConfigService;
@@ -24,7 +33,22 @@ export class ServiceManager implements IServiceManager, IDisposable {
   readonly gutterService: GutterService;
   readonly workspaceService: WorkspaceService;
   readonly gitService: GitService;
+
+  readonly iconsService: IconsService;
+
+  readonly colorsService: ColorsService;
+
+  readonly migrateService: MigrateService
   private _statusbarService: StatusbarService | undefined;
+
+  public readonly fileService: FileService;
+
+  private static _instance: ServiceManager;
+
+  public static get instance() {
+    return this._instance;
+  }
+
   public get statusbarService(): StatusbarService | undefined {
     return this._statusbarService;
   }
@@ -34,10 +58,36 @@ export class ServiceManager implements IServiceManager, IDisposable {
     return this._context;
   }
 
+  private _store: Instance<typeof GlobalStore>;
+
+  public get store() {
+    if (!this._store) {
+      this._store = createGlobalStore();
+    }
+    return this._store;
+  }
+
+  public get configure() {
+    return this._store.configure;
+  }
+
+  public get colors() {
+    return this.configure.configure?.colors;
+  }
+
+  public get icons() {
+    return this.store.icons;
+  }
+
   constructor(context: ExtensionContext) {
     this._context = context;
+    this._store = createGlobalStore();
+    this.fileService = new FileService(this);
+    this.iconsService = new IconsService(this);
     this.configService = new ConfigService(this);
+    this.colorsService = new ColorsService(this);
     this.gutterService = new GutterService(this);
+    this.migrateService = new MigrateService(this)
     this.decorationService = new DecorationService(this);
     this.workspaceService = new WorkspaceService(this);
     this.gitService = new GitService(this);
@@ -53,6 +103,12 @@ export class ServiceManager implements IServiceManager, IDisposable {
     this.workspaceService.dispose();
     this.gutterService.dispose();
     this.gitService.dispose();
+    this.iconsService.dispose();
+    this.colorsService.dispose();
+  }
+
+  static initial(context) {
+    this._instance = new ServiceManager(context);
   }
 }
 
@@ -62,11 +118,11 @@ export function initServiceManager(
 ): Promise<ServiceManager> {
   return new Promise((resolve, reject) => {
     try {
-      _serviceManager = new ServiceManager(context);
-      _serviceManager.configService.onDecorationConfigChange(() => {
+      ServiceManager.initial(context);
+      ServiceManager.instance.configService.onDecorationConfigChange(() => {
         udpateCb();
       });
-      resolve(_serviceManager);
+      resolve(ServiceManager.instance);
     } catch (error) {
       reject(error);
     }
@@ -74,9 +130,10 @@ export function initServiceManager(
 }
 
 export function postInitController() {
-  _serviceManager.decorationService.setupAllDecorations();
-  _serviceManager.registerStatusbarService();
+  // _serviceManager.decorationService.setupAllDecorations();
+  ServiceManager.instance.registerStatusbarService();
 }
 
-const resolveServiceManager = () => _serviceManager;
+const resolveServiceManager = () => ServiceManager.instance;
+
 export default resolveServiceManager;

@@ -9,17 +9,16 @@ import {ServiceManager} from './ServiceManager';
 import {resolveBookmarkController} from '../bootstrap';
 import BookmarksController from '../controllers/BookmarksController';
 import {EXTENSION_ID, EXTENSION_NAME} from '../constants';
+import {BaseService} from './BaseService';
 
-export default class StatusbarService implements Disposable {
-  private _serviceManager: ServiceManager;
-
+export default class StatusbarService extends BaseService {
   private _controller: BookmarksController;
   private statusbarItem: StatusBarItem | undefined;
   constructor(sm: ServiceManager) {
-    this._serviceManager = sm;
+    super(StatusbarService.name, sm);
     this._controller = resolveBookmarkController();
     this.updateStatusBarItem();
-    this._serviceManager.configService.onDidChangeConfiguration(() => {
+    this.sm.configService.onDidChangeConfiguration(() => {
       this.updateStatusBarItem();
     });
     this._controller.onDidChangeEvent(() => {
@@ -62,5 +61,6 @@ export default class StatusbarService implements Disposable {
 
     return tooltip;
   }
+  initial(): void {}
   dispose() {}
 }

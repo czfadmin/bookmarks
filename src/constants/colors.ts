@@ -8,3 +8,7 @@ export const defaultColors = {
   purple: 'purple',
   black: 'black',
 };
+/**
+ * 默认的书签的颜色标签
+ */
+export const default_bookmark_color = 'default';

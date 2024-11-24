@@ -5,16 +5,20 @@ import {
   QuickPickItem,
   workspace,
   Uri,
-  TextEditorRevealType,
   commands,
+  Position,
 } from 'vscode';
 import {resolveBookmarkController} from '../../bootstrap';
 import resolveServiceManager from '../../services/ServiceManager';
-import {BookmarksGroupedByColorType, IBookmark} from '../../stores';
+import {
+  BookmarksGroupedByColorType,
+  BookmarksGroupedByIconType,
+  IBookmark,
+} from '../../stores';
 import {
   BookmarksGroupedByFileType,
   BookmarkTypeEnum,
-  LineBookmarkContext,
+  BookmarkActionContext,
 } from '../../types';
 import {
   checkIfBookmarksIsInCurrentEditor,
@@ -28,12 +32,14 @@ import {
   getBookmarkFromCtx,
   getBookmarkColorFromCtx,
   toggleBookmarksWithSelections,
+  highlightSelection,
 } from '../../utils';
+import {range} from 'lodash';
 
 /**
  * 开启行书签, 使用默认颜色且无标签等相关信息
  */
-export function toggleLineBookmark(args: LineBookmarkContext) {
+export function toggleLineBookmark(args: BookmarkActionContext) {
   toggleBookmark(args, {type: BookmarkTypeEnum.LINE});
 }
 
@@ -41,7 +47,7 @@ export function toggleLineBookmark(args: LineBookmarkContext) {
  * 开启带有标签的行书签
  */
 export async function toggleLineBookmarkWithLabel(
-  context: LineBookmarkContext,
+  context: BookmarkActionContext,
 ) {
   const label = await window.showInputBox({
     placeHolder: l10n.t('Type a label for your bookmarks'),
@@ -61,7 +67,7 @@ export async function toggleLineBookmarkWithLabel(
 /**
  * 开启行书签,并可以指定书签颜色
  */
-export function toggleLineBookmarkWithColor(context: LineBookmarkContext) {
+export function toggleLineBookmarkWithColor(context: BookmarkActionContext) {
   toggleBookmark(context, {
     withColor: true,
     type: BookmarkTypeEnum.LINE,
@@ -85,7 +91,7 @@ export function clearAllBookmarks(args: any) {
  * - 从 文本编辑器中的菜单上下文调用删除操作, context 类型为 当前打开的文件的uri
  * - 从树视图中调用删除操作, context 类型为 BookmarkTreeItem
  */
-export function deleteBookmark(context: LineBookmarkContext) {
+export function deleteBookmark(context: BookmarkActionContext) {
   const controller = resolveBookmarkController();
   if (!controller) {
     return;
@@ -100,8 +106,15 @@ export function deleteBookmark(context: LineBookmarkContext) {
  *  - 如果存在, 更新书签的label
  *  - 如果不存在, 创建书签并追加label
  */
-export async function editLabel(context: LineBookmarkContext) {
+export async function editLabel(context: BookmarkActionContext) {
   let bookmark: IBookmark | undefined = getBookmarkFromCtx(context);
+  if (!bookmark) {
+    window.showInformationMessage(
+      l10n.t('Please select the bookmark before proceeding.'),
+      {},
+    );
+    return;
+  }
   const label = await window.showInputBox({
     placeHolder: l10n.t('Type a label for your bookmarks'),
     title: l10n.t(
@@ -113,7 +126,7 @@ export async function editLabel(context: LineBookmarkContext) {
     return;
   }
   if (!bookmark) {
-    toggleBookmark(context as LineBookmarkContext | undefined, {
+    toggleBookmark(context as BookmarkActionContext | undefined, {
       label,
       type: BookmarkTypeEnum.LINE,
     });
@@ -127,7 +140,7 @@ export async function editLabel(context: LineBookmarkContext) {
  */
 export function gotoSourceLocation(args: any) {
   const sm = resolveServiceManager();
-  const {enableClick} = sm.configService.configuration;
+  const {enableClick} = sm.configure.configure;
 
   // 表示点击TreeView中的定位图标进入此方法, 反之为单击书签跳转到书签位置
   if (args.meta || (args && enableClick)) {
@@ -138,7 +151,7 @@ export function gotoSourceLocation(args: any) {
 /**
  * 为选中的区域增加书签
  */
-export function toggleBookmarkWithSelection(ctx: LineBookmarkContext) {
+export function toggleBookmarkWithSelection(ctx: BookmarkActionContext) {
   window
     .showInputBox({
       placeHolder: l10n.t('Type a label for your bookmarks'),
@@ -165,10 +178,13 @@ export function quickJumpTo() {
 /**
  *  改变书签颜色
  */
-export async function changeBookmarkColor(ctx: LineBookmarkContext) {
+export async function changeBookmarkColor(ctx: BookmarkActionContext) {
   let bookmark: IBookmark | undefined = getBookmarkFromCtx(ctx);
   if (!bookmark) {
-    window.showInformationMessage(l10n.t('Please select bookmark color'), {});
+    window.showInformationMessage(
+      l10n.t('Please select the bookmark before proceeding.'),
+      {},
+    );
     return;
   }
 
@@ -183,10 +199,13 @@ export async function changeBookmarkColor(ctx: LineBookmarkContext) {
   bookmark.updateColor(newColor);
 }
 
-export async function changeBookmarkColorName(ctx: LineBookmarkContext) {
+export async function changeBookmarkColorName(ctx: BookmarkActionContext) {
   let bookmark: IBookmark | undefined = getBookmarkColorFromCtx(ctx);
   if (!bookmark) {
-    window.showInformationMessage(l10n.t('Please select bookmark color'), {});
+    window.showInformationMessage(
+      l10n.t('Please select the bookmark before proceeding.'),
+      {},
+    );
     return;
   }
 
@@ -235,7 +254,7 @@ export function clearAllBookmarksInCurrentFile(args: any) {
 /**
  * 为书签增加备注信息
  */
-export function editDescription(ctx: LineBookmarkContext) {
+export function editDescription(ctx: BookmarkActionContext) {
   let bookmark: IBookmark | undefined = getBookmarkFromCtx(ctx);
   if (!bookmark) {
     window.showInformationMessage(
@@ -263,33 +282,27 @@ export function editDescription(ctx: LineBookmarkContext) {
 /**
  * 列出当前文件中的所有信息
  */
-export async function listBookmarksInCurrentFile(ctx: LineBookmarkContext) {
+export async function listBookmarksInCurrentFile(ctx: BookmarkActionContext) {
   const editor = window.activeTextEditor;
   const controller = resolveBookmarkController();
-  const sm = resolveServiceManager();
 
-  const bookmarkDS = controller.store;
-  if (!editor || !bookmarkDS) {
+  if (!editor || !controller.store) {
     return;
   }
+
   const bookmarks = getBookmarksFromFileUri(editor.document.uri);
   if (!bookmarks.length) {
     return;
   }
-  const tagGutters = sm.gutterService.tagGutters;
-  const gutters = sm.gutterService.gutters;
-  const pickItems = bookmarks.map((it: any) => {
-    const iconPath = it.label
-      ? tagGutters[it.color] || tagGutters['default']
-      : gutters[it.color] || gutters['default'];
+  const pickItems = bookmarks.map((it: IBookmark) => {
     return {
       label:
         it.label || it.description || it.selectionContent?.slice(0, 120) || '',
       description: getLineInfoStrFromBookmark(it),
       detail: it.fileUri.fsPath,
-      iconPath: iconPath.iconPath as any,
+      iconPath: it.iconPath,
       meta: {
-        ...it,
+        value: it,
         selection: new Selection(it.selection.anchor, it.selection.active),
       },
     };
@@ -300,24 +313,33 @@ export async function listBookmarksInCurrentFile(ctx: LineBookmarkContext) {
     placeHolder: l10n.t('Please select the bookmark you want to open'),
     canPickMany: false,
     ignoreFocusOut: false,
-    async onDidSelectItem(item: QuickPickItem & {meta: IBookmark}) {
+    async onDidSelectItem(
+      item: QuickPickItem & {meta: {value: IBookmark; selection: Selection}},
+    ) {
       // @ts-ignore
       let bookmark = typeof item === 'object' ? item.meta : undefined;
       if (bookmark) {
-        const doc = await workspace.openTextDocument(
-          Uri.parse(bookmark.fileName),
-        );
+        const {value: _bookmark, selection} = item.meta;
+
+        const openedUri = Uri.from({
+          scheme: 'file',
+          path: _bookmark.fileId,
+        });
+
+        const doc = await workspace.openTextDocument(openedUri);
+
         const editor = await window.showTextDocument(doc, {
           preview: true,
           preserveFocus: true,
         });
-        editor.selection = new Selection(
-          bookmark.selection.start,
-          bookmark.selection.end,
-        );
-        editor.revealRange(
-          bookmark.selection,
-          TextEditorRevealType.InCenterIfOutsideViewport,
+
+        const range = selection || _bookmark.rangesOrOptions?.range;
+        const {start, end} = range;
+        highlightSelection(
+          editor,
+          range,
+          new Position(start.line, start.character),
+          new Position(end.line, end.character),
         );
       }
     },
@@ -349,6 +371,19 @@ export function clearAllBookmarksInColor(args: any) {
   controller.clearAllBookmarksInColor(meta.color);
 }
 
+export function clearAllBookmarksInIconGroup(args: any) {
+  if (!args || !args.meta) {
+    return;
+  }
+  const controller = resolveBookmarkController();
+  if (!controller) {
+    return;
+  }
+
+  const meta = args.meta as BookmarksGroupedByIconType;
+  controller.clearAllBookmarksInIconGroup(meta.icon);
+}
+
 /**
  * 打开交互指南
  * @param args
@@ -360,4 +395,4 @@ export function showWalkthroughs(args: any) {
   );
 }
 
-export function revealInExplorer(args: any) {}
+export function revealInExplorer(args: BookmarkActionContext) {}

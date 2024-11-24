@@ -6,10 +6,10 @@ import {
   TreeViewStyleEnum,
 } from '../types';
 import {UniversalStoreType} from './UniversalBookmarkController';
-import {IBookmark, IBookmarksStore} from '../stores';
+import {IBookmark, BookmarksStoreType} from '../stores';
 
 export default interface IController extends Disposable {
-  get store(): IBookmarksStore | UniversalStoreType | undefined;
+  get store(): BookmarksStoreType | UniversalStoreType | undefined;
 
   get totalCount(): number;
 

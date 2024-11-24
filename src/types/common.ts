@@ -1,17 +1,20 @@
 import {Uri, workspace} from 'vscode';
 import BookmarkTreeItem from '../providers/BookmarksTreeItem';
+import {BookmarkColorType} from '../stores';
 
 export type StringIndexType<T> = {[key: string]: T};
-export type BookmarkColor = string | 'none';
 
 export interface BaseMeta {
   id: string;
   label?: string;
-  color: BookmarkColor;
+  color: string;
   sortedIndex?: number;
 }
 
-export type LineBookmarkContext =
+/**
+ * @zh 表示用户对书签进行操作时的上下文
+ */
+export type BookmarkActionContext =
   | Uri
   | {uri: Uri; lineNumber: number}
   | BookmarkTreeItem
@@ -47,4 +50,5 @@ export enum TreeViewGroupEnum {
   DEFAULT = 'default',
   WORKSPACE = 'workspace',
   CUSTOM = 'custom',
+  ICON = 'icon',
 }

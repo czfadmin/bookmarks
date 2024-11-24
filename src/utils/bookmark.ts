@@ -18,7 +18,7 @@ import {
 import {
   BookmarkTreeItemCtxValueEnum,
   BookmarkTypeEnum,
-  LineBookmarkContext,
+  BookmarkActionContext,
   TreeViewGroupEnum,
   TreeViewSortedEnum,
 } from '../types';
@@ -26,7 +26,6 @@ import {resolveBookmarkController} from '../bootstrap';
 import resolveServiceManager, {
   ServiceManager,
 } from '../services/ServiceManager';
-import {defaultColors} from '../constants/colors';
 import {IBookmark} from '../stores/bookmark';
 import {IBookmarkGroup} from '../stores';
 import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
@@ -50,8 +49,8 @@ export function checkIfBookmarkIsInGivenSelectionAndRemove(
   if (!bookmarks.length) {
     return;
   }
-  let item;
-  let matched = [];
+  let item: any;
+  let matched: any[] = [];
 
   for (item of bookmarks) {
     if (range.isEqual(item.selection)) {
@@ -242,7 +241,7 @@ export async function toggleBookmarksWithSelections(label: string) {
  * @returns
  */
 export async function toggleBookmark(
-  context: LineBookmarkContext,
+  context: BookmarkActionContext,
   extra: {
     type: BookmarkTypeEnum;
     label?: string;
@@ -330,12 +329,6 @@ export async function toggleBookmark(
     workspaceFolder: workspace.getWorkspaceFolder(editor.document.uri!)!,
   };
 
-  bookmark.rangesOrOptions.hoverMessage = createHoverMessage(
-    bookmark,
-    true,
-    true,
-  );
-
   controller.add(bookmark);
 }
 /**
@@ -343,7 +336,7 @@ export async function toggleBookmark(
  * @param context
  * @returns
  */
-export function deleteBookmark(context?: LineBookmarkContext) {
+export function deleteBookmark(context?: BookmarkActionContext) {
   const editor = window.activeTextEditor;
   const controller = resolveBookmarkController();
   let _lineNumber = -1,
@@ -407,28 +400,15 @@ export function getSelectionFromLine(
  */
 export async function chooseBookmarkColor() {
   const sm = resolveServiceManager();
-  const gutterService = sm.gutterService;
   const colors = {...sm.configService.colors};
-  if (
-    !sm.configService.configuration.useBuiltInColors &&
-    Object.keys(sm.configService.customColors).length
-  ) {
-    Object.keys(defaultColors).forEach(it => delete colors[it]);
-  }
 
-  const controller = resolveBookmarkController();
-  const userColors = controller.store!.colors;
-
-  const allUsedColors = Array.from(
-    new Set([...Object.keys(colors), ...userColors]),
-  );
-
-  const pickItems = allUsedColors.map(color => {
+  const pickItems = Object.keys(colors).map(color => {
     return {
       label: color,
-      iconPath: (
-        gutterService.gutters[color] || gutterService.gutters['default']
-      ).iconPath,
+      description: colors[color] || color,
+      iconPath: ServiceManager.instance.icons
+        .find(it => it.id === sm.configure.configure.defaultBookmarkIcon)
+        ?.iconPath(color),
     } as QuickPickItem;
   });
   const chosenColor = await window.showQuickPick(pickItems, {
@@ -532,7 +512,7 @@ function appendGroupInfo(
   bookmark: Omit<IBookmark, 'id'>,
   markdownString: MarkdownString,
 ) {
-  if (!bookmark.group) {
+  if (!bookmark.groupId) {
     return;
   }
 
@@ -549,7 +529,7 @@ function appendGroupInfo(
   markdownString.isTrusted = true;
 
   markdownString.appendMarkdown(
-    `[${bookmark.group.label}](command:bookmark-manager.revealInExplorer?${generateCMDArgs(customParams)}) | [${bookmark.color}](command:bookmark-manager.revealInExplorer?${generateCMDArgs(colorParams)}) | ${bookmark.createdAt.toLocaleString()}\n`,
+    `[${bookmark.group?.label}](command:bookmark-manager.revealInExplorer?${generateCMDArgs(customParams)}) | [${bookmark.color}](command:bookmark-manager.revealInExplorer?${generateCMDArgs(colorParams)}) | ${bookmark.createdAt.toLocaleString()}\n`,
   );
 }
 
@@ -589,14 +569,13 @@ export function updateBookmarksGroupByChangedLine(
   change: TextDocumentContentChangeEvent,
 ) {
   const {document} = event;
-  const serviceManager = resolveServiceManager();
-  const {configService} = serviceManager;
+  const sm = resolveServiceManager();
   const changeText = change.text;
   const isNewLine = REGEXP_NEWLINE.test(changeText);
   const isDeleteLine = change.range.end.line > change.range.start.line;
   const isLineStart = change.range.start.character === 0;
   const bookmarkInCurrentLine = getBookmarkFromLineNumber();
-  const {autoSwitchSingleToMultiWhenLineWrapping} = configService.configuration;
+  const {autoSwitchSingleToMultiWhenLineWrap} = sm.configure.configure;
   const cursorLine = document.lineAt(change.range.start.line);
   const bookmarkInCursor = getBookmarkFromLineNumber(
     cursorLine.range.start.line,
@@ -667,7 +646,7 @@ export function updateBookmarksGroupByChangedLine(
       let endLine = originalSelection.end.line;
       let startChar = originalSelection.start.character;
       let endCharacter = changedLine.range.end.character;
-      if (autoSwitchSingleToMultiWhenLineWrapping) {
+      if (autoSwitchSingleToMultiWhenLineWrap) {
         startLine = isLineStart
           ? originalSelection.start.line + newLines
           : originalSelection.start.line;
@@ -782,7 +761,7 @@ export function updateBookmarksGroupByChangedLine(
 
   if (needUpdateDecorations) {
     // 这时候要刷新下打开的编辑器的装饰器样式, 要不然会被用户误认为还是将单行书签转换为多行书签显示
-    serviceManager.decorationService.updateActiveEditorAllDecorations();
+    sm.decorationService.updateActiveEditorAllDecorations();
   }
 }
 /**
@@ -859,6 +838,10 @@ export function sortBookmarks(
         if (groupViewType === TreeViewGroupEnum.WORKSPACE) {
           return a.sortedInfo.workspace - b.sortedInfo.workspace;
         }
+
+        if (groupViewType === TreeViewGroupEnum.ICON) {
+          return a.sortedInfo.icon - b.sortedInfo.icon;
+        }
         return a.selection.start.line - b.selection.start.line;
       });
 
@@ -924,7 +907,7 @@ export async function showGroupQuickPick(
  * @returns
  */
 export function getBookmarkFromCtx(
-  context: LineBookmarkContext,
+  context: BookmarkActionContext,
   cb?: () => void,
 ) {
   let bookmark: IBookmark | undefined;
@@ -951,7 +934,7 @@ export function getBookmarkFromCtx(
  * @returns
  */
 export function getBookmarkColorFromCtx(
-  context: LineBookmarkContext | BookmarkTreeItem | undefined,
+  context: BookmarkActionContext | BookmarkTreeItem | undefined,
   cb?: () => void,
 ) {
   let bookmark: IBookmark | undefined;
@@ -970,28 +953,20 @@ export function getBookmarkColorFromCtx(
   return bookmark;
 }
 
-export function getBookmarkIcon(sm: ServiceManager, bookmark: IBookmark) {
-  const gutters = sm.gutterService.gutters;
-  const tagGutters = sm.gutterService.tagGutters;
-
-  return bookmark.label
-    ? (tagGutters[bookmark.color] || tagGutters['default']).iconPath
-    : (gutters[bookmark.color] || (tagGutters['default'] as any)).iconPath;
-}
-
 export async function showBookmarksQuickPick(bookmarks?: IBookmark[]) {
   let _bookmarks = bookmarks;
   const sm = resolveServiceManager();
   if (!_bookmarks) {
     _bookmarks = resolveBookmarkController().store.bookmarks;
   }
-  const quickItems = _bookmarks.map(it => ({
+
+  const quickItems = _bookmarks?.map(it => ({
     label:
       it.label || it.description || it.selectionContent?.slice(0, 120) || '',
     description: getLineInfoStrFromBookmark(it),
     detail: it.fileId,
     meta: it,
-    iconPath: getBookmarkIcon(sm, it) as any,
+    iconPath: it.iconPath,
   }));
 
   // @ts-ignore

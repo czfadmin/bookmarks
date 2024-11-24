@@ -1,6 +1,5 @@
-import {EXTENSION_ID} from './constants';
 import {disableAllEvents} from './events';
-import {ExtensionContext} from 'vscode';
+import {ExtensionContext, window} from 'vscode';
 import bootstrap from './bootstrap';
 /**
  * 插件上下文
@@ -11,9 +10,9 @@ let _context: ExtensionContext;
  * 获取插件的上下文
  * @returns context
  */
-export const resolveExtensionCtx = (): ExtensionContext => _context;
+export const resolveExtensionCtx = (): ExtensionContext => _context!;
 
-export async function activate(context: ExtensionContext) {
+export function activate(context: ExtensionContext) {
   _context = context;
   bootstrap(context);
 }
