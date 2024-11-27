@@ -258,78 +258,83 @@ export async function toggleBookmark(
     return;
   }
 
-  let selection = editor.selection;
+  let selections = editor.selections;
 
   if (context && 'lineNumber' in context) {
     const {lineNumber} = context;
     const line = editor.document.lineAt(lineNumber - 1);
-    selection = getSelectionFromLine(line);
+    selections = [getSelectionFromLine(line)];
   }
 
-  if (!selection) {
+  if (!selections.length) {
     return;
   }
 
-  const {type: bookmarkType, label = '', withColor = false} = extra;
+  for (let selection of selections) {
+    const {type: bookmarkType, label = '', withColor = false} = extra;
 
-  let range, selectionContent;
-  const activeLine = editor.document.lineAt(selection.active.line);
-  if (bookmarkType === BookmarkTypeEnum.LINE) {
-    const startPos = activeLine.text.indexOf(activeLine.text.trim());
-    range = new Selection(
-      activeLine.lineNumber,
-      startPos,
-      activeLine.lineNumber,
-      activeLine.range.end.character,
-    );
+    let range, selectionContent;
+    const activeLine = editor.document.lineAt(selection.active.line);
+    if (bookmarkType === BookmarkTypeEnum.LINE) {
+      const startPos = activeLine.text.indexOf(activeLine.text.trim());
+      range = new Selection(
+        activeLine.lineNumber,
+        startPos,
+        activeLine.lineNumber,
+        activeLine.range.end.character,
+      );
 
-    selectionContent = activeLine.text.trim();
-  } else {
-    range = editor.selection;
-    if (range.isEmpty) {
-      return;
+      selectionContent = activeLine.text.trim();
+    } else {
+      range = editor.selection;
+      if (range.isEmpty) {
+        return;
+      }
+      selectionContent = editor.document.getText(range);
     }
-    selectionContent = editor.document.getText(range);
-  }
 
-  if (
-    bookmarkType === BookmarkTypeEnum.LINE &&
-    checkIfBookmarkIsInGivenSelectionAndRemove(editor, range)
-  ) {
-    return;
-  }
-
-  let chosenColor: string | undefined = 'default';
-  if (withColor) {
-    chosenColor = await chooseBookmarkColor();
-    if (!chosenColor) {
-      return;
+    if (
+      bookmarkType === BookmarkTypeEnum.LINE &&
+      checkIfBookmarkIsInGivenSelectionAndRemove(editor, range)
+    ) {
+      if (selections.length === 1) {
+        return;
+      }
+      continue;
     }
-  }
 
-  const fileUri = editor.document.uri;
+    let chosenColor: string | undefined = 'default';
+    if (withColor) {
+      chosenColor = await chooseBookmarkColor();
+      if (!chosenColor) {
+        return;
+      }
+    }
 
-  const bookmark: any = {
-    type: bookmarkType,
-    label,
-    color: chosenColor,
-    description: '',
-    fileUri: editor.document.uri,
-    languageId: editor.document.languageId,
-    selectionContent,
-    fileId: fileUri.fsPath,
-    fileName: editor.document.fileName,
-    rangesOrOptions: {
-      range,
-      hoverMessage: '',
-      renderOptions: {
-        after: {},
+    const fileUri = editor.document.uri;
+
+    const bookmark: any = {
+      type: bookmarkType,
+      label,
+      color: chosenColor,
+      description: '',
+      fileUri: editor.document.uri,
+      languageId: editor.document.languageId,
+      selectionContent,
+      fileId: fileUri.fsPath,
+      fileName: editor.document.fileName,
+      rangesOrOptions: {
+        range,
+        hoverMessage: '',
+        renderOptions: {
+          after: {},
+        },
       },
-    },
-    workspaceFolder: workspace.getWorkspaceFolder(editor.document.uri!)!,
-  };
+      workspaceFolder: workspace.getWorkspaceFolder(editor.document.uri!)!,
+    };
 
-  controller.add(bookmark);
+    controller.add(bookmark);
+  }
 }
 /**
  * 删除行标签
