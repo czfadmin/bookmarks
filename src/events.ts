@@ -1,4 +1,5 @@
 import {
+  commands,
   Disposable,
   TextEditor,
   TextEditorDecorationType,
@@ -14,9 +15,7 @@ import {
 import {registerExtensionCustomContextByKey} from './context';
 import {resolveBookmarkController} from './bootstrap';
 import resolveServiceManager from './services/ServiceManager';
-import {IBookmark} from './stores/bookmark';
 
-// let onDidChangeActiveTextEditor: Disposable | undefined;
 let onDidChangeVisibleTextEditors: Disposable | undefined;
 let onDidSaveTextDocumentDisposable: Disposable | undefined;
 let onDidCursorChangeDisposable: Disposable | undefined;
@@ -27,7 +26,6 @@ let onDidDeleteFilesDisposable: Disposable | undefined;
 let onDidTextSelectionDisposable: Disposable | undefined;
 
 export function updateChangeActiveTextEditorListener() {
-  // onDidChangeActiveTextEditor?.dispose();
   const sm = resolveServiceManager();
   // 当打开多个editor group时,更新每个editor的中的decorations
   let visibleTextEditors = window.visibleTextEditors;
@@ -36,16 +34,10 @@ export function updateChangeActiveTextEditorListener() {
       sm.decorationService.updateDecorationsByEditor(editor, true);
     });
   }
-  // onDidChangeActiveTextEditor = window.onDidChangeActiveTextEditor(ev => {
-  //   if (!ev) {
-  //     return;
-  //   }
-  //   sm.decorationService.updateDecorationsByEditor(ev, true);
-  // });
 }
 
 /**
- * 监听`onDidChangeVisibleTextEditors`事件: 当打开的`editor` 发生变化, 更新所有打开的`TextEditor`上的装饰器
+ * @zh 监听`onDidChangeVisibleTextEditors`事件: 当打开的`editor` 发生变化, 更新所有打开的`TextEditor`上的装饰器
  */
 export function updateChangeVisibleTextEditorsListener() {
   onDidChangeVisibleTextEditors?.dispose();
@@ -63,7 +55,7 @@ let lastPositionLine = -1;
 let decoration: TextEditorDecorationType | undefined;
 
 /**
- * 跟随鼠标移动,显示鼠标所在行的鼠标的信息
+ * @zh 跟随鼠标移动,显示鼠标所在行的书签的 `lineBlame` 信息
  */
 export function updateCursorChangeListener() {
   onDidCursorChangeDisposable?.dispose();
@@ -72,7 +64,9 @@ export function updateCursorChangeListener() {
   const sm = resolveServiceManager();
   const enableLineBlame =
     (sm.configure.configure.lineBlame as boolean) || false;
+
   const activeEditor = window.activeTextEditor;
+
   if (activeEditor) {
     updateLineBlame(activeEditor, enableLineBlame);
   }
@@ -125,8 +119,9 @@ function updateLineBlame(editor: TextEditor, enableLineBlame: boolean) {
         renderOptions: {
           after: {
             color: '#ffffff40',
-            margin: '0 12px 0 12px',
-            contentText: buildLineBlameInfo(bookmark),
+            margin: '0 16px 0 16px',
+            contentText: bookmark.lineBlame,
+            contentIconPath: bookmark.iconPath,
           },
         },
       },
@@ -134,19 +129,9 @@ function updateLineBlame(editor: TextEditor, enableLineBlame: boolean) {
   }
 }
 
-function buildLineBlameInfo(bookmark: IBookmark) {
-  if (bookmark.label && bookmark.description) {
-    return `${bookmark.label} - ${bookmark.description}`;
-  }
-  if (bookmark.label && !bookmark.description) {
-    return bookmark.label;
-  }
-  if (bookmark.description && !bookmark.label) {
-    return bookmark.description;
-  }
-  return '';
-}
-
+/**
+ * @zh 当文档变化时 进行对文档中的书签
+ */
 export function updateBookmarkInfoWhenTextChangeListener() {
   onDidChangeTextDocumentDisposable?.dispose();
   const controller = resolveBookmarkController();
@@ -227,7 +212,6 @@ export function updateTextEditorSelectionListener() {
 }
 
 export function disableAllEvents() {
-  // onDidChangeActiveTextEditor?.dispose();
   onDidChangeBreakpoints?.dispose();
   onDidCursorChangeDisposable?.dispose();
   onDidSaveTextDocumentDisposable?.dispose();

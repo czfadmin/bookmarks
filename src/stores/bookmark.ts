@@ -278,6 +278,20 @@ export const Bookmark = types
           ? `Ln: ${start.line + 1}`
           : `Start { Ln: ${start?.line}, Col: ${start.character + 1} }. End { Ln: ${end.line + 1}, Col: ${end.character + 1} }`;
       },
+
+      /**
+       *  @zh 书签的 `lineBlame` 信息
+       */
+      get lineBlame() {
+        const group = (self as any).group;
+        if (self.label && self.description) {
+          return `${group.label} • ${self.label} - ${self.description}`;
+        }
+
+        return !self.label && !self.description
+          ? ''
+          : `${group.label} • ${self.label || self.description || ''}`;
+      },
     };
   })
   .actions(self => {

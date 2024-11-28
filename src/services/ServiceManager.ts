@@ -11,7 +11,7 @@ import {createGlobalStore, GlobalStore} from '../stores';
 import {IconsService} from './IconsService';
 import ColorsService from './ColorsService';
 import {Instance} from 'mobx-state-tree';
-import { MigrateService } from './MigrateService';
+import {MigrateService} from './MigrateService';
 
 export interface IServiceManager {
   readonly configService: ConfigService;
@@ -24,7 +24,7 @@ export interface IServiceManager {
   readonly colorsService: ColorsService;
   readonly fileService: FileService;
 
-  readonly migrateService: MigrateService
+  readonly migrateService: MigrateService;
 }
 
 export class ServiceManager implements IServiceManager, IDisposable {
@@ -38,7 +38,7 @@ export class ServiceManager implements IServiceManager, IDisposable {
 
   readonly colorsService: ColorsService;
 
-  readonly migrateService: MigrateService
+  readonly migrateService: MigrateService;
   private _statusbarService: StatusbarService | undefined;
 
   public readonly fileService: FileService;
@@ -87,7 +87,7 @@ export class ServiceManager implements IServiceManager, IDisposable {
     this.configService = new ConfigService(this);
     this.colorsService = new ColorsService(this);
     this.gutterService = new GutterService(this);
-    this.migrateService = new MigrateService(this)
+    this.migrateService = new MigrateService(this);
     this.decorationService = new DecorationService(this);
     this.workspaceService = new WorkspaceService(this);
     this.gitService = new GitService(this);

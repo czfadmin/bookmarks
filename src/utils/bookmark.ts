@@ -578,10 +578,20 @@ export function updateBookmarksGroupByChangedLine(
   const changeText = change.text;
   const isNewLine = REGEXP_NEWLINE.test(changeText);
   const isDeleteLine = change.range.end.line > change.range.start.line;
-  const isLineStart = change.range.start.character === 0;
+
+  // 获取当前行的书签数据
   const bookmarkInCurrentLine = getBookmarkFromLineNumber();
   const {autoSwitchSingleToMultiWhenLineWrap} = sm.configure.configure;
+  // 鼠标发生改变的行
   const cursorLine = document.lineAt(change.range.start.line);
+
+  // 是否时从当前行的开始位置进行操作, 需要判断是否直接从character为0或者在已经缩进的地方直接回车
+  const isLineStart =
+    change.range.start.character === 0 ||
+    (change.range.start.character ===
+      cursorLine.firstNonWhitespaceCharacterIndex &&
+      cursorLine.isEmptyOrWhitespace);
+
   const bookmarkInCursor = getBookmarkFromLineNumber(
     cursorLine.range.start.line,
   );
