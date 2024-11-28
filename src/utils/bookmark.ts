@@ -789,35 +789,6 @@ export function updateLineBookmarkRangeWhenDocumentChange(
   });
 }
 
-/**
- * 获取书签的选择区域信息
- * @param bookmark
- * @returns
- */
-export function getLineInfoFromBookmark(bookmark: IBookmark) {
-  const {start, end} = bookmark.selection;
-  if (bookmark.type === BookmarkTypeEnum.LINE) {
-    return {
-      line: start.line + 1,
-    };
-  } else {
-    return {
-      start: {line: start.line + 1, col: start.character + 1},
-      end: {
-        line: end.line + 1,
-        col: end.character + 1,
-      },
-    };
-  }
-}
-
-export function getLineInfoStrFromBookmark(bookmark: IBookmark) {
-  const lineInfo = getLineInfoFromBookmark(bookmark);
-  return bookmark.type === BookmarkTypeEnum.LINE
-    ? `Ln: ${lineInfo.line}`
-    : `Start { Ln: ${lineInfo.start?.line}, Col: ${lineInfo.start?.col} }. End { Ln: ${lineInfo.end?.line}, Col: ${lineInfo.end?.col} }`;
-}
-
 export function sortBookmarks(
   bookmarks: IBookmark[],
   sortedType: TreeViewSortedEnum,
@@ -970,7 +941,7 @@ export async function showBookmarksQuickPick(bookmarks?: IBookmark[]) {
   const quickItems = _bookmarks?.map(it => ({
     label:
       it.label || it.description || it.selectionContent?.slice(0, 120) || '',
-    description: getLineInfoStrFromBookmark(it),
+    description: it.lineInfoString,
     detail: it.fileId,
     meta: it,
     iconPath: it.iconPath,

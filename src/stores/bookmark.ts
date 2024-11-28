@@ -202,10 +202,7 @@ export const Bookmark = types
         return color.startsWith('#') ? escapeColor(color) : color;
       },
 
-      /**
-       *@zh 获取书签的装饰器图标
-       */
-      get iconPath() {
+      get iconSvg() {
         const {icons, configure} = ServiceManager.instance;
         const {defaultLabeledBookmarkIcon, defaultBookmarkIcon} =
           configure.configure;
@@ -226,30 +223,60 @@ export const Bookmark = types
         const color = (self as any).escapedColor;
 
         if (icon) {
-          return Uri.parse(
-            `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 24 24">${
-              icon.body.includes('stroke')
-                ? icon.body.replace(
-                    /stroke\s*=\s*"(.*?)"/gi,
-                    `stroke="${color}"`,
-                  )
-                : icon.body.replace(/fill\s*=\s*"(.*?)"/gi, `fill="${color}"`)
-            }</svg>`,
-          );
+          return `<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 24 24">${
+            icon.body.includes('stroke')
+              ? icon.body.replace(/stroke\s*=\s*"(.*?)"/gi, `stroke="${color}"`)
+              : icon.body.replace(/fill\s*=\s*"(.*?)"/gi, `fill="${color}"`)
+          }</svg>`;
         }
         // 这样写只是为了消除ts报警错误,误删
         const body = default_bookmark_svg_icon.replace(
           /fill="currentColor"/gi,
           `fill="${(self as Instance<typeof Bookmark>).escapedColor}"`,
         );
-        return Uri.parse(
-          `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 24 24">${body}</svg>`,
-        );
+        return `<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 24 24">${body}</svg>`;
+      },
+      /**
+       *@zh 获取书签的装饰器图标
+       */
+      get iconPath() {
+        return Uri.parse(`data:image/svg+xml;utf8,${(self as any).iconSvg}`);
       },
 
       get group() {
         const controller = resolveBookmarkController();
         return controller.store.groups.find(it => it.id === self.groupId);
+      },
+
+      /**
+       * @zh 获取书签的选择区域信息
+       */
+      get lineInfo() {
+        const {start, end} = self.rangesOrOptions.range;
+
+        if (self.type === BookmarkTypeEnum.LINE) {
+          return {
+            line: start.line + 1,
+          };
+        } else {
+          return {
+            start: {line: start.line + 1, col: start.character + 1},
+            end: {
+              line: end.line + 1,
+              col: end.character + 1,
+            },
+          };
+        }
+      },
+
+      /**
+       * @zh 获取书签的选择区域信息
+       */
+      get lineInfoString() {
+        const {start, end} = self.rangesOrOptions.range;
+        return self.type === BookmarkTypeEnum.LINE
+          ? `Ln: ${start.line + 1}`
+          : `Start { Ln: ${start?.line}, Col: ${start.character + 1} }. End { Ln: ${end.line + 1}, Col: ${end.character + 1} }`;
       },
     };
   })

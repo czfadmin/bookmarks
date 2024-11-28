@@ -25,7 +25,6 @@ import {
   chooseBookmarkColor,
   deleteBookmark as deleteBookmarkUtil,
   getBookmarksFromFileUri,
-  getLineInfoStrFromBookmark,
   gotoSourceLocation as gotoSourceLocationUtil,
   quicklyJumpToBookmark,
   toggleBookmark,
@@ -298,7 +297,7 @@ export async function listBookmarksInCurrentFile(ctx: BookmarkActionContext) {
     return {
       label:
         it.label || it.description || it.selectionContent?.slice(0, 120) || '',
-      description: getLineInfoStrFromBookmark(it),
+      description: it.lineInfoString,
       detail: it.fileUri.fsPath,
       iconPath: it.iconPath,
       meta: {

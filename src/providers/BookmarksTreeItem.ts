@@ -13,7 +13,6 @@ import {
   BookmarksGroupedByCustomType,
   BookmarkTreeItemCtxValueEnum,
 } from '../types';
-import {getLineInfoStrFromBookmark} from '../utils';
 import {ServiceManager} from '../services/ServiceManager';
 import {
   BookmarksGroupedByColorType,
@@ -112,7 +111,7 @@ export default class BookmarkTreeItem extends BaseTreeItem {
     this.tooltip = Array.isArray(hoverMessage)
       ? hoverMessage.join('\n')
       : hoverMessage;
-    this.description = getLineInfoStrFromBookmark(meta);
+    this.description = meta.lineInfoString;
   }
 
   /**
