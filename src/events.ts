@@ -1,6 +1,7 @@
 import {
-  commands,
   Disposable,
+  FileCreateEvent,
+  FileWillCreateEvent,
   TextEditor,
   TextEditorDecorationType,
   Uri,
@@ -25,6 +26,16 @@ let onDidRenameFilesDisposable: Disposable | undefined;
 let onDidDeleteFilesDisposable: Disposable | undefined;
 let onDidTextSelectionDisposable: Disposable | undefined;
 
+export const locker = {
+  refactoring: false,
+  didCreate: false,
+  willCreate: false,
+  didDelete: false,
+  willDelete: false,
+  didRename: false,
+  willRename: false,
+};
+
 export function updateChangeActiveTextEditorListener() {
   const sm = resolveServiceManager();
   // 当打开多个editor group时,更新每个editor的中的decorations
@@ -45,7 +56,7 @@ export function updateChangeVisibleTextEditorsListener() {
   onDidChangeVisibleTextEditors = window.onDidChangeVisibleTextEditors(
     editors => {
       for (let editor of editors) {
-        sm.decorationService.updateDecorationsByEditor(editor);
+        sm.decorationService.updateDecorationsByEditor(editor, true);
       }
     },
   );
@@ -175,6 +186,8 @@ export function updateFilesRenameAndDeleteListeners() {
     }
   });
 
+  workspace.onWillRenameFiles(e => {});
+
   // 监听文件删除
   onDidDeleteFilesDisposable = workspace.onDidDeleteFiles(e => {
     const {files} = e;
@@ -190,6 +203,56 @@ export function updateFilesRenameAndDeleteListeners() {
       controller.clearAllBookmarkInFile(file);
     }
   });
+
+  workspace.onWillDeleteFiles(e => {});
+
+  /**
+   * 在进行refactor中将文件移动到一个新的文件,
+   * - 通过对当前的打开的文档激活的行, 判断当前行时候存在书签,
+   * - 如果有书签, 需要当前的书签的数据移动到新的文件, 此时进行对当前行的内容和新的文件中的内容进行正则匹配, 完成书签位置调整
+   * - 如果没用, 更新当前激活的文件中的存在的书签的数据, 此时已经有`updateBookmarkInfoWhenTextChangeListener` 监听的事件进行处理.
+   */
+  workspace.onDidCreateFiles((e: FileCreateEvent) => {
+    const {files} = e;
+    console.log(
+      'workspace.onDidCreateFiles:',
+      files,
+      window.activeTextEditor?.selection.active.line,
+    );
+
+    locker.willCreate = false;
+
+    const activeTextEditor = window.activeTextEditor;
+    if (!activeTextEditor) {
+      return;
+    }
+
+    const activeLine = activeTextEditor.selection.active.line;
+
+    const existingBookmark = getBookmarkFromLineNumber(activeLine);
+
+    console.log('当前书签: ', existingBookmark);
+
+    if (!existingBookmark) {
+      return;
+    }
+
+    existingBookmark.updateFileUri(files[0]);
+  });
+
+  workspace.onWillCreateFiles((e: FileWillCreateEvent) => {
+    const {files} = e;
+    console.log(
+      'workspace.onWillCreateFiles:',
+      files,
+      window.activeTextEditor?.selection.active.line,
+    );
+    locker.willCreate = true;
+  });
+
+  // workspace.onWillSaveTextDocument(e => {
+  //   console.log("workspace.onWillSaveTextDocument:", e, window.activeTextEditor?.selection.active.line)
+  // })
 }
 
 /**

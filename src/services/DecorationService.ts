@@ -191,7 +191,7 @@ export default class DecorationService extends BaseService {
       prevTextDecoration.dispose();
       this._decorations.delete(bookmark.id);
     }
-    const newTextDecoration = this.getTextDecoration(bookmark);
+    const newTextDecoration = this.getTextDecoration(bookmark, true);
     return newTextDecoration;
   }
 

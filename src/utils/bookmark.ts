@@ -72,7 +72,7 @@ export function checkIfBookmarksIsInCurrentEditor(editor: TextEditor) {
 }
 
 /**
- * 从当前编辑的行号获取当前位置存在的书签
+ * @zh 从当前编辑的行号获取当前位置存在的书签
  */
 export function getBookmarkFromLineNumber(
   line?: number,
@@ -596,8 +596,15 @@ export function updateBookmarksGroupByChangedLine(
     cursorLine.range.start.line,
   );
   let needUpdateDecorations = false;
+
+  // 当使用 F2 进行名称修改
+  const isExecutedRenameCommand =
+    !isNewLine &&
+    !isDeleteLine &&
+    change.range.start.line === window.activeTextEditor!.selection.active.line;
+
   // 1. 当发生改变的区域存在行书签
-  if (bookmarkInCurrentLine) {
+  if (bookmarkInCurrentLine && isExecutedRenameCommand) {
     // 发生改变的行
     const changedLine = document.lineAt(change.range.start.line);
     let selection,

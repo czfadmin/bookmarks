@@ -1,4 +1,4 @@
-import {ExtensionContext, workspace} from 'vscode';
+import {commands, ExtensionContext, window, workspace} from 'vscode';
 import BookmarksController from './controllers/BookmarksController';
 import UniversalBookmarkController from './controllers/UniversalBookmarkController';
 import {BookmarksTreeView} from './views/BookmarksTreeView';
@@ -78,7 +78,6 @@ export function resolveBookmarkController(): BookmarksController {
 export function resolveUniversalController(): UniversalBookmarkController {
   return controllerManager.universal!;
 }
-
 
 export default function bootstrap(context: ExtensionContext) {
   if (!workspace.workspaceFolders) {

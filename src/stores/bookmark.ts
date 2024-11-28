@@ -334,7 +334,7 @@ export const Bookmark = types
 
     function updateFileUri(uri: Uri) {
       self.fileUri = {
-        fsPath: uri.fsPath,
+        fsPath: workspace.asRelativePath(uri.fsPath, false),
       };
       updateTextDecoration();
     }
