@@ -11,12 +11,17 @@ export interface BaseMeta {
   sortedIndex?: number;
 }
 
+export interface BookmarkGutterActionContext {
+  uri: Uri;
+  lineNumber: number;
+}
+
 /**
  * @zh 表示用户对书签进行操作时的上下文
  */
 export type BookmarkActionContext =
   | Uri
-  | {uri: Uri; lineNumber: number}
+  | BookmarkGutterActionContext
   | BookmarkTreeItem
   | undefined;
 

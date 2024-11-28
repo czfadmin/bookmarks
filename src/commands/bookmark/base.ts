@@ -86,10 +86,10 @@ export function clearAllBookmarks(args: any) {
 }
 /**
  * 通过命令行删除书签
- * - 从`command palette` 上调用删除操作, context 为undefined
- * - 从 左侧通过gutter的菜单上下文调用删除操作, context 类型为 LineBookmarkContext
+ * - 从`command palette` 上调用删除操作, context 为 undefined
+ * - 从 左侧通过gutter的菜单上下文调用删除操作, context 类型为 @see {BookmarkGutterActionContext}
  * - 从 文本编辑器中的菜单上下文调用删除操作, context 类型为 当前打开的文件的uri
- * - 从树视图中调用删除操作, context 类型为 BookmarkTreeItem
+ * - 从树视图中调用删除操作, context 类型为 @see {BookmarkTreeItem}
  */
 export function deleteBookmark(context: BookmarkActionContext) {
   const controller = resolveBookmarkController();

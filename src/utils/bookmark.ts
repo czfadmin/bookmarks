@@ -923,7 +923,9 @@ export function getBookmarkFromCtx(
   ) {
     bookmark = context.meta as IBookmark;
   } else {
-    bookmark = getBookmarkFromLineNumber();
+    bookmark = getBookmarkFromLineNumber(
+      context && 'lineNumber' in context ? context.lineNumber - 1 : undefined,
+    );
   }
 
   if (!bookmark && cb) {
