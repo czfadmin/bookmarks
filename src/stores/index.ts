@@ -11,6 +11,7 @@ export * from './bookmark-store';
 export * from './icons';
 export * from './color';
 export * from './global';
+export * from './BookmarkSCMCommitInfo';
 
 /**
  * @zh 初始化一个全局的状态管理器

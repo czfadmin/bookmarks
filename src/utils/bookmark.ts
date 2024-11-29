@@ -604,7 +604,7 @@ export function updateBookmarksGroupByChangedLine(
     change.range.start.line === window.activeTextEditor!.selection.active.line;
 
   // 1. 当发生改变的区域存在行书签
-  if (bookmarkInCurrentLine && isExecutedRenameCommand) {
+  if (bookmarkInCurrentLine && (isExecutedRenameCommand || isLineStart)) {
     // 发生改变的行
     const changedLine = document.lineAt(change.range.start.line);
     let selection,

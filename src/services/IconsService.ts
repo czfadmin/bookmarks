@@ -225,7 +225,7 @@ export class IconsService extends BaseService {
     try {
       return await ofetch(url);
     } catch (error) {
-      this._logger.error(error);
+      this.logger.error(error);
       return error;
     }
   }

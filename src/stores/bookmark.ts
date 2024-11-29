@@ -1,6 +1,13 @@
 import {Instance, SnapshotIn, types} from 'mobx-state-tree';
 import {default_bookmark_color, default_bookmark_icon} from '../constants';
-import {Selection, Uri, WorkspaceFolder, workspace} from 'vscode';
+import {
+  Range,
+  Selection,
+  Uri,
+  WorkspaceFolder,
+  window,
+  workspace,
+} from 'vscode';
 import {createHoverMessage, escapeColor} from '../utils';
 import {BookmarksGroupedByFileType, BookmarkTypeEnum} from '../types';
 import {
@@ -16,6 +23,7 @@ import {
 } from '../constants/bookmark';
 import {ServiceManager} from '../services';
 import {resolveBookmarkController} from '../bootstrap';
+import {BookmarkSCMCommitInfo} from './BookmarkSCMCommitInfo';
 
 export type BookmarksGroupedByColorType = {
   color: string;
@@ -129,6 +137,11 @@ export const Bookmark = types
      * @zh 书签的图标引用
      */
     icon: types.optional(types.string, default_bookmark_icon),
+
+    /**
+     * @zh 源代码控制器提交的相关信息
+     */
+    scmCommitInfo: types.maybeNull(BookmarkSCMCommitInfo),
   })
   .views(self => {
     return {
@@ -410,6 +423,13 @@ export const Bookmark = types
         );
       },
       setProp,
+      updateRangesOrOptions(range: Range) {
+        self.rangesOrOptions = {
+          ...self.rangesOrOptions,
+          range: new Selection(range.start, range.end),
+        };
+        updateTextDecoration();
+      },
     };
   });
 

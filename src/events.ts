@@ -15,7 +15,7 @@ import {
 } from './utils/bookmark';
 import {registerExtensionCustomContextByKey} from './context';
 import {resolveBookmarkController} from './bootstrap';
-import resolveServiceManager from './services/ServiceManager';
+import resolveServiceManager, {ServiceManager} from './services/ServiceManager';
 
 let onDidChangeVisibleTextEditors: Disposable | undefined;
 let onDidSaveTextDocumentDisposable: Disposable | undefined;
@@ -149,14 +149,37 @@ export function updateBookmarkInfoWhenTextChangeListener() {
   onDidChangeTextDocumentDisposable = workspace.onDidChangeTextDocument(e => {
     const {contentChanges, document} = e;
     // 代表存在文档发生变化
-    if (contentChanges.length) {
-      const bookmarks = controller.getBookmarkStoreByFileUri(document.uri);
-      if (!bookmarks.length) {
+    if (!contentChanges.length || document.uri.scheme !== 'file') {
+      return;
+    }
+
+    const bookmarks = controller.getBookmarkStoreByFileUri(document.uri);
+
+    if (!bookmarks.length) {
+      return;
+    }
+
+    // 配合当使用`command(refactor:moveToNewFile)`指令, 更新书签数据
+    if (bookmarks.length === 1 && locker.didCreate) {
+      locker.didCreate = false;
+      const bookmark = bookmarks[0];
+
+      // 寻找第一个相同的内容的书签作为书签的新的 `range`
+      for (let idx = 0; idx < document.lineCount; idx++) {
+        const line = document.lineAt(idx);
+        if (
+          line.text.length &&
+          bookmark.selectionContent.includes(line.text.trim())
+        ) {
+          bookmark.updateRangesOrOptions(line.range);
+        }
         return;
       }
-      for (let change of contentChanges) {
-        updateBookmarksGroupByChangedLine(e, change);
-      }
+      return;
+    }
+
+    for (let change of contentChanges) {
+      updateBookmarksGroupByChangedLine(e, change);
     }
   });
 }
@@ -191,7 +214,7 @@ export function updateFilesRenameAndDeleteListeners() {
   // 监听文件删除
   onDidDeleteFilesDisposable = workspace.onDidDeleteFiles(e => {
     const {files} = e;
-    const excludeFolders = ['node_modules', '.vscode', 'dist', '.git'];
+    const excludeFolders = ['node_modules', '.vscode', 'dist', '.git', 'out'];
     if (!files.length) {
       return;
     }
@@ -204,23 +227,20 @@ export function updateFilesRenameAndDeleteListeners() {
     }
   });
 
-  workspace.onWillDeleteFiles(e => {});
-
   /**
-   * 在进行refactor中将文件移动到一个新的文件,
+   * 在进行refactor中将当前打开的文件中的书签移动到一个新的文件,
    * - 通过对当前的打开的文档激活的行, 判断当前行时候存在书签,
    * - 如果有书签, 需要当前的书签的数据移动到新的文件, 此时进行对当前行的内容和新的文件中的内容进行正则匹配, 完成书签位置调整
    * - 如果没用, 更新当前激活的文件中的存在的书签的数据, 此时已经有`updateBookmarkInfoWhenTextChangeListener` 监听的事件进行处理.
    */
   workspace.onDidCreateFiles((e: FileCreateEvent) => {
+    locker.willCreate = false;
     const {files} = e;
     console.log(
       'workspace.onDidCreateFiles:',
       files,
       window.activeTextEditor?.selection.active.line,
     );
-
-    locker.willCreate = false;
 
     const activeTextEditor = window.activeTextEditor;
     if (!activeTextEditor) {
@@ -231,13 +251,12 @@ export function updateFilesRenameAndDeleteListeners() {
 
     const existingBookmark = getBookmarkFromLineNumber(activeLine);
 
-    console.log('当前书签: ', existingBookmark);
-
     if (!existingBookmark) {
       return;
     }
 
     existingBookmark.updateFileUri(files[0]);
+    locker.didCreate = true;
   });
 
   workspace.onWillCreateFiles((e: FileWillCreateEvent) => {
@@ -250,9 +269,21 @@ export function updateFilesRenameAndDeleteListeners() {
     locker.willCreate = true;
   });
 
-  // workspace.onWillSaveTextDocument(e => {
-  //   console.log("workspace.onWillSaveTextDocument:", e, window.activeTextEditor?.selection.active.line)
-  // })
+  workspace.onWillSaveTextDocument(e => {
+    console.log(
+      'workspace.onWillSaveTextDocument:',
+      e,
+      window.activeTextEditor?.selection.active.line,
+    );
+  });
+
+  workspace.onDidSaveTextDocument(e => {
+    console.log(
+      'workspace.onDidSaveTextDocument:',
+      e,
+      window.activeTextEditor?.selection.active.line,
+    );
+  });
 }
 
 /**

@@ -5,7 +5,7 @@ import {ServiceManager} from './ServiceManager';
 
 export abstract class BaseService implements ILifecyle {
   public readonly sm: ServiceManager;
-  public readonly _logger: LoggerService;
+  public readonly logger: LoggerService;
 
   public readonly _disposers: (IDisposable | IDisposer)[] = [];
 
@@ -19,7 +19,7 @@ export abstract class BaseService implements ILifecyle {
 
   constructor(name: string, sm: ServiceManager) {
     this.sm = sm;
-    this._logger = new LoggerService(name);
+    this.logger = new LoggerService(name);
   }
 
   initial() {}

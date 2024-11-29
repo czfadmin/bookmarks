@@ -59,7 +59,7 @@ export default class DecorationService extends BaseService {
         ]);
       });
     } catch (error) {
-      this._logger.error(error);
+      this.logger.error(error);
     }
   }
 
@@ -178,14 +178,29 @@ export default class DecorationService extends BaseService {
     return decoration;
   }
 
+  /**
+   * @zh 根据书签更新书签装饰器
+   * @param bookmark  待更新的书签装饰器
+   * @returns
+   */
   updateTextDecoration(bookmark: Instance<typeof Bookmark>) {
     const editor = window.visibleTextEditors.find(
       it => it.document.uri.fsPath === bookmark.fileId,
     );
+    const prevTextDecoration = this._decorations.get(bookmark.id);
+
     if (!editor) {
+      if (!prevTextDecoration) {
+        return;
+      }
+      for (let editor of window.visibleTextEditors) {
+        editor.setDecorations(prevTextDecoration, []);
+      }
+      this._decorations.delete(bookmark.id);
+      prevTextDecoration.dispose();
       return;
     }
-    const prevTextDecoration = this._decorations.get(bookmark.id);
+
     if (prevTextDecoration) {
       editor.setDecorations(prevTextDecoration, []);
       prevTextDecoration.dispose();
@@ -210,10 +225,16 @@ export default class DecorationService extends BaseService {
     if (!textDecoration) {
       return;
     }
-    const editor = window.visibleTextEditors.find(
-      it => it.document.uri.fsPath === bookmark.fileId,
-    );
-    if (editor) {
+
+    if (
+      !window.visibleTextEditors.length &&
+      this._decorations.has(bookmark.id)
+    ) {
+      this._decorations.delete(bookmark.id);
+      textDecoration.dispose();
+    }
+
+    for (let editor of window.visibleTextEditors) {
       editor.setDecorations(textDecoration, []);
     }
 
