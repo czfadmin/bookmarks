@@ -16,6 +16,7 @@ import {
 import {registerExtensionCustomContextByKey} from './context';
 import {resolveBookmarkController} from './bootstrap';
 import resolveServiceManager, {ServiceManager} from './services/ServiceManager';
+import {Locker} from './stores/EventLocker';
 
 let onDidChangeVisibleTextEditors: Disposable | undefined;
 let onDidSaveTextDocumentDisposable: Disposable | undefined;
@@ -26,15 +27,9 @@ let onDidRenameFilesDisposable: Disposable | undefined;
 let onDidDeleteFilesDisposable: Disposable | undefined;
 let onDidTextSelectionDisposable: Disposable | undefined;
 
-export const locker = {
-  refactoring: false,
-  didCreate: false,
-  willCreate: false,
-  didDelete: false,
-  willDelete: false,
-  didRename: false,
-  willRename: false,
-};
+export const locker = Locker.create({
+  didCreate: [],
+});
 
 export function updateChangeActiveTextEditorListener() {
   const sm = resolveServiceManager();
@@ -159,22 +154,33 @@ export function updateBookmarkInfoWhenTextChangeListener() {
       return;
     }
 
-    // 配合当使用`command(refactor:moveToNewFile)`指令, 更新书签数据
-    if (bookmarks.length === 1 && locker.didCreate) {
-      locker.didCreate = false;
-      const bookmark = bookmarks[0];
+    if (
+      locker.didCreate.filter(it => it.fileId === document.uri.fsPath).length &&
+      locker.didCreate.length
+    ) {
+      // 配合当使用`command(refactor:moveToNewFile)`指令, 更新书签数据
+      locker.didCreate
+        .filter(it => it.fileId === document.uri.fsPath)
+        .forEach(it => {
+          for (let bookmark of bookmarks) {
+            // 寻找第一个相同的内容的书签作为书签的新的 `range`
+            for (let idx = 0; idx < document.lineCount; idx++) {
+              const line = document.lineAt(idx);
+              if (
+                line.text.length &&
+                bookmark.selectionContent
+                  .replace(/\s+/g, '')
+                  .includes(line.text.trim().replace(/\s+/g, ''))
+              ) {
+                bookmark.updateRangesOrOptions(line.range);
+                break;
+              }
+            }
+          }
 
-      // 寻找第一个相同的内容的书签作为书签的新的 `range`
-      for (let idx = 0; idx < document.lineCount; idx++) {
-        const line = document.lineAt(idx);
-        if (
-          line.text.length &&
-          bookmark.selectionContent.includes(line.text.trim())
-        ) {
-          bookmark.updateRangesOrOptions(line.range);
-        }
-        return;
-      }
+          locker.removeDidCreateByFileId(it.fileId);
+        });
+
       return;
     }
 
@@ -209,8 +215,6 @@ export function updateFilesRenameAndDeleteListeners() {
     }
   });
 
-  workspace.onWillRenameFiles(e => {});
-
   // 监听文件删除
   onDidDeleteFilesDisposable = workspace.onDidDeleteFiles(e => {
     const {files} = e;
@@ -234,7 +238,6 @@ export function updateFilesRenameAndDeleteListeners() {
    * - 如果没用, 更新当前激活的文件中的存在的书签的数据, 此时已经有`updateBookmarkInfoWhenTextChangeListener` 监听的事件进行处理.
    */
   workspace.onDidCreateFiles((e: FileCreateEvent) => {
-    locker.willCreate = false;
     const {files} = e;
     console.log(
       'workspace.onDidCreateFiles:',
@@ -256,33 +259,9 @@ export function updateFilesRenameAndDeleteListeners() {
     }
 
     existingBookmark.updateFileUri(files[0]);
-    locker.didCreate = true;
-  });
 
-  workspace.onWillCreateFiles((e: FileWillCreateEvent) => {
-    const {files} = e;
-    console.log(
-      'workspace.onWillCreateFiles:',
-      files,
-      window.activeTextEditor?.selection.active.line,
-    );
-    locker.willCreate = true;
-  });
-
-  workspace.onWillSaveTextDocument(e => {
-    console.log(
-      'workspace.onWillSaveTextDocument:',
-      e,
-      window.activeTextEditor?.selection.active.line,
-    );
-  });
-
-  workspace.onDidSaveTextDocument(e => {
-    console.log(
-      'workspace.onDidSaveTextDocument:',
-      e,
-      window.activeTextEditor?.selection.active.line,
-    );
+    // 添加到正在创建的书签列表中
+    locker.updateDidCreate(files[0].fsPath, [existingBookmark.id]);
   });
 }
 
