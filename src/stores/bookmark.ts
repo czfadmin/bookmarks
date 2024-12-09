@@ -345,9 +345,12 @@ export const Bookmark = types
       updateTextDecoration();
     }
 
-    function updateFileUri(uri: Uri) {
+    function updateFileUri(uriOrPath: Uri | string) {
       self.fileUri = {
-        fsPath: workspace.asRelativePath(uri.fsPath, false),
+        fsPath: workspace.asRelativePath(
+          typeof uriOrPath === 'string' ? uriOrPath : uriOrPath.fsPath,
+          false,
+        ),
       };
       updateTextDecoration();
     }

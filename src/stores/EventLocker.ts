@@ -1,37 +1,35 @@
 import {types} from 'mobx-state-tree';
+import {workspace} from 'vscode';
 
-export const LockerItem = types.model('LockerItem', {
-  bookmarks: types.array(types.string),
-  fileId: types.string,
-});
+export const DidCreateModel = types
+  .model('DidCreateModel', {
+    bookmarks: types.array(types.string),
+    fileId: types.string,
+    fromFileId: types.string,
+    fromStart: types.number,
+    fromEnd: types.number,
+  })
+  .views(self => {
+    return {};
+  });
 
 export const Locker = types
   .model('locker', {
-    didCreate: types.array(LockerItem),
+    didCreate: types.maybeNull(DidCreateModel),
   })
   .actions(self => {
     return {
-      updateDidCreate(fileId: string, bookmarks: string[]) {
-        const existing = self.didCreate.find(it => it.fileId === fileId);
-        if (!existing) {
-          self.didCreate.push({
-            fileId,
-            bookmarks,
-          });
-        } else {
-          bookmarks.forEach(it => {
-            if (!existing.bookmarks.find(item => item === it)) {
-              existing.bookmarks.push(it);
-            }
-          });
-        }
+      updateDidCreate(fileId: string, fromFileId: string, bookmarks: string[]) {
+        self.didCreate = DidCreateModel.create({
+          fileId,
+          fromFileId,
+          bookmarks,
+          fromStart: 0,
+          fromEnd: 0,
+        });
       },
-      removeDidCreateByFileId(fileId: string) {
-        const existing = self.didCreate.find(it => it.fileId === fileId);
-        if (!existing) {
-          return;
-        }
-        self.didCreate.remove(existing);
+      removeDidCreate() {
+        self.didCreate = null;
       },
     };
   });
