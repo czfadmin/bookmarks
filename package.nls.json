@@ -30,7 +30,7 @@
   "bookmark-manager.textDecorationThickness.description": "Text decoration thickness",
   "bookmark-manager.lineBlame.description": "Enable Line Blame",
   "bookmark-manager.fontWeight.description": "Font Weight",
-  "bookmark-manager.colors.description": "Custom bookmark color, object format: {\" name\": \"value\"}",
+  "bookmark-manager.colors.description": "Custom bookmark color, object format: {\" name\": \"value\"}.Note that this color value should be in hexadecimal format as much as possible. This makes it easier for the plugin to have a transparent effect when highlighting the current bookmark line, so that the current line content will not be unclear after it is turned on.",
   "bookmark-manager.defaultBookmarkIconColor.description": "The default color of bookmark icon.",
   "bookmark-manager.enableClick.description": "Enable click to jump to bookmark location",
   "bookmark-manager.viewsWelcome.content": "Add some bookmarks",

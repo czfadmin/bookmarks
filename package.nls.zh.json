@@ -30,7 +30,7 @@
   "bookmark-manager.textDecorationThickness.description": "设置用于装饰的线条粗细",
   "bookmark-manager.lineBlame.description": "是否跟随鼠标位置显示书签信息",
   "bookmark-manager.fontWeight.description": "书签字体权重",
-  "bookmark-manager.colors.description": "设置书签的颜色",
+  "bookmark-manager.colors.description": "设置书签的颜色.注意, 这个颜色值尽量使用16进制格式,.这样方便插件在使用高亮当前书签所在行的时候可以有个透明的效果,不至于导致开启后导致看不清当前行的内容",
   "bookmark-manager.defaultBookmarkIconColor.description": "默认书签图标的颜色",
   "bookmark-manager.enableClick": "启用双击跳转到书签位置",
   "bookmark-manager.viewsWelcome.content": "增加一些书签",

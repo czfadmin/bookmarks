@@ -18,7 +18,7 @@ export * from './global';
  */
 export function createGlobalStore() {
   const globalStore = GlobalStore.create({
-    colors: [],
+    colors: {},
     icons: [],
     configure: {
       decoration: {},

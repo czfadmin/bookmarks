@@ -1,16 +1,16 @@
-import {Instance, getRoot, types} from 'mobx-state-tree';
-import {workspace} from 'vscode';
+import { Instance, getRoot, types } from 'mobx-state-tree';
+import { workspace } from 'vscode';
 import {
   DEFAULT_BOOKMARK_COLOR,
   default_bookmark_icon,
   default_bookmark_tag,
   EXTENSION_ID,
 } from '../constants';
-import {defaultColors} from '../constants/colors';
-import {CreateDecorationOptions} from './decoration';
-import {GlobalStore} from './global';
+import { defaultColors } from '../constants/colors';
+import { CreateDecorationOptions } from './decoration';
+import { GlobalStore } from './global';
 
-export type StringIndexType<T> = {[key: string]: T};
+export type StringIndexType<T> = { [key: string]: T };
 
 /**
  * @zh 插件在 vscode 的自定义配置
@@ -101,11 +101,14 @@ export const BookmarkManagerConfigure = types
   .actions(self => {
     function refreshColors() {
       const configuration = workspace.getConfiguration(EXTENSION_ID);
-      const _colors = {} as any;
+      const _colors = {} as { [key: string]: { value: string, hex: string } };
       Object.entries(configuration.get('colors') as object).forEach(
         ([key, value]) => {
           if (typeof value === 'string') {
-            _colors[key] = value;
+            _colors[key] = {
+              value,
+              hex: value.startsWith("#") ? value : ''
+            };
           }
         },
       );
@@ -113,13 +116,19 @@ export const BookmarkManagerConfigure = types
       if (self.useBuiltInColors) {
         Object.entries(defaultColors).forEach(([key, color]) => {
           if (!_colors[key]) {
-            _colors[key] = color;
+            _colors[key] = {
+              value: color.value,
+              hex: color.hex
+            };
           }
         });
       }
 
-      _colors['default'] =
-        configuration.get('defaultBookmarkIconColor') || DEFAULT_BOOKMARK_COLOR;
+      const defaultColor = (configuration.get('defaultBookmarkIconColor') || DEFAULT_BOOKMARK_COLOR) as string
+      _colors['default'] = {
+        value: defaultColor,
+        hex: defaultColor.startsWith("#") ? defaultColor : ""
+      }
       if ((self as IBookmarkManagerConfigure).updateColors) {
         (self as IBookmarkManagerConfigure).updateColors(_colors);
       }
@@ -128,7 +137,8 @@ export const BookmarkManagerConfigure = types
       Object.entries(_colors).forEach((v, i) => {
         getRoot<Instance<typeof GlobalStore>>(self).addNewColor(
           v[0],
-          v[1] as string,
+          v[1].value as string,
+          v[1].hex
         );
       });
     }
@@ -164,17 +174,17 @@ export const BookmarkManagerConfigure = types
       );
     }
     return {
-      updateColors(colors: StringIndexType<string>) {
+      updateColors(colors: { [name: string]: { value: string, hex: string } }) {
         self.colors.clear();
         Object.keys(colors).forEach(it => {
-          self.colors.set(it, colors[it]);
+          self.colors.set(it, colors[it].value);
         });
       },
       afterCreate() {
         resolveConfiguration();
       },
       resolveConfiguration,
-      refreshColors() {},
+      refreshColors() { },
       refreshIcons,
     };
   });
@@ -186,7 +196,7 @@ export const RootConfigure = types
   })
   .actions(self => {
     return {
-      afterCreate() {},
+      afterCreate() { },
       refresh() {
         self.decoration?.resolveDecorationOptions();
         self.configure?.resolveConfiguration();

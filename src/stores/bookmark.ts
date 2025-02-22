@@ -1,8 +1,8 @@
-import {Instance, SnapshotIn, types} from 'mobx-state-tree';
-import {default_bookmark_color, default_bookmark_icon} from '../constants';
-import {Selection, Uri, WorkspaceFolder, workspace} from 'vscode';
-import {createHoverMessage, escapeColor} from '../utils';
-import {BookmarksGroupedByFileType, BookmarkTypeEnum} from '../types';
+import { Instance, SnapshotIn, types } from 'mobx-state-tree';
+import { DEFAULT_BOOKMARK_COLOR, default_bookmark_color, default_bookmark_icon } from '../constants';
+import { Selection, Uri, WorkspaceFolder, workspace } from 'vscode';
+import { createHoverMessage, escapeColor } from '../utils';
+import { BookmarksGroupedByFileType, BookmarkTypeEnum } from '../types';
 import {
   MyUriType,
   MyWorkspaceFolderType,
@@ -14,8 +14,8 @@ import {
   DEFAULT_BOOKMARK_GROUP_ID,
   default_bookmark_svg_icon,
 } from '../constants/bookmark';
-import {ServiceManager} from '../services';
-import {resolveBookmarkController} from '../bootstrap';
+import { ServiceManager } from '../services';
+import { resolveBookmarkController } from '../bootstrap';
 
 export type BookmarksGroupedByColorType = {
   color: string;
@@ -165,7 +165,7 @@ export const Bookmark = types
       },
 
       get selection() {
-        const {start, end} = self.rangesOrOptions.range;
+        const { start, end } = self.rangesOrOptions.range;
         return new Selection(
           start.line,
           start.character,
@@ -177,7 +177,7 @@ export const Bookmark = types
        *@zh 当label, range 以及description发生改变时, 调用此计算属性, 获取最新的hoverMessage
        */
       get prettierRangesOrOptions() {
-        const rangesOrOptions = {...self.rangesOrOptions};
+        const rangesOrOptions = { ...self.rangesOrOptions };
         rangesOrOptions.hoverMessage = createHoverMessage(
           self as IBookmark,
           true,
@@ -187,27 +187,36 @@ export const Bookmark = types
       },
 
       get plainColor() {
-        const {store, configure} = ServiceManager.instance;
+        const { store, configure } = ServiceManager.instance;
         return (
-          store.colors.find(it => it.label === self.color)?.value ||
+          store.colors.get(self.color)?.value ||
           configure.configure.defaultBookmarkIconColor
         );
       },
 
-      get escapedColor() {
-        const {store, configure} = ServiceManager.instance;
-        const color =
-          store.colors.find(it => it.label === self.color)?.value ||
+
+      /**
+       * @zh 获取颜色的HEX值, 反之去颜色名称, 最后去默认颜色HEX值
+       */
+      get hexColor() {
+        const { store, configure } = ServiceManager.instance;
+        const colorInfo = store.colors.get(self.color)
+        const color = colorInfo?.hex || colorInfo?.value ||
           configure.configure.defaultBookmarkIconColor;
-        return color.startsWith('#') ? escapeColor(color) : color;
+        return {
+          isHex: color.startsWith('#'),
+          value: color || DEFAULT_BOOKMARK_COLOR,
+          escapedColor: color.startsWith('#') ? escapeColor(color) : color || DEFAULT_BOOKMARK_COLOR
+        };
       },
+
 
       /**
        *@zh 获取书签的装饰器图标
        */
       get iconPath() {
-        const {icons, configure} = ServiceManager.instance;
-        const {defaultLabeledBookmarkIcon, defaultBookmarkIcon} =
+        const { icons, configure } = ServiceManager.instance;
+        const { defaultLabeledBookmarkIcon, defaultBookmarkIcon } =
           configure.configure;
         let iconId = self.icon
           ? self.icon
@@ -223,24 +232,27 @@ export const Bookmark = types
               : icons.find(it => it.id === defaultBookmarkIcon);
         }
 
-        const color = (self as any).escapedColor;
+        const { isHex, value: color, escapedColor } = (self as Instance<typeof Bookmark>).hexColor;
+        let iconColor = escapedColor as string
+        if (isHex && color.length >= 8) {
+          iconColor = iconColor.slice(0, 9)
+        }
 
         if (icon) {
           return Uri.parse(
-            `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 24 24">${
-              icon.body.includes('stroke')
-                ? icon.body.replace(
-                    /stroke\s*=\s*"(.*?)"/gi,
-                    `stroke="${color}"`,
-                  )
-                : icon.body.replace(/fill\s*=\s*"(.*?)"/gi, `fill="${color}"`)
+            `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 24 24">${icon.body.includes('stroke')
+              ? icon.body.replace(
+                /stroke\s*=\s*"(.*?)"/gi,
+                `stroke="${color}"`,
+              )
+              : icon.body.replace(/fill\s*=\s*"(.*?)"/gi, `fill="${iconColor}"`)
             }</svg>`,
           );
         }
-        // 这样写只是为了消除ts报警错误,误删
+
         const body = default_bookmark_svg_icon.replace(
           /fill="currentColor"/gi,
-          `fill="${(self as Instance<typeof Bookmark>).escapedColor}"`,
+          `fill="${iconColor}"`,
         );
         return Uri.parse(
           `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 24 24">${body}</svg>`,
@@ -286,8 +298,8 @@ export const Bookmark = types
 
     function updateColor(newColor: string) {
       self.color =
-        ServiceManager.instance.store.colors.find(it => it.label === newColor)
-          ?.label || 'default';
+        ServiceManager.instance.store.colors.get(newColor)?.label || 'default';
+
       updateTextDecoration();
     }
 
@@ -342,11 +354,11 @@ export const Bookmark = types
       self.icon = label;
     }
 
-    function afterCreate() {}
+    function afterCreate() { }
     /**
      * @zh 当书签创建时调用 渲染装饰器
      */
-    function afterAttach() {}
+    function afterAttach() { }
 
     return {
       afterCreate,

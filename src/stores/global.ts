@@ -1,18 +1,20 @@
-import {types} from 'mobx-state-tree';
-import {BookmarkColor} from './color';
-import {Icon} from './icons';
-import {DEFAULT_BOOKMARK_COLOR} from '../constants';
-import {RootConfigure} from './configure';
+import { types } from 'mobx-state-tree';
+import { BookmarkColor } from './color';
+import { Icon } from './icons';
+import { RootConfigure } from './configure';
 
 export const GlobalStore = types
   .model('global-store', {
-    colors: types.array(BookmarkColor),
+    colors: types.map(BookmarkColor),
     icons: types.array(Icon),
     configure: RootConfigure,
+  }).views(self => {
+    return {
+    }
   })
   .actions(self => {
     return {
-      afterCreate() {},
+      afterCreate() { },
 
       addNewIcon(
         prefix: string,
@@ -43,11 +45,17 @@ export const GlobalStore = types
         }
       },
 
-      addNewColor(name: string, value: string) {
-        self.colors.push(
+      clearColors() {
+        self.colors.clear();
+      },
+
+      addNewColor(name: string, value: string, hex: string) {
+        self.colors.set(
+          name,
           BookmarkColor.create({
             label: name,
             value,
+            hex,
           }),
         );
       },

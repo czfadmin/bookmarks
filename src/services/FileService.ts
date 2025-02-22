@@ -16,7 +16,7 @@ export class FileService extends BaseService {
       os.homedir(),
       os.platform() === 'win32'
         ? '.bookmark-manager'
-        : './config/.bookmark-manager',
+        : './.config/bookmark-manager',
     );
     this.checkDirIsExists(_path);
     return _path;
