@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.0.38
+
+### Patch Changes
+
+- c5f8f05: fix(bookmarkcolor): 修复书签颜色配置调整渲染不生效问题
+
 ## 0.0.37
 
 ### Patch Changes
