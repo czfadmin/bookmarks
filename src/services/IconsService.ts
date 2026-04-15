@@ -1,16 +1,16 @@
-import {ServiceManager} from './ServiceManager';
-import {ofetch} from 'ofetch';
+import { ServiceManager } from './ServiceManager';
+import { ofetch } from 'ofetch';
 import {
   iconfiy_public_url,
   iconify_collection_endpoint,
 } from '../constants/icons';
-import {IconifyIconsType} from '../types/icon';
-import {BaseService} from './BaseService';
-import {applySnapshot, IDisposer, onSnapshot} from 'mobx-state-tree';
-import {EventEmitter, Uri, window, workspace} from 'vscode';
-import {escapeColor} from '../utils';
-import {EXTENSION_ID} from '../constants';
-import {IconType} from '../stores';
+import { IconifyIconsType } from '../types/icon';
+import { BaseService } from './BaseService';
+import { applySnapshot, IDisposer, onSnapshot } from 'mobx-state-tree';
+import { EventEmitter, Uri, window, workspace } from 'vscode';
+import { escapeColor } from '../utils';
+import { EXTENSION_ID } from '../constants';
+import { IconType } from '../stores';
 
 /**
  * @zh 装饰器和树上的图标服务类
@@ -41,7 +41,7 @@ export class IconsService extends BaseService {
     // 监听插件的的`icons`的变化, 更新存储
     this._disposers.push(
       onSnapshot(this.configure.configure.icons, snapshot => {
-        const {defaultBookmarkIcon, defaultLabeledBookmarkIcon} =
+        const { defaultBookmarkIcon, defaultLabeledBookmarkIcon } =
           this.configure.configure;
         Object.entries(snapshot).forEach(([key, value], index) => {
           if (!this.store.icons.find(it => it.id === value)) {
@@ -70,7 +70,7 @@ export class IconsService extends BaseService {
           ev.affectsConfiguration(`${EXTENSION_ID}.defaultBookmarkIcon`) ||
           ev.affectsConfiguration(`${EXTENSION_ID}.defaultLabeledBookmarkIcon`)
         ) {
-          const {defaultBookmarkIcon, defaultLabeledBookmarkIcon} =
+          const { defaultBookmarkIcon, defaultLabeledBookmarkIcon } =
             this.configure.configure;
           if (!this.store.icons.find(it => it.id === defaultBookmarkIcon)) {
             this.downloadIcon(defaultBookmarkIcon, 'default:bookmark');
@@ -112,6 +112,10 @@ export class IconsService extends BaseService {
       const response = await this.download(
         `${iconfiy_public_url}/${prefix}.json?icons=${name}`,
       );
+      if (response.name === 'FetchError') {
+        window.showInformationMessage('Icon download failed!');
+        return;
+      }
       window.showInformationMessage('Icon downloaded successfully!');
       const svgBody = (response as IconifyIconsType).icons[name].body;
       this.store.addNewIcon(prefix, name, svgBody, customName);
@@ -176,7 +180,7 @@ export class IconsService extends BaseService {
     for (let [key, value] of iconsValues) {
       // 下载配置需要存在但不存在本地的图标数据
       if (!this.sm.store.icons.find(it => it.id === value)) {
-        toDownloadIcons.push({key, value});
+        toDownloadIcons.push({ key, value });
       }
     }
 
@@ -206,7 +210,7 @@ export class IconsService extends BaseService {
     if (!configure) {
       return;
     }
-    const {defaultBookmarkIcon, defaultLabeledBookmarkIcon} =
+    const { defaultBookmarkIcon, defaultLabeledBookmarkIcon } =
       configure.configure;
 
     await this.downloadIcon(defaultBookmarkIcon, 'default:bookmark');
@@ -239,7 +243,7 @@ export class IconsService extends BaseService {
     }
 
     let color =
-      this.store.colors.find(it => it.label === colorLabel)?.value ||
+      this.store.colors.get(colorLabel)?.value ||
       this.configure.configure.defaultBookmarkIconColor;
 
     color = color.startsWith('#') ? escapeColor(color) : color;

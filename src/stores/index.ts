@@ -19,7 +19,7 @@ export * from './BookmarkSCMCommitInfo';
  */
 export function createGlobalStore() {
   const globalStore = GlobalStore.create({
-    colors: [],
+    colors: {},
     icons: [],
     configure: {
       decoration: {},

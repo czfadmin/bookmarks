@@ -49,6 +49,7 @@ export default class ConfigService extends BaseService {
   get decorationConfiguration() {
     return this.configure.decoration;
   }
+  
   get configuration() {
     return this.configure.configure;
   }

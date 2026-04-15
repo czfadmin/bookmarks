@@ -6,13 +6,13 @@ import {
   TextEditorDecorationType,
   window,
 } from 'vscode';
-import {ServiceManager} from './ServiceManager';
-import {resolveBookmarkController} from '../bootstrap';
+import { ServiceManager } from './ServiceManager';
+import { resolveBookmarkController } from '../bootstrap';
 import BookmarksController from '../controllers/BookmarksController';
-import {Bookmark, IBookmark} from '../stores/bookmark';
-import {BaseService} from './BaseService';
-import {DEFAULT_BOOKMARK_COLOR} from '../constants';
-import {Instance} from 'mobx-state-tree';
+import { Bookmark, IBookmark } from '../stores/bookmark';
+import { BaseService } from './BaseService';
+import { DEFAULT_BOOKMARK_COLOR } from '../constants';
+import { Instance } from 'mobx-state-tree';
 
 /**
  * 装饰器服务类
@@ -107,7 +107,7 @@ export default class DecorationService extends BaseService {
   }
 
   createTextDecoration(bookmark: IBookmark) {
-    let color = bookmark.plainColor || DEFAULT_BOOKMARK_COLOR;
+    let { isHex, value: color } = bookmark.hexColor;
 
     const {
       fontWeight,
@@ -129,7 +129,7 @@ export default class DecorationService extends BaseService {
     let overviewRulerColor;
     let overviewRulerLane: OverviewRulerLane | undefined = undefined;
     if (showGutterInOverviewRuler) {
-      overviewRulerColor = bookmark.plainColor;
+      overviewRulerColor = color;
       overviewRulerLane = OverviewRulerLane.Center;
     } else {
       overviewRulerColor = undefined;
@@ -147,9 +147,7 @@ export default class DecorationService extends BaseService {
     }
 
     if (alwaysUseDefaultColor) {
-      color =
-        this.store.colors.find(it => it.label === 'default')?.value ||
-        DEFAULT_BOOKMARK_COLOR;
+      color = this.store.colors.get('deault')?.value || DEFAULT_BOOKMARK_COLOR;
     }
 
     let rangeBehavior = DecorationRangeBehavior.ClosedClosed;

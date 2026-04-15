@@ -1,6 +1,6 @@
-import {Instance, types} from 'mobx-state-tree';
-import {l10n, Uri, window, workspace, WorkspaceFolder} from 'vscode';
-import {generateUUID, sortBookmarks} from '../utils';
+import { Instance, types } from 'mobx-state-tree';
+import { l10n, Uri, window, workspace, WorkspaceFolder } from 'vscode';
+import { generateUUID, sortBookmarks } from '../utils';
 import {
   BookmarksGroupedByCustomType,
   BookmarksGroupedByFileType,
@@ -8,7 +8,7 @@ import {
   TreeViewSortedEnum,
   TreeViewStyleEnum,
 } from '../types';
-import {registerExtensionCustomContextByKey} from '../context';
+import { registerExtensionCustomContextByKey } from '../context';
 import {
   BookmarksGroupedByColorType,
   BookmarksGroupedByWorkspaceType,
@@ -16,10 +16,10 @@ import {
   Bookmark,
   BookmarksGroupedByIconType,
 } from './bookmark';
-import {BookmarkGroup, IBookmarkGroup} from './bookmark-group';
-import {DEFAULT_BOOKMARK_GROUP_ID} from '../constants/bookmark';
-import {isProxy} from 'util/types';
-import {LoggerService, ServiceManager} from '../services';
+import { BookmarkGroup, IBookmarkGroup } from './bookmark-group';
+import { DEFAULT_BOOKMARK_GROUP_ID } from '../constants/bookmark';
+import { isProxy } from 'util/types';
+import { LoggerService, ServiceManager } from '../services';
 
 const BookmarkGroupData = types.model('BookmarkGroupData', {
   id: types.string,
@@ -166,7 +166,7 @@ export const BookmarksStore = types
 
           if (!existed) {
             grouped.push({
-              workspace: {...it.workspaceFolder, ...it.wsFolder},
+              workspace: { ...it.workspaceFolder, ...it.wsFolder },
               files: [
                 {
                   bookmarks: [it],
@@ -364,7 +364,7 @@ export const BookmarksStore = types
 
       const groupId = bookmark.groupId || DEFAULT_BOOKMARK_GROUP_ID;
 
-      const {defaultBookmarkIcon, defaultLabeledBookmarkIcon} =
+      const { defaultBookmarkIcon, defaultLabeledBookmarkIcon } =
         sm.store.configure.configure;
       _bookmark = Bookmark.create({
         id: id || generateUUID(),
@@ -728,9 +728,9 @@ export const BookmarksStore = types
     /**
      * 已经通过之前groups字段实现
      */
-    function addCustomroupInfo(info: BookmarkGroupDataType) {}
+    function addCustomroupInfo(info: BookmarkGroupDataType) { }
 
-    function afterCreate() {}
+    function afterCreate() { }
 
     return {
       add,
