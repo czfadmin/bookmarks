@@ -34,9 +34,10 @@ export const Icon = types
       iconPath(colorLabel?: string) {
         const {configure, colors} = getRoot<any>(self);
         let color =
-          colors.find(it => it.label === colorLabel)?.value ||
+          colors?.find(it => it.label === colorLabel)?.value ||
           configure.configure.defaultBookmarkIconColor ||
           DEFAULT_BOOKMARK_COLOR;
+        
         color = color.startsWith('#') ? escapeColor(color) : color;
         let body = self.body;
         if (!self.body.includes('stroke')) {
