@@ -34,6 +34,13 @@ export class FileService extends BaseService {
   }
 
   /**
+   * @zh SQLite 数据库文件路径
+   */
+  get dbPath() {
+    return path.join(this.homeDir, './bookmarks.db');
+  }
+
+  /**
    * @zh 文件配置路径
    */
   get configPath() {
