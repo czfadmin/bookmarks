@@ -192,14 +192,20 @@ export default class BookmarksController implements IController {
     this._resolveDataFromStoreFile();
     // 当从 `bookmark-manager.json`文件中读取, 直接刷新返回
     if (!this.configuration.createJsonFile) {
-      // 从state中读取数据
+      // 优先从 SQLite 数据库中读取数据
       try {
-        store = this.workspaceState.get<any>(EXTENSION_ID);
-        if (!store) {
-          store = this._store;
+        const loaded = this._loadFromDatabase();
+        if (loaded) {
+          applySnapshot(this._store, this._sm.migrateService.migrate(loaded as any) as any);
+        } else {
+          // 兼容旧版: 尝试从 workspaceState 迁移数据
+          store = this.workspaceState.get<any>(EXTENSION_ID);
+          if (store) {
+            applySnapshot(this._store, isProxy(store) ? getSnapshot(store) : this._sm.migrateService.migrate(store));
+            // 迁移完成后清空 workspaceState
+            this.workspaceState.update(EXTENSION_ID, null);
+          }
         }
-
-        applySnapshot(this._store, isProxy(store) ? getSnapshot(store) : this._sm.migrateService.migrate(store));
 
         if (!this._store.groups.length) {
           this._store.addGroups([]);
@@ -324,7 +330,8 @@ export default class BookmarksController implements IController {
     if (this.configuration.createJsonFile) {
       this._saveToDisk();
     } else {
-      this.workspaceState.update(EXTENSION_ID, this._store);
+      this._saveToDatabase();
+      this.workspaceState.update(EXTENSION_ID, null);
     }
     this.refresh();
   }
@@ -531,6 +538,111 @@ export default class BookmarksController implements IController {
       groupInfo: this._store.groupInfo,
     };
     return JSON.stringify(storeInfo);
+  }
+
+  /**
+   * @zh 将书签数据保存到 SQLite 数据库中
+   */
+  private _saveToDatabase() {
+    if (env.appHost !== 'desktop') {
+      return;
+    }
+    const workspaceFolders = workspace.workspaceFolders || [];
+    if (!workspaceFolders.length) {
+      return;
+    }
+    try {
+      for (const ws of workspaceFolders) {
+        const saveBookmarks = this._store.bookmarks.filter(
+          it => it.wsFolder?.uri.fsPath === ws.uri.fsPath,
+        );
+        const _usedGroupIds = saveBookmarks.map(it => it.groupId);
+        if (!_usedGroupIds.includes(DEFAULT_BOOKMARK_GROUP_ID)) {
+          _usedGroupIds.push(DEFAULT_BOOKMARK_GROUP_ID);
+        }
+        const groups = this._store.groups.filter(
+          it =>
+            !it.workspace ||
+            it.workspace === ws.name ||
+            _usedGroupIds.includes(it.id),
+        );
+        const storeInfo: IBookmarkStoreInfo = {
+          version: process.env.version!,
+          workspace: ws.name,
+          updatedDate: new Date().toLocaleString(),
+          updatedDateTimespan: Date.now(),
+          viewType: this._store.viewType,
+          groupView: this._store.groupView,
+          sortedType: this._store.sortedType,
+          bookmarks: saveBookmarks as any,
+          groups,
+          groupInfo: this._store.groupInfo,
+        };
+        this._sm.databaseService.save(ws.name, storeInfo);
+      }
+    } catch (error) {
+      this._logger.error('Failed to save bookmarks to SQLite database', error);
+    }
+  }
+
+  /**
+   * @zh 从 SQLite 数据库中加载书签数据 (合并所有工作区间)
+   * @returns 合并后的书签存储信息, 若无数据则返回 null
+   */
+  private _loadFromDatabase(): IBookmarkStoreInfo | null {
+    if (env.appHost !== 'desktop') {
+      return null;
+    }
+    const workspaceFolders = workspace.workspaceFolders || [];
+    if (!workspaceFolders.length) {
+      return null;
+    }
+    try {
+      let merged: IBookmarkStoreInfo | null = null;
+      for (const ws of workspaceFolders) {
+        const data = this._sm.databaseService.load(ws.name);
+        if (!data) {
+          continue;
+        }
+        if (!merged) {
+          merged = {...data};
+        } else {
+          merged.bookmarks = [...merged.bookmarks, ...(data.bookmarks || [])];
+          // 合并分组 (去重)
+          const existingGroupIds = new Set(merged.groups.map(g => g.id));
+          for (const group of data.groups || []) {
+            if (!existingGroupIds.has(group.id)) {
+              merged.groups.push(group);
+              existingGroupIds.add(group.id);
+            }
+          }
+          // 合并 groupInfo (去重)
+          const existingGroupInfoNames = new Set(
+            (merged.groupInfo || []).map(g => g.name),
+          );
+          for (const info of data.groupInfo || []) {
+            if (!existingGroupInfoNames.has(info.name)) {
+              merged.groupInfo = [...(merged.groupInfo || []), info];
+              existingGroupInfoNames.add(info.name);
+            } else {
+              const existing = merged.groupInfo?.find(g => g.name === info.name);
+              if (existing) {
+                const existingIds = new Set(existing.data.map((d: any) => d.id));
+                for (const item of info.data) {
+                  if (!existingIds.has(item.id)) {
+                    existing.data.push(item);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return merged;
+    } catch (error) {
+      this._logger.error('Failed to load bookmarks from SQLite database', error);
+      return null;
+    }
   }
 
   /**

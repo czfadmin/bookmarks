@@ -7,4 +7,5 @@ export * from './WorkspaceService';
 export * from './IconsService'
 export * from './ColorsService'
 export * from './FileService'
+export * from './DatabaseService';
 export * from './ServiceManager';
