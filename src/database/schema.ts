@@ -1,4 +1,4 @@
-import {integer, real, sqliteTable, text} from 'drizzle-orm/sqlite-core';
+import {integer, sqliteTable, text} from 'drizzle-orm/sqlite-core';
 
 /**
  * @zh 书签表
@@ -82,7 +82,7 @@ export const groupInfoTable = sqliteTable('group_info', {
   workspace: text('workspace').notNull(),
   groupName: text('group_name').notNull(),
   itemId: text('item_id').notNull(),
-  sortedIndex: real('sorted_index').notNull().default(-1),
+  sortedIndex: integer('sorted_index').notNull().default(-1),
 });
 
 export type BookmarkRow = typeof bookmarksTable.$inferSelect;

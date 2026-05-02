@@ -74,7 +74,7 @@ function runMigrations(db: BookmarkDatabase) {
       workspace TEXT NOT NULL,
       group_name TEXT NOT NULL,
       item_id TEXT NOT NULL,
-      sorted_index REAL NOT NULL DEFAULT -1
+      sorted_index INTEGER NOT NULL DEFAULT -1
     )
   `);
 }

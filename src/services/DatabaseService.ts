@@ -42,7 +42,7 @@ export class DatabaseService extends BaseService {
     // 使用事务批量写入以保证原子性
     db.transaction((tx) => {
       // 1. 更新或插入元数据
-      db.insert(storeMetaTable)
+      tx.insert(storeMetaTable)
         .values({
           workspace: workspaceName,
           version: storeInfo.version || '',
@@ -64,13 +64,13 @@ export class DatabaseService extends BaseService {
         .run();
 
       // 2. 删除当前工作区间的书签并重新插入
-      db.delete(bookmarksTable)
+      tx.delete(bookmarksTable)
         .where(eq(bookmarksTable.workspace, workspaceName))
         .run();
 
       if (storeInfo.bookmarks && storeInfo.bookmarks.length) {
         for (const bookmark of storeInfo.bookmarks) {
-          db.insert(bookmarksTable)
+          tx.insert(bookmarksTable)
             .values({
               id: bookmark.id,
               label: bookmark.label || '',
@@ -97,13 +97,13 @@ export class DatabaseService extends BaseService {
       }
 
       // 3. 删除当前工作区间的分组并重新插入
-      db.delete(bookmarkGroupsTable)
+      tx.delete(bookmarkGroupsTable)
         .where(eq(bookmarkGroupsTable.workspace, workspaceName))
         .run();
 
       if (storeInfo.groups && storeInfo.groups.length) {
         for (const group of storeInfo.groups) {
-          db.insert(bookmarkGroupsTable)
+          tx.insert(bookmarkGroupsTable)
             .values({
               id: group.id,
               label: group.label,
@@ -117,7 +117,7 @@ export class DatabaseService extends BaseService {
       }
 
       // 4. 删除当前工作区间的分组信息并重新插入
-      db.delete(groupInfoTable)
+      tx.delete(groupInfoTable)
         .where(eq(groupInfoTable.workspace, workspaceName))
         .run();
 
@@ -127,7 +127,7 @@ export class DatabaseService extends BaseService {
             continue;
           }
           for (const item of info.data) {
-            db.insert(groupInfoTable)
+            tx.insert(groupInfoTable)
               .values({
                 workspace: workspaceName,
                 groupName: info.name,
@@ -262,16 +262,16 @@ export class DatabaseService extends BaseService {
   delete(workspaceName: string): void {
     const db = this.db;
     db.transaction((tx) => {
-      db.delete(bookmarksTable)
+      tx.delete(bookmarksTable)
         .where(eq(bookmarksTable.workspace, workspaceName))
         .run();
-      db.delete(bookmarkGroupsTable)
+      tx.delete(bookmarkGroupsTable)
         .where(eq(bookmarkGroupsTable.workspace, workspaceName))
         .run();
-      db.delete(storeMetaTable)
+      tx.delete(storeMetaTable)
         .where(eq(storeMetaTable.workspace, workspaceName))
         .run();
-      db.delete(groupInfoTable)
+      tx.delete(groupInfoTable)
         .where(eq(groupInfoTable.workspace, workspaceName))
         .run();
     });
